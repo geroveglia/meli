@@ -1,0 +1,725 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useAuthStore } from "../stores/authStore";
+import { useThemeStore } from "../stores/themeStore";
+import { useClientContextStore } from "../stores/clientContextStore";
+import { Link, useLocation } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faXmark, faBars, faMoon, faSun, faRightFromBracket, faHouse, faUserGear, faBuilding, faArrowUpRightFromSquare, faCog, faUser, faUserShield, faChevronDown, faUserGraduate, faUserTie, faUsersGear, faLayerGroup, faInfoCircle, faBriefcase, faImages, faPalette } from "@fortawesome/free-solid-svg-icons";
+import { faSearch } from "@fortawesome/free-solid-svg-icons";
+import { Logo } from "./Logo";
+import axios from "../api/axiosConfig";
+import { SettingsModal } from "./SettingsModal";
+import ClientSelector from "./ClientSelector";
+import { motion, AnimatePresence } from "framer-motion";
+
+interface AdminCounts {
+  clients: number;
+  tenants: number;
+  roles: number;
+  users: number;
+  areas: number;
+  positions: number;
+  levels: number;
+}
+
+export const MobileNavbar: React.FC = () => {
+  const { user, logout, hasPermission } = useAuthStore();
+  const { theme, toggleTheme } = useThemeStore();
+
+  const location = useLocation();
+  const [open, setOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [, setAdminAccordionOpen] = useState(true);
+
+  // No renderizar el Navbar en rutas públicas
+  const publicRoutes = ["/login", "/register", "/register-client"];
+  if (publicRoutes.includes(location.pathname)) {
+    return null;
+  }
+
+  // Estado del acordeón persistente: "users" | "general" | null
+  const [openAdminSection, setOpenAdminSection] = useState<string | null>(() => {
+    return localStorage.getItem("adminOpenSection") || "general";
+  });
+
+  const toggleAdminSection = (section: "users" | "general" | "config") => {
+    const newVal = openAdminSection === section ? null : section;
+    setOpenAdminSection(newVal);
+    if (newVal) localStorage.setItem("adminOpenSection", newVal);
+    else localStorage.removeItem("adminOpenSection");
+  };
+  const [adminCounts, setAdminCounts] = useState<AdminCounts>({
+    clients: 0,
+    tenants: 0,
+    roles: 0,
+    users: 0,
+    areas: 0,
+    positions: 0,
+    levels: 0,
+  });
+
+  const creativeWinRef = useRef<Window | null>(null);
+
+  useEffect(() => {
+    const fetchAdminCounts = async () => {
+      try {
+        const promises: Array<Promise<any>> = [];
+
+        if (hasPermission("tenants:view")) promises.push(axios.get("/tenants/count").catch(() => ({ data: { count: 0 } })));
+        else promises.push(Promise.resolve({ data: { count: 0 } }));
+
+        if (hasPermission("roles:view")) promises.push(axios.get("/roles/count").catch(() => ({ data: { count: 0 } })));
+        else promises.push(Promise.resolve({ data: { count: 0 } }));
+
+        if (hasPermission("areas:view")) promises.push(axios.get("/areas/count").catch(() => ({ data: { count: 0 } })));
+        else promises.push(Promise.resolve({ data: { count: 0 } }));
+
+        if (hasPermission("positions:view")) promises.push(axios.get("/positions/count").catch(() => ({ data: { count: 0 } })));
+        else promises.push(Promise.resolve({ data: { count: 0 } }));
+
+        if (hasPermission("levels:view")) promises.push(axios.get("/levels/count").catch(() => ({ data: { count: 0 } })));
+        else promises.push(Promise.resolve({ data: { count: 0 } }));
+
+        if (hasPermission("users:view")) {
+          promises.push(axios.get("/users/count").catch(() => ({ data: { count: 0 } })));
+        } else {
+          promises.push(Promise.resolve({ data: { count: 0 } }));
+        }
+
+        const [tenantsRes, rolesRes, areasRes, positionsRes, levelsRes, usersRes] = await Promise.all(promises);
+
+        setAdminCounts({
+          clients: 0,
+          tenants: tenantsRes?.data?.count || 0,
+          roles: rolesRes?.data?.count || 0,
+          areas: areasRes?.data?.count || 0,
+          positions: positionsRes?.data?.count || 0,
+          levels: levelsRes?.data?.count || 0,
+          users: usersRes?.data?.count || 0,
+        });
+      } catch (error) {
+        console.error("Error fetching admin counts:", error);
+      }
+    };
+    fetchAdminCounts();
+  }, [hasPermission, user]);
+
+  useEffect(() => {
+    if (user?.tenantSlug === "superadmin") setAdminAccordionOpen(true);
+  }, [user?.tenantSlug]);
+
+  useEffect(() => {
+    if (["/admin/dashboard", "/admin/tenants", "/admin/clients"].includes(location.pathname)) {
+      setOpenAdminSection("general");
+    } else if (["/admin/carousel-images", "/admin/general", "/admin/colors", "/admin/seo"].includes(location.pathname)) {
+      setOpenAdminSection("config");
+    } else if (["/admin/roles", "/admin/areas", "/admin/positions", "/admin/levels", "/admin/users"].includes(location.pathname)) {
+      setOpenAdminSection("users");
+    }
+  }, [location.pathname]);
+
+  const userRoleNames = useMemo(() => {
+    if (Array.isArray(user?.roles) && user.roles.length > 0) {
+      if (typeof user.roles[0] === "string") return [...new Set(user.roles)];
+      if (typeof user.roles[0] === "object" && user.roles[0] !== null) {
+        const names = user.roles.map((r: any) => r.name || r).filter((n): n is string => typeof n === "string");
+        return [...new Set(names)];
+      }
+    }
+    return user?.primaryRole ? [user.primaryRole] : [];
+  }, [user?.roles, user?.primaryRole]);
+
+  const menuItems = useMemo(() => {
+    const isSuperAdminTenant = user?.tenantSlug === "superadmin";
+
+    const base: Array<{
+      path: string;
+      icon: any;
+      label: string;
+      external?: boolean;
+      scope?: "global" | "client";
+      count?: number;
+      dividerTop?: boolean;
+      isCreativeSuite?: boolean;
+      badge?: string;
+      badgeColor?: string;
+      disabled?: boolean; // 👈 AGREGAR ESTO
+    }> = [];
+
+    if (isSuperAdminTenant) {
+      base.push(
+        {
+          path: "/admin/dashboard",
+          icon: faHouse,
+          label: "Dashboard",
+          scope: "global",
+        },
+        {
+          path: "/admin/tenants",
+          icon: faBuilding,
+          label: "Tenants",
+          scope: "global",
+          count: adminCounts.tenants,
+        },
+        {
+          path: "/admin/carousel-images",
+          icon: faImages,
+          label: "Carrusel",
+          scope: "global",
+        },
+        {
+          path: "/admin/general",
+          icon: faCog,
+          label: "Logo",
+          scope: "global",
+        },
+        {
+          path: "/admin/colors",
+          icon: faPalette,
+          label: "Colores",
+          scope: "global",
+        },
+        {
+          path: "/admin/seo",
+          icon: faSearch,
+          label: "SEO",
+          scope: "global",
+        }
+      );
+    } else {
+      // Dashboard siempre visible
+      base.push({
+        path: "/admin/dashboard",
+        icon: faHouse,
+        label: "Dashboard",
+        scope: "global",
+      });
+      base.push({
+        path: "/admin/carousel-images",
+        icon: faImages,
+        label: "Carrusel",
+        scope: "global",
+      });
+      base.push({
+        path: "/admin/general",
+        icon: faCog,
+        label: "Logo",
+        scope: "global",
+      });
+      base.push({
+        path: "/admin/colors",
+        icon: faPalette,
+        label: "Colores",
+        scope: "global",
+      });
+      base.push({
+        path: "/admin/seo",
+        icon: faSearch,
+        label: "SEO",
+        scope: "global",
+      });
+      if (hasPermission("roles:view"))
+        base.push({
+          path: "/admin/roles",
+          icon: faUserShield,
+          label: "Roles",
+          scope: "global",
+          count: adminCounts.roles,
+          badge: "",
+          badgeColor: "bg-accent-9",
+        });
+      if (hasPermission("areas:view"))
+        base.push({
+          path: "/admin/areas",
+          icon: faLayerGroup,
+          label: "Áreas",
+          scope: "global",
+          count: adminCounts.areas,
+          badge: "",
+          badgeColor: "bg-accent-9",
+        });
+      if (hasPermission("positions:view"))
+        base.push({
+          path: "/admin/positions",
+          icon: faUserTie,
+          label: "Cargos",
+          scope: "global",
+          count: adminCounts.positions,
+          badge: "",
+          badgeColor: "bg-accent-9",
+        });
+      if (hasPermission("levels:view"))
+        base.push({
+          path: "/admin/levels",
+          icon: faUserGraduate,
+          label: "Niveles",
+          scope: "global",
+          count: adminCounts.levels,
+          badge: "",
+          badgeColor: "bg-accent-9",
+        });
+      if (hasPermission("users:view"))
+        base.push({
+          path: "/admin/users",
+          icon: faUserGear,
+          label: "Usuarios",
+          scope: "global",
+          count: adminCounts.users,
+          badge: "",
+          badgeColor: "bg-accent-9",
+        });
+      if (hasPermission("clients:view"))
+        base.push({
+          path: "/admin/clients",
+          icon: faBuilding,
+          label: "Cliente",
+          scope: "global",
+          badge: "",
+          badgeColor: "bg-accent-9",
+        });
+    }
+
+    return base;
+  }, [hasPermission, adminCounts, user?.tenantSlug]);
+
+  const handleMenuClick = (e: React.MouseEvent<HTMLAnchorElement>, item: any) => {
+    if (item.external && item.label === "Creative Suite") {
+      e.preventDefault();
+      const url = item.path as string;
+      const windowName = "creativeSuite";
+      if (creativeWinRef.current && !creativeWinRef.current.closed) {
+        creativeWinRef.current.focus();
+      } else {
+        creativeWinRef.current = window.open(url, windowName);
+      }
+    }
+  };
+
+  const RoleChips: React.FC<{ className?: string }> = ({ className = "text-[9px]" }) =>
+    userRoleNames.length ? (
+      <div className="flex flex-wrap gap-1">
+        {userRoleNames.map((label) => (
+          <div key={label} className={`flex text-transform: capitalize font-semibold items-center justify-center px-3 py-1 rounded-full ${className} text-xs bg-accent-3 text-accent-1 border border-accent-4`}>
+            <FontAwesomeIcon icon={faUserShield} className="h-3 w-3 mr-1.5" />
+            {label}
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div className="mt-2">
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-full ${className} font-medium bg-accent-3 text-accent-1 border border-accent-4 uppercase`}>{user?.primaryRole ?? "user"}</span>
+      </div>
+    );
+
+  const UserCard: React.FC = () => {
+    const displayName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.firstName || user?.lastName || user?.email || "Usuario";
+    return (
+      <div>
+        {user?.tenantSlug && (
+          <div className="flex flex-col lg:flex-row gap-2 w-full lg:justify-between items-center lg:items-start lg:px-2">
+            <div className="hidden lg:flex text-transform: capitalize font-semibold items-center justify-center px-3 py-1 rounded-full text-xs bg-accent-9 text-accent-2" title={user.tenantSlug}>
+              <FontAwesomeIcon icon={faBuilding} className="h-3 w-3 mr-1.5" />
+              {user.tenantSlug}
+            </div>
+            <div className="flex text-transform: capitalize font-semibold items-center justify-center px-3 py-1 rounded-full text-xs bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100" title={displayName}>
+              <FontAwesomeIcon icon={faUser} className="h-3 w-3 mr-1.5" /> {displayName}
+            </div>
+            <div className="hidden lg:block">
+              <RoleChips />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+const LogoutButton: React.FC<{
+  onClick?: () => void;
+  className?: string;
+  logout: () => void;
+}> = ({ onClick, className = "", logout }) => (
+  <button
+    onClick={() => {
+      logout();
+      onClick?.();
+    }}
+    className={`flex items-center space-x-3 w-full py-3 rounded-lg text-accent-7 dark:text-accent-6 hover:text-accent-1 transition-colors ${className}`}
+  >
+    <FontAwesomeIcon icon={faRightFromBracket} className="h-5 w-5" />
+    <span className="font-medium lg:hidden"></span>
+  </button>
+);
+
+interface NavMenuProps {
+  menuItems: any[];
+  openAdminSection: string | null;
+  toggleAdminSection: (section: "users" | "general" | "config") => void;
+  onItemClick?: () => void;
+  handleMenuClick: (e: React.MouseEvent<HTMLAnchorElement>, item: any) => void;
+  setIsSettingsOpen: (open: boolean) => void;
+}
+
+const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAdminSection, onItemClick, handleMenuClick, setIsSettingsOpen }) => {
+  const location = useLocation();
+  const selectedClient = useClientContextStore((state) => state.selectedClient);
+  const SHOW_MENU_COUNTS = false;
+
+  const isActive = (path: string) => location.pathname === path;
+
+  // Partición de items: Admin Usuarios (sin clients ni dashboard)
+  const userAdminItems = menuItems.filter((item) => ["/admin/roles", "/admin/areas", "/admin/positions", "/admin/levels", "/admin/users"].includes(item.path));
+
+  // Items de Admin General (Dashboard + Clientes + Tenants para superadmin + SEO)
+  const dashboardItem = menuItems.find((item) => item.path === "/admin/dashboard");
+  const clientItem = menuItems.find((item) => item.path === "/admin/clients");
+  const tenantsItem = menuItems.find((item) => item.path === "/admin/tenants");
+  const carouselItem = menuItems.find((item) => item.path === "/admin/carousel-images");
+
+  const generalItem = menuItems.find((item) => item.path === "/admin/general");
+  const colorsItem = menuItems.find((item) => item.path === "/admin/colors");
+  const seoItem = menuItems.find((item) => item.path === "/admin/seo");
+
+  // Otros items que no pertenecen a ninguna sección
+  const otherAdminItems = menuItems.filter((item) => !userAdminItems.some((u) => u.path === item.path) && item.path !== "/admin/dashboard" && item.path !== "/admin/clients" && item.path !== "/admin/tenants" && item.path !== "/admin/carousel-images" && item.path !== "/admin/general" && item.path !== "/admin/colors" && item.path !== "/admin/seo");
+
+  const renderMenuItem = (item: any) => {
+    // Debug log to verify HMR
+    console.log("NavMenu rendering item:", item.label);
+    if (item.external) {
+      return (
+        <a
+          key={item.path}
+          href={item.path}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => {
+            handleMenuClick(e, item);
+            onItemClick?.();
+          }}
+          className="group flex items-center justify-between px-2 py-2 transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+        >
+          <div className="flex items-center space-x-3">
+            <FontAwesomeIcon icon={item.icon} className="h-5 w-5" />
+            <span className="font-medium">{item.label}</span>
+          </div>
+          <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="h-3 w-3 opacity-50 group-hover:opacity-100 transition-opacity" />
+        </a>
+      );
+    }
+
+    if (item.path === "#") {
+      return (
+        <button
+          key={item.label}
+          onClick={() => {
+            setIsSettingsOpen(true);
+            onItemClick?.();
+          }}
+          className="group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all w-full text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
+          <div className="flex items-center space-x-3 flex-1 min-w-0">
+            <FontAwesomeIcon icon={item.icon} className="h-5 w-5 flex-shrink-0" />
+            <span className="font-medium truncate">{item.label}</span>
+          </div>
+          {SHOW_MENU_COUNTS && item.count !== undefined && <span className={`ml-2 flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${item.count > 0 ? "bg-slate-500/20 text-slate-500 dark:bg-white/20 dark:text-white" : "bg-red-500/20 text-red-700 dark:bg-red-500/20 dark:text-red-400"}`}>{item.count}</span>}
+        </button>
+      );
+    }
+
+    // Disabled state
+    if (item.disabled) {
+      return (
+        <div key={item.path} className="group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all cursor-not-allowed opacity-40 bg-neutral-100 dark:bg-neutral-700 select-none">
+          <div className="flex items-center space-x-3 flex-1 min-w-0">
+            <div className="h-8 w-8 flex items-center justify-center rounded-md bg-neutral-200 dark:bg-neutral-600">
+              <FontAwesomeIcon icon={item.icon} className="h-4 w-4" />
+            </div>
+            <span className="font-medium truncate">{item.label}</span>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <Link key={item.path} to={item.path} onClick={onItemClick} aria-current={isActive(item.path) ? "page" : undefined} className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${isActive(item.path) ? "!bg-accent-3 !text-accent-1 border border-accent-4 shadow-sm" : "text-accent-7 dark:text-accent-6 hover:bg-accent-3 border border-transparent"}`}>
+        <div className="flex items-center space-x-3 flex-1 min-w-0">
+          <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${isActive(item.path) ? "bg-accent-1 text-accent-2" : "bg-accent-4/50 text-accent-7 dark:bg-accent-4/30 dark:text-accent-6 group-hover:bg-accent-5 dark:group-hover:bg-accent-4/50"}`}>
+            <FontAwesomeIcon icon={item.icon} className="h-4 w-4" />
+          </div>
+          <span className="font-medium truncate">{item.label}</span>
+          {item.badge && <span className={`ml-1 px-2 py-0.5 rounded-full text-[8px] font-bold bg-accent-2 text-accent-9 border border-accent-9 dark:bg-black dark:text-white dark:border-white uppercase`}>{item.badge}</span>}
+        </div>
+
+        {SHOW_MENU_COUNTS && item.count !== undefined && <span className={`ml-2 flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${item.count > 0 ? "bg-slate-500/20 text-slate-500 dark:bg-white/20 dark:text-white" : "bg-red-500/20 text-red-700 dark:bg-red-500/20 dark:text-red-400"}`}>{item.count}</span>}
+      </Link>
+    );
+  };
+  return (
+    <div>
+      {/* CLIENT SELECTOR - Arriba de todo */}
+      {clientItem && (
+        <div className="px-2 mb-4">
+          <ClientSelector className="w-full" />
+
+          {/* Información tab - subcategoría cuando hay cliente seleccionado */}
+          {selectedClient && (
+            <div className="mt-2 ml-2 space-y-1">
+              <Link to="/client-info" onClick={onItemClick} aria-current={isActive("/client-info") ? "page" : undefined} className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${isActive("/client-info") ? "!bg-accent-3 !text-accent-1 border border-accent-4 shadow-sm" : "text-accent-7 dark:text-accent-6 hover:bg-accent-3 border border-transparent"}`}>
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${isActive("/client-info") ? "bg-accent-1 text-accent-2" : "bg-accent-4/50 text-accent-7 dark:bg-accent-4/30 dark:text-accent-6 group-hover:bg-accent-5 dark:group-hover:bg-accent-4/50"}`}>
+                    <FontAwesomeIcon icon={faInfoCircle} className="h-4 w-4" />
+                  </div>
+                  <span className="font-medium truncate">Información</span>
+                </div>
+              </Link>
+
+              <Link to="/client-projects" onClick={onItemClick} aria-current={isActive("/client-projects") ? "page" : undefined} className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${isActive("/client-projects") ? "!bg-accent-3 !text-accent-1 border border-accent-4 shadow-sm" : "text-accent-7 dark:text-accent-6 hover:bg-accent-3 border border-transparent"}`}>
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${isActive("/client-projects") ? "bg-accent-1 text-accent-2" : "bg-accent-4/50 text-accent-7 dark:bg-accent-4/30 dark:text-accent-6 group-hover:bg-accent-5 dark:group-hover:bg-accent-4/50"}`}>
+                    <FontAwesomeIcon icon={faBriefcase} className="h-4 w-4" />
+                  </div>
+                  <span className="font-medium truncate">Proyectos</span>
+                </div>
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ADMIN GENERAL - Dashboard, Tenants y Clientes */}
+      {(dashboardItem || clientItem || tenantsItem) && (
+        <div className="px-2 mb-4">
+          <button onClick={() => toggleAdminSection("general")} className="w-full flex items-center justify-between text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider transition-colors pb-2 pt-2">
+            <span>
+              <FontAwesomeIcon icon={faCog} className="mr-2 h-4 w-4" />
+              <span className="uppercase">Admin General</span>
+            </span>
+            <FontAwesomeIcon icon={faChevronDown} className={`h-3 w-3 transform transition-transform ${openAdminSection === "general" ? "rotate-180" : ""}`} />
+          </button>
+
+          <AnimatePresence initial={false}>
+            {openAdminSection === "general" && (
+              <motion.nav
+                key="general"
+                initial="collapsed"
+                animate="open"
+                exit="collapsed"
+                variants={{
+                  open: { opacity: 1, height: "auto" },
+                  collapsed: { opacity: 0, height: 0 },
+                }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="overflow-hidden space-y-1"
+              >
+                <div className="pb-2">
+                  {/* Dashboard */}
+                  {dashboardItem && renderMenuItem(dashboardItem)}
+
+                  {/* Tenants (solo superadmin) */}
+                  {tenantsItem && renderMenuItem(tenantsItem)}
+
+                  {/* Clientes */}
+                  {clientItem && renderMenuItem(clientItem)}
+                </div>
+              </motion.nav>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
+      {/* CONFIGURACIÓN - Web (Carrusel, Logo, SEO) */}
+      {(carouselItem || generalItem || seoItem) && (
+        <div className="px-2 mb-4">
+          <button onClick={() => toggleAdminSection("config")} className="w-full flex items-center justify-between text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider transition-colors pb-2 pt-2">
+            <span>
+              <FontAwesomeIcon icon={faCog} className="mr-2 h-4 w-4" />
+              <span className="uppercase">Configuración</span>
+            </span>
+            <FontAwesomeIcon icon={faChevronDown} className={`h-3 w-3 transform transition-transform ${openAdminSection === "config" ? "rotate-180" : ""}`} />
+          </button>
+
+          <AnimatePresence initial={false}>
+            {openAdminSection === "config" && (
+              <motion.nav
+                key="config"
+                initial="collapsed"
+                animate="open"
+                exit="collapsed"
+                variants={{
+                  open: { opacity: 1, height: "auto" },
+                  collapsed: { opacity: 0, height: 0 },
+                }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="overflow-hidden space-y-1"
+              >
+                <div className="pb-2">
+                  <div className="pl-2 pt-1 pb-1 text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
+                    Web
+                  </div>
+                  {/* SEO */}
+                  {seoItem && renderMenuItem(seoItem)}
+
+                  {/* Carousel */}
+                  {carouselItem && renderMenuItem(carouselItem)}
+
+                  {/* General/Logo */}
+                  {generalItem && renderMenuItem(generalItem)}
+
+                  {/* Colors */}
+                  {colorsItem && renderMenuItem(colorsItem)}
+                </div>
+              </motion.nav>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
+      {/* ADMIN USUARIOS */}
+      {userAdminItems.length > 0 && (
+        <div className="px-2 mb-2">
+          <button onClick={() => toggleAdminSection("users")} className="w-full flex items-center justify-between text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider transition-colors pb-2 pt-2">
+            <span>
+              <FontAwesomeIcon icon={faUsersGear} className="mr-2 h-4 w-4" />
+              <span className="uppercase"> Admin Usuarios</span>
+            </span>
+            <FontAwesomeIcon icon={faChevronDown} className={`h-3 w-3 transform transition-transform ${openAdminSection === "users" ? "rotate-180" : ""}`} />
+          </button>
+
+          <AnimatePresence initial={false}>
+            {openAdminSection === "users" && (
+              <motion.nav
+                key="users"
+                initial="collapsed"
+                animate="open"
+                exit="collapsed"
+                variants={{
+                  open: { opacity: 1, height: "auto" },
+                  collapsed: { opacity: 0, height: 0 },
+                }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="overflow-hidden space-y-1"
+              >
+                <div className="pb-2">{userAdminItems.map((item) => renderMenuItem(item))}</div>
+              </motion.nav>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
+      {/* OTROS ITEMS (si existen) */}
+      {otherAdminItems.length > 0 && (
+        <div className="px-2 mb-2">
+          <nav className="space-y-1 pb-2">{otherAdminItems.map((item) => renderMenuItem(item))}</nav>
+        </div>
+      )}
+    </div>
+  );
+};
+
+  return (
+    <>
+      <nav className="bg-accent-2 shadow-sm border-b border-accent-4 sticky top-0 z-40 transition-colors duration-300">
+        <div className="px-4 sm:px-6">
+          <div className="flex justify-between items-center h-16">
+            <div className="lg:hidden">
+              <button onClick={() => setOpen((v) => !v)} className="p-2 rounded-lg hover:bg-accent-3 flex-1 overflow-y-auto space-y-4 mb-4000 transition-colors">
+                {open ? <FontAwesomeIcon icon={faXmark} className="h-6 w-6 text-accent-1" /> : <FontAwesomeIcon icon={faBars} className="h-6 w-6 text-accent-1" />}
+              </button>
+            </div>
+            <div>
+              <Logo sizeClass="text-3xl" wrapperClassName="flex items-center cursor-pointer hover:opacity-80 transition-opacity" />
+            </div>
+            <div className="flex items-center justify-center space-x-2">
+              <div className="hidden lg:block">
+                <UserCard />
+              </div>
+
+              {/* 🤖 Robot (por ahora oculto) */}
+              {/*               <button onClick={() => openAssistant?.()} className="p-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors" title="Asistente IA">
+                <FontAwesomeIcon icon={faRobot} className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </button> */}
+
+              <button onClick={toggleTheme} className="p-2 rounded-lg text-accent-7 dark:text-accent-6 hover:text-accent-1 transition-colors">
+                {theme === "light" ? <FontAwesomeIcon icon={faMoon} className="h-5 w-5" /> : <FontAwesomeIcon icon={faSun} className="h-5 w-5" />}
+              </button>
+              <div className="sticky bottom-0 left-0 right-0 bg-transparent dark:bg-transparent py-2 border-none px-4 hidden lg:block">
+                <LogoutButton onClick={() => setOpen(false)} logout={logout} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {open && <div className="fixed inset-0 z-40 bg-neutral-950/50 backdrop-blur-[2px]" onClick={() => setOpen(false)} />}
+        <div className={`fixed top-0 left-0 z-50 h-svh w-80 bg-accent-2 transform transition-transform duration-300 ease-in-out flex flex-col ${open ? "translate-x-0" : "-translate-x-full"}`} aria-hidden={!open}>
+          <div className="p-4 pb-0">
+            <div className="flex items-start justify-between border-b border-neutral-700 mb-2">
+              <div>
+                <Logo sizeClass="text-2xl" />
+              </div>
+              <button onClick={() => setOpen(false)} className="p-3 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+                <FontAwesomeIcon icon={faXmark} className="h-5 w-5 text-accent-1" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex-1 overflow-y-auto p-4 pt-1 space-y-3">
+              {/*               {showClientContext && (
+                <div className="bg-white dark:bg-neutral-950">
+                  <div>
+                    <div className="text-sm font-medium text-neutral-500 dark:text-neutral-40 uppercase tracking-wider mb-2">Cliente</div>
+                    <ClientSelector />
+                  </div>
+                  <div>
+                    <ClientContextMenu />
+                  </div>
+                </div>
+              )} */}
+                <div>
+                <NavMenu 
+                  menuItems={menuItems}
+                  openAdminSection={openAdminSection}
+                  toggleAdminSection={toggleAdminSection}
+                  onItemClick={() => setOpen(false)} 
+                  handleMenuClick={handleMenuClick}
+                  setIsSettingsOpen={setIsSettingsOpen}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:hidden flex-none bg-accent-2 border-t border-accent-4 p-4 flex justify-between items-end items-center">
+            <div>
+              <UserCard />
+            </div>
+            <div>
+              <LogoutButton onClick={() => setOpen(false)} logout={logout} />
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:bg-accent-2 lg:border-r lg:border-accent-4 transition-colors duration-300">
+        <div className="flex flex-col flex-1 min-h-0">
+          <div className="flex flex-col pt-5 pb-4 overflow-y-auto mt-12">
+            <div className="px-3 mb-4">
+              <div className={`bg-transparent dark:bg-transparent py-2`}>
+                <NavMenu 
+                  menuItems={menuItems}
+                  openAdminSection={openAdminSection}
+                  toggleAdminSection={toggleAdminSection}
+                  onItemClick={() => setOpen(false)} 
+                  handleMenuClick={handleMenuClick}
+                  setIsSettingsOpen={setIsSettingsOpen}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="px-3 pb-4 lg:hidden">
+            <LogoutButton logout={logout} />
+          </div>
+        </div>
+      </aside>
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+    </>
+  );
+};

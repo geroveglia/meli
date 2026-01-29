@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* 1. TEMA CLARO */
+  :root,
+  [data-theme="light"] {
+    color-scheme: light;
+    --accent-1: #09090b;
+    --accent-2: #ffffff;
+    --accent-3: #f4f4f5;
+    --accent-4: #e4e4e7;
+    --accent-5: #d4d4d8;
+    --accent-6: #a1a1aa;
+    --accent-7: #71717a;
+    --accent-8: #52525b;
+    --accent-9: #27272a;
+    --accent-10: #18181b;
+
+    --primary-50: #eff6ff;
+    --primary-100: #dbeafe;
+    --primary-200: #bfdbfe;
+    --primary-300: #93c5fd;
+    --primary-400: #60a5fa;
+    --primary-500: #3b82f6;
+    --primary-600: #2563eb;
+    --primary-700: #1d4ed8;
+    --primary-800: #1e40af;
+    --primary-900: #1e3a8a;
+    --primary-950: #172554;
+  }
+
+  /* 2. TEMA OSCURO */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --accent-1: #ffffff;
+      --accent-2: #000000;
+      --accent-3: #18181b;
+      --accent-4: #27272a;
+      --accent-5: #3f3f46;
+      --accent-6: #52525b;
+      --accent-7: #71717a;
+      --accent-8: #a1a1aa;
+      --accent-9: #d4d4d8;
+      --accent-10: #f4f4f5;
+
+      --primary-50: #eff6ff;
+      --primary-100: #dbeafe;
+      --primary-200: #bfdbfe;
+      --primary-300: #93c5fd;
+      --primary-400: #60a5fa;
+      --primary-500: #3b82f6;
+      --primary-600: #2563eb;
+      --primary-700: #1d4ed8;
+      --primary-800: #1e40af;
+      --primary-900: #1e3a8a;
+      --primary-950: #172554;
+    }
+  }
+
+  [data-theme="dark"] {
+    color-scheme: dark;
+    --accent-1: #ffffff;
+    --accent-2: #000000;
+    --accent-3: #18181b;
+    --accent-4: #27272a;
+    --accent-5: #3f3f46;
+    --accent-6: #52525b;
+    --accent-7: #71717a;
+    --accent-8: #a1a1aa;
+    --accent-9: #d4d4d8;
+    --accent-10: #f4f4f5;
+
+    --primary-50: #eff6ff;
+    --primary-100: #dbeafe;
+    --primary-200: #bfdbfe;
+    --primary-300: #93c5fd;
+    --primary-400: #60a5fa;
+    --primary-500: #3b82f6;
+    --primary-600: #2563eb;
+    --primary-700: #1d4ed8;
+    --primary-800: #1e40af;
+    --primary-900: #1e3a8a;
+    --primary-950: #172554;
+  }
+}
+
+body {
+  color: var(--accent-1);
+  background: var(--accent-2);
+}
+
+@layer components {
+  /* Clase general para inputs */
+  .input-base {
+    @apply w-full border rounded-xl px-4 py-3.5 text-sm transition-colors outline-none;
+    background-color: var(--accent-3);
+    border-color: var(--accent-4);
+    color: var(--accent-1);
+  }
+
+  .input-base::placeholder {
+    @apply text-accent-5;
+  }
+
+  .input-base:focus {
+    @apply border-accent-9;
+  }
+
+  /* Fix para Autocompletado del navegador */
+  .input-base:-webkit-autofill,
+  .input-base:-webkit-autofill:hover,
+  .input-base:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--accent-1);
+    box-shadow: 0 0 0px 1000px var(--accent-3) inset;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* Botón primario */
+  .btn-primary {
+    @apply px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    background-color: var(--accent-9);
+    color: var(--accent-2);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--accent-8);
+  }
+}
