@@ -13,9 +13,11 @@ type LogoProps = {
   wrapperClassName?: string;
   /** Ruta destino del logo */
   to?: string;
+  /** Clases extra para la etiqueta <img> (ej: object-contain, constraints) */
+  imgClassName?: string;
 };
 
-export const Logo: React.FC<LogoProps> = ({ wrapperClassName = "flex items-center cursor-pointer hover:opacity-80 transition-opacity", to = "/admin/dashboard" }) => {
+export const Logo: React.FC<LogoProps> = ({ wrapperClassName = "flex items-center cursor-pointer hover:opacity-80 transition-opacity", to = "/admin/dashboard", imgClassName = "" }) => {
   // Use global store
   const { branding, fetchBranding } = useBrandingStore();
   const { theme } = useThemeStore();
@@ -43,7 +45,7 @@ export const Logo: React.FC<LogoProps> = ({ wrapperClassName = "flex items-cente
   return (
     <Link to={to} className={wrapperClassName}>
       {fullLogoUrl ? (
-        <img src={fullLogoUrl} alt={`${import.meta.env.VITE_APP_FIRST_NAME} ${import.meta.env.VITE_APP_LAST_NAME} Logo`} className="object-contain" style={{ width: `${logoWidth}px` }} />
+        <img src={fullLogoUrl} alt={`${import.meta.env.VITE_APP_FIRST_NAME} ${import.meta.env.VITE_APP_LAST_NAME} Logo`} className={`object-contain ${imgClassName}`} style={{ width: `${logoWidth}px` }} />
       ) : (
         <div className="flex items-center gap-3 group">
           {/* Logo Icon - FontAwesome Cube */}

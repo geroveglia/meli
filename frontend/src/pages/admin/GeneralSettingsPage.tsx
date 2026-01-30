@@ -209,28 +209,30 @@ export const GeneralSettingsPage: React.FC = () => {
                     <label className="block text-xs font-medium text-accent-7 mb-2">
                       Modo Claro
                     </label>
-                    <ImageUploader
-                      onChange={handleFileChange(setHeaderLightFile, setHeaderLightRemoved)}
-                      value={headerLightRemoved ? undefined : (headerLightFile || getImageUrl(settings?.logo?.header?.light))}
-                      showPreview={true}
-                      acceptCamera={false}
-                      className="w-full"
-                      previewHeightClass="h-24"
-                    />
+                      <ImageUploader
+                        onChange={handleFileChange(setHeaderLightFile, setHeaderLightRemoved)}
+                        value={headerLightRemoved ? undefined : (headerLightFile || getImageUrl(settings?.logo?.header?.light))}
+                        showPreview={true}
+                        acceptCamera={false}
+                        className="w-full"
+                        previewHeightClass="h-24"
+                        imageObjectFit="contain"
+                      />
                   </div>
 
                   <div>
                     <label className="block text-xs font-medium text-accent-7 mb-2">
                       Modo Oscuro
                     </label>
-                    <ImageUploader
-                      onChange={handleFileChange(setHeaderDarkFile, setHeaderDarkRemoved)}
-                      value={headerDarkRemoved ? undefined : (headerDarkFile || getImageUrl(settings?.logo?.header?.dark))}
-                      showPreview={true}
-                      acceptCamera={false}
-                      className="w-full"
-                      previewHeightClass="h-24"
-                    />
+                      <ImageUploader
+                        onChange={handleFileChange(setHeaderDarkFile, setHeaderDarkRemoved)}
+                        value={headerDarkRemoved ? undefined : (headerDarkFile || getImageUrl(settings?.logo?.header?.dark))}
+                        showPreview={true}
+                        acceptCamera={false}
+                        className="w-full"
+                        previewHeightClass="h-24"
+                        imageObjectFit="contain"
+                      />
                   </div>
                 </div>
               </div>
@@ -260,28 +262,30 @@ export const GeneralSettingsPage: React.FC = () => {
                     <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-2">
                       Modo Claro
                     </label>
-                    <ImageUploader
-                      onChange={handleFileChange(setFooterLightFile, setFooterLightRemoved)}
-                      value={footerLightRemoved ? undefined : (footerLightFile || getImageUrl(settings?.logo?.footer?.light))}
-                      showPreview={true}
-                      acceptCamera={false}
-                      className="w-full"
-                      previewHeightClass="h-24"
-                    />
+                      <ImageUploader
+                        onChange={handleFileChange(setFooterLightFile, setFooterLightRemoved)}
+                        value={footerLightRemoved ? undefined : (footerLightFile || getImageUrl(settings?.logo?.footer?.light))}
+                        showPreview={true}
+                        acceptCamera={false}
+                        className="w-full"
+                        previewHeightClass="h-24"
+                        imageObjectFit="contain"
+                      />
                   </div>
 
                   <div>
                     <label className="block text-xs font-medium text-accent-7 mb-2">
                       Modo Oscuro
                     </label>
-                    <ImageUploader
-                      onChange={handleFileChange(setFooterDarkFile, setFooterDarkRemoved)}
-                      value={footerDarkRemoved ? undefined : (footerDarkFile || getImageUrl(settings?.logo?.footer?.dark))}
-                      showPreview={true}
-                      acceptCamera={false}
-                      className="w-full"
-                      previewHeightClass="h-24"
-                    />
+                      <ImageUploader
+                        onChange={handleFileChange(setFooterDarkFile, setFooterDarkRemoved)}
+                        value={footerDarkRemoved ? undefined : (footerDarkFile || getImageUrl(settings?.logo?.footer?.dark))}
+                        showPreview={true}
+                        acceptCamera={false}
+                        className="w-full"
+                        previewHeightClass="h-24"
+                        imageObjectFit="contain"
+                      />
                   </div>
                 </div>
               </div>

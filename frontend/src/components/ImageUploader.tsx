@@ -13,6 +13,7 @@ interface ImageUploaderProps {
   maxSizeMB?: number;
   className?: string;
   previewHeightClass?: string;
+  imageObjectFit?: "cover" | "contain" | "fill" | "none" | "scale-down";
 }
 
 export const ImageUploader: React.FC<ImageUploaderProps> = ({
@@ -26,6 +27,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   maxSizeMB = 10,
   className = "",
   previewHeightClass = "h-48",
+  imageObjectFit = "cover",
 }) => {
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -96,7 +98,12 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
       {showPreview && preview && (
         <div className="relative rounded-lg overflow-hidden border-2 border-accent-4">
-          <img src={preview} alt="Preview" className={`w-full ${previewHeightClass} object-cover`} />
+          <img 
+            src={preview} 
+            alt="Preview" 
+            className={`w-full ${previewHeightClass}`} 
+            style={{ objectFit: imageObjectFit }} 
+          />
           {!disabled && (
             <button
               type="button"

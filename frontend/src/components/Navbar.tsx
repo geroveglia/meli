@@ -619,16 +619,20 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
     <>
       <nav className="bg-primary-400 dark:bg-accent-2 shadow-sm border-b border-accent-4 sticky top-0 z-40 transition-colors duration-300">
         <div className="px-4 sm:px-6">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-16 relative">
             <div className="lg:hidden">
               <button onClick={() => setOpen((v) => !v)} className="p-2 rounded-lg hover:bg-accent-3 flex-1 overflow-y-auto space-y-4 mb-4000 transition-colors">
                 {open ? <FontAwesomeIcon icon={faXmark} className="h-6 w-6 text-accent-1" /> : <FontAwesomeIcon icon={faBars} className="h-6 w-6 text-accent-1" />}
               </button>
             </div>
-            <div>
-              <Logo sizeClass="text-3xl" wrapperClassName="flex items-center cursor-pointer hover:opacity-80 transition-opacity" />
+            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 lg:static lg:transform-none lg:w-64 lg:-ml-6 lg:flex lg:justify-center lg:items-center">
+              <Logo 
+                sizeClass="text-3xl" 
+                wrapperClassName="flex items-center cursor-pointer hover:opacity-80 transition-opacity" 
+                imgClassName="max-h-12 max-w-[200px]"
+              />
             </div>
-            <div className="flex items-center justify-center space-x-2">
+            <div className="flex items-center justify-center space-x-2 ml-auto">
               <div className="hidden lg:block">
                 <UserCard />
               </div>
@@ -653,7 +657,7 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
           <div className="p-4 pb-0">
             <div className="flex items-start justify-between border-b border-neutral-700 mb-2">
               <div>
-                <Logo sizeClass="text-2xl" />
+                <Logo sizeClass="text-2xl" imgClassName="max-h-10 max-w-[150px]" />
               </div>
               <button onClick={() => setOpen(false)} className="p-3 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
                 <FontAwesomeIcon icon={faXmark} className="h-5 w-5 text-accent-1" />
