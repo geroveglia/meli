@@ -20,16 +20,12 @@ export const GeneralSettingsPage: React.FC = () => {
   
   // Files
   const [headerLightFile, setHeaderLightFile] = useState<File | null>(null);
-  const [headerDarkFile, setHeaderDarkFile] = useState<File | null>(null);
   const [footerLightFile, setFooterLightFile] = useState<File | null>(null);
-  const [footerDarkFile, setFooterDarkFile] = useState<File | null>(null);
   const [faviconFile, setFaviconFile] = useState<File | null>(null);
 
   // Removed State
   const [headerLightRemoved, setHeaderLightRemoved] = useState(false);
-  const [headerDarkRemoved, setHeaderDarkRemoved] = useState(false);
   const [footerLightRemoved, setFooterLightRemoved] = useState(false);
-  const [footerDarkRemoved, setFooterDarkRemoved] = useState(false);
   const [faviconRemoved, setFaviconRemoved] = useState(false);
 
   useEffect(() => {
@@ -46,9 +42,7 @@ export const GeneralSettingsPage: React.FC = () => {
       }
       // Reset removed states on fresh load
       setHeaderLightRemoved(false);
-      setHeaderDarkRemoved(false);
       setFooterLightRemoved(false);
-      setFooterDarkRemoved(false);
       setFaviconRemoved(false);
     } catch (error) {
       console.error(error);
@@ -63,27 +57,19 @@ export const GeneralSettingsPage: React.FC = () => {
       setSavingLogos(true);
       const updatedSettings = await brandingService.updateBranding(width, {
         headerLight: headerLightFile || undefined,
-        headerDark: headerDarkFile || undefined,
         footerLight: footerLightFile || undefined,
-        footerDark: footerDarkFile || undefined,
       }, {
         removeHeaderLight: headerLightRemoved,
-        removeHeaderDark: headerDarkRemoved,
         removeFooterLight: footerLightRemoved,
-        removeFooterDark: footerDarkRemoved,
       });
       setSettings(updatedSettings);
 
       useBrandingStore.getState().setBranding(updatedSettings);
       
       setHeaderLightFile(null);
-      setHeaderDarkFile(null);
       setFooterLightFile(null);
-      setFooterDarkFile(null);
       
-      setHeaderDarkRemoved(false);
       setFooterLightRemoved(false);
-      setFooterDarkRemoved(false);
 
       sweetAlert.success("Logos Guardados", "La configuración de logos se ha guardado correctamente");
     } catch (error) {
@@ -167,7 +153,7 @@ export const GeneralSettingsPage: React.FC = () => {
                 <div>
                   <h2 className="text-lg font-bold text-accent-1">Logos</h2>
                   <p className="text-sm text-accent-7">
-                    Configura los logos para header y footer (Claro/Oscuro).
+                    Configura los logos para header y footer.
                   </p>
                 </div>
               </div>
@@ -207,26 +193,11 @@ export const GeneralSettingsPage: React.FC = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-xs font-medium text-accent-7 mb-2">
-                      Modo Claro
+                      Logo
                     </label>
                       <ImageUploader
                         onChange={handleFileChange(setHeaderLightFile, setHeaderLightRemoved)}
                         value={headerLightRemoved ? undefined : (headerLightFile || getImageUrl(settings?.logo?.header?.light))}
-                        showPreview={true}
-                        acceptCamera={false}
-                        className="w-full"
-                        previewHeightClass="h-24"
-                        imageObjectFit="contain"
-                      />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-accent-7 mb-2">
-                      Modo Oscuro
-                    </label>
-                      <ImageUploader
-                        onChange={handleFileChange(setHeaderDarkFile, setHeaderDarkRemoved)}
-                        value={headerDarkRemoved ? undefined : (headerDarkFile || getImageUrl(settings?.logo?.header?.dark))}
                         showPreview={true}
                         acceptCamera={false}
                         className="w-full"
@@ -260,26 +231,11 @@ export const GeneralSettingsPage: React.FC = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-2">
-                      Modo Claro
+                      Logo
                     </label>
                       <ImageUploader
                         onChange={handleFileChange(setFooterLightFile, setFooterLightRemoved)}
                         value={footerLightRemoved ? undefined : (footerLightFile || getImageUrl(settings?.logo?.footer?.light))}
-                        showPreview={true}
-                        acceptCamera={false}
-                        className="w-full"
-                        previewHeightClass="h-24"
-                        imageObjectFit="contain"
-                      />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-accent-7 mb-2">
-                      Modo Oscuro
-                    </label>
-                      <ImageUploader
-                        onChange={handleFileChange(setFooterDarkFile, setFooterDarkRemoved)}
-                        value={footerDarkRemoved ? undefined : (footerDarkFile || getImageUrl(settings?.logo?.footer?.dark))}
                         showPreview={true}
                         acceptCamera={false}
                         className="w-full"

@@ -305,7 +305,7 @@ export const LoginPage: React.FC = () => {
             {/* Tenant Selector - solo cuando hay múltiples tenants */}
             {showTenantSelector && availableTenants.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-accent-9 mb-2">
+                <label className="block text-sm font-medium text-accent-1 mb-2">
                   <FontAwesomeIcon icon={faBuilding} className="h-4 w-4 mr-2" />
                   Selecciona tu organización
                 </label>
@@ -329,13 +329,13 @@ export const LoginPage: React.FC = () => {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-accent-9 mb-2">{t("auth.email")}</label>
+              <label className="block text-sm font-medium text-accent-1 mb-2">{t("auth.email")}</label>
               <input {...register("email")} type="email" className="input-base" placeholder="admin@example.com" autoComplete="username" />
               {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-accent-9 mb-2">{t("auth.password")}</label>
+              <label className="block text-sm font-medium text-accent-1 mb-2">{t("auth.password")}</label>
               <div className="relative">
                 <input {...register("password")} type={showPassword ? "text" : "password"} className="input-base pr-10" placeholder="••••••••" autoComplete="current-password" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -362,7 +362,7 @@ export const LoginPage: React.FC = () => {
             {/* Client Selector */}
             {showClientSelector && availableClients.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-accent-9 mb-2">
+                <label className="block text-sm font-medium text-accent-1 mb-2">
                   <FontAwesomeIcon icon={faBuilding} className="h-4 w-4 mr-2" />
                   Cliente
                 </label>
@@ -386,7 +386,7 @@ export const LoginPage: React.FC = () => {
           <div className="mt-6">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               ¿No tienes cuenta?{" "}
-              <Link to="/register" className="font-medium text-accent-9 hover:underline transition-colors">
+              <Link to="/register" className="font-medium text-accent-1 hover:underline transition-colors">
                 Crear cuenta
               </Link>
             </p>
@@ -396,19 +396,19 @@ export const LoginPage: React.FC = () => {
           {import.meta.env.DEV && demoUsers.length > 0 && (
             <div className="mt-4">
               <details className="rounded-lg border border-accent-4 bg-accent-3">
-                <summary className="cursor-pointer select-none px-4 py-3 text-sm font-medium text-accent-8">Usuarios disponibles ({demoUsers.length})</summary>
+                <summary className="cursor-pointer select-none px-4 py-3 text-sm font-medium text-accent-1">Usuarios disponibles ({demoUsers.length})</summary>
                 <div className="p-4 space-y-3">
                   {demoUsers.map((user) => (
                     <div key={user._id} className="flex items-center justify-between gap-3 rounded-lg bg-accent-2 border border-accent-4 p-3">
                       <div className="flex-1">
                         {/* Tenant Badge - destacado arriba */}
                         {user.tenant && (
-                          <div className="mb-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-accent-3 text-accent-9 border border-accent-4">
+                          <div className="mb-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-accent-3 text-accent-1 border border-accent-4">
                             <FontAwesomeIcon icon={faBuilding} className="h-3 w-3" />
                             {user.tenant.name}
                           </div>
                         )}
-                        <div className="text-sm font-semibold text-accent-9">{user.firstName || user.lastName ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : user.email.split("@")[0]}</div>
+                        <div className="text-sm font-semibold text-accent-1">{user.firstName || user.lastName ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : user.email.split("@")[0]}</div>
                         <div className="text-xs text-accent-7">Email: {user.email}</div>
                         <div className="text-xs text-accent-7">Roles: {user.roles.map((r) => r.name).join(", ") || "Sin roles"}</div>
                         {user.area && (

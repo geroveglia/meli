@@ -57,12 +57,12 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, subtitle, 
         <div className="fixed inset-0 bg-neutral-950/40 dark:bg-neutral-950/60 backdrop-blur-sm transition duration-200 h-vh h-vh" />
 
         {/* Panel */}
-        <div className={`relative bg-accent-2 border border-accent-4 rounded-2xl shadow-xl w-full ${getSizeClasses()} ${isFullscreen ? "overflow-hidden flex flex-col" : "max-h-[85svh] overflow-y-auto"}`} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={subtitleId}>
+        <div className={`relative bg-accent-3 border border-accent-4 rounded-2xl shadow-xl w-full ${getSizeClasses()} ${isFullscreen ? "overflow-hidden flex flex-col" : "max-h-[85svh] overflow-y-auto"}`} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={subtitleId}>
           {/* Header */}
           {customHeader ? (
             customHeader
           ) : (
-            <div className="flex items-center justify-between p-6 border-b border-accent-4 bg-accent-2 sticky top-0 py-3 z-50">
+            <div className="flex items-center justify-between p-6 border-b border-accent-4 bg-accent-3 sticky top-0 py-3 z-50">
               <div>
                 <h2 id={titleId} className="text-xl font-bold text-accent-1">
                   {title}

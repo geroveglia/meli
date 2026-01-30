@@ -38,7 +38,7 @@ const FilterSelect: React.FC<FilterProps> = ({ value, onChange, options, placeho
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="appearance-none w-full px-3 py-2 pe-8 border border-accent-4 rounded-lg
-                   focus:ring-2 focus:ring-accent-5 focus:border-accent-5 bg-accent-2 text-accent-1"
+                   focus:ring-2 focus:ring-accent-5 focus:border-accent-5 bg-accent-3 text-accent-1"
       >
         {placeholder && <option value="">{placeholder}</option>}
         {options.map((opt) => (
@@ -97,7 +97,7 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({ searchTerm, 
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-accent-4 rounded-lg
-                         focus:ring-2 focus:ring-accent-5 focus:border-accent-5 bg-accent-2 text-accent-1"
+                         focus:ring-2 focus:ring-accent-5 focus:border-accent-5 bg-accent-3 text-accent-1"
             />
           </div>
           <div className="flex gap-3">
@@ -168,7 +168,7 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({ searchTerm, 
                 value={dateFilter.startDate}
                 onChange={(e) => dateFilter.onStartDateChange(e.target.value)}
                 className="w-full px-3 py-2 border border-accent-4 rounded-lg
-                           focus:ring-2 focus:ring-accent-5 focus:border-accent-5 bg-accent-2 text-accent-1"
+                           focus:ring-2 focus:ring-accent-5 focus:border-accent-5 bg-accent-3 text-accent-1"
               />
             </div>
 
@@ -179,7 +179,7 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({ searchTerm, 
                 value={dateFilter.endDate}
                 onChange={(e) => dateFilter.onEndDateChange(e.target.value)}
                 className="w-full px-3 py-2 border border-accent-4 rounded-lg
-                           focus:ring-2 focus:ring-accent-5 focus:border-accent-5 bg-accent-2 text-accent-1"
+                           focus:ring-2 focus:ring-accent-5 focus:border-accent-5 bg-accent-3 text-accent-1"
               />
             </div>
 

@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthStore } from "../stores/authStore";
-import { useThemeStore } from "../stores/themeStore";
+
 import { useClientContextStore } from "../stores/clientContextStore";
 import { Link, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faBars, faMoon, faSun, faRightFromBracket, faHouse, faUserGear, faBuilding, faArrowUpRightFromSquare, faCog, faUser, faUserShield, faChevronDown, faUserGraduate, faUserTie, faUsersGear, faLayerGroup, faInfoCircle, faBriefcase, faImages, faPalette } from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faBars, faRightFromBracket, faHouse, faUserGear, faBuilding, faArrowUpRightFromSquare, faCog, faUser, faUserShield, faChevronDown, faUserGraduate, faUserTie, faUsersGear, faLayerGroup, faInfoCircle, faBriefcase, faImages } from "@fortawesome/free-solid-svg-icons";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { Logo } from "./Logo";
 import axios from "../api/axiosConfig";
@@ -24,7 +24,7 @@ interface AdminCounts {
 
 export const MobileNavbar: React.FC = () => {
   const { user, logout, hasPermission } = useAuthStore();
-  const { theme, toggleTheme } = useThemeStore();
+
 
   const location = useLocation();
   const [open, setOpen] = useState(false);
@@ -111,7 +111,7 @@ export const MobileNavbar: React.FC = () => {
   useEffect(() => {
     if (["/admin/dashboard", "/admin/tenants", "/admin/clients"].includes(location.pathname)) {
       setOpenAdminSection("general");
-    } else if (["/admin/carousel-images", "/admin/general", "/admin/colors", "/admin/seo"].includes(location.pathname)) {
+    } else if (["/admin/carousel-images", "/admin/general", "/admin/seo"].includes(location.pathname)) {
       setOpenAdminSection("config");
     } else if (["/admin/roles", "/admin/areas", "/admin/positions", "/admin/levels", "/admin/users"].includes(location.pathname)) {
       setOpenAdminSection("users");
@@ -173,12 +173,7 @@ export const MobileNavbar: React.FC = () => {
           label: "Logo",
           scope: "global",
         },
-        {
-          path: "/admin/colors",
-          icon: faPalette,
-          label: "Colores",
-          scope: "global",
-        },
+
         {
           path: "/admin/seo",
           icon: faSearch,
@@ -206,12 +201,7 @@ export const MobileNavbar: React.FC = () => {
         label: "Logo",
         scope: "global",
       });
-      base.push({
-        path: "/admin/colors",
-        icon: faPalette,
-        label: "Colores",
-        scope: "global",
-      });
+
       base.push({
         path: "/admin/seo",
         icon: faSearch,
@@ -376,11 +366,11 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
   const carouselItem = menuItems.find((item) => item.path === "/admin/carousel-images");
 
   const generalItem = menuItems.find((item) => item.path === "/admin/general");
-  const colorsItem = menuItems.find((item) => item.path === "/admin/colors");
+
   const seoItem = menuItems.find((item) => item.path === "/admin/seo");
 
   // Otros items que no pertenecen a ninguna sección
-  const otherAdminItems = menuItems.filter((item) => !userAdminItems.some((u) => u.path === item.path) && item.path !== "/admin/dashboard" && item.path !== "/admin/clients" && item.path !== "/admin/tenants" && item.path !== "/admin/carousel-images" && item.path !== "/admin/general" && item.path !== "/admin/colors" && item.path !== "/admin/seo");
+  const otherAdminItems = menuItems.filter((item) => !userAdminItems.some((u) => u.path === item.path) && item.path !== "/admin/dashboard" && item.path !== "/admin/clients" && item.path !== "/admin/tenants" && item.path !== "/admin/carousel-images" && item.path !== "/admin/general" && item.path !== "/admin/seo");
 
   const renderMenuItem = (item: any) => {
     // Debug log to verify HMR
@@ -564,8 +554,7 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
                   {/* General/Logo */}
                   {generalItem && renderMenuItem(generalItem)}
 
-                  {/* Colors */}
-                  {colorsItem && renderMenuItem(colorsItem)}
+
                 </div>
               </motion.nav>
             )}
@@ -642,9 +631,7 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
                 <FontAwesomeIcon icon={faRobot} className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </button> */}
 
-              <button onClick={toggleTheme} className="p-2 rounded-lg text-accent-7 dark:text-accent-6 hover:text-accent-1 transition-colors">
-                {theme === "light" ? <FontAwesomeIcon icon={faMoon} className="h-5 w-5" /> : <FontAwesomeIcon icon={faSun} className="h-5 w-5" />}
-              </button>
+              {/* Theme Toggle Removed - Enforced Light Mode */}
               <div className="sticky bottom-0 left-0 right-0 bg-transparent dark:bg-transparent py-2 border-none px-4 hidden lg:block">
                 <LogoutButton onClick={() => setOpen(false)} logout={logout} />
               </div>

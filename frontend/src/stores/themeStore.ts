@@ -7,17 +7,20 @@ interface ThemeState {
 }
 
 export const useThemeStore = create<ThemeState>((set) => ({
-  theme: (localStorage.getItem("theme") as "light" | "dark") || "dark",
+  theme: "light", // Force light mode always
 
-  toggleTheme: () =>
-    set((state) => {
-      const newTheme = state.theme === "light" ? "dark" : "light";
-      localStorage.setItem("theme", newTheme);
-      return { theme: newTheme };
-    }),
+  toggleTheme: () => {
+    // No-op: Dark mode disabled
+    console.warn("Dark mode is disabled in this project.");
+  },
 
   setTheme: (theme) => {
-    localStorage.setItem("theme", theme);
-    set({ theme });
+    // Only allow setting light mode
+    if (theme === "dark") {
+      console.warn("Dark mode is disabled.");
+      return;
+    }
+    localStorage.setItem("theme", "light");
+    set({ theme: "light" });
   },
 }));

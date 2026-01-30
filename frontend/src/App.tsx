@@ -23,7 +23,7 @@ import { ProjectsPage } from "./pages/admin/ProjectsPage";
 import { CarouselImagesPage } from "./pages/admin/CarouselImagesPage";
 import { TenantsPage } from "./pages/admin/TenantsPage";
 import { GeneralSettingsPage } from "./pages/admin/GeneralSettingsPage";
-import { ThemeColorsPage } from "./pages/admin/ThemeColorsPage";
+
 import { SeoSettingsPage } from "./pages/admin/SeoSettingsPage";
 
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -258,14 +258,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="colors"
-                element={
-                  <ProtectedRoute>
-                    <ThemeColorsPage />
-                  </ProtectedRoute>
-                }
-              />
+
               <Route
                 path="seo"
                 element={
