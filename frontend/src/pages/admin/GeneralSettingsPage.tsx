@@ -157,7 +157,7 @@ export const GeneralSettingsPage: React.FC = () => {
         <div className="space-y-8">
           
           {/* CARD 1: LOGOS */}
-          <div className="bg-accent-2 rounded-xl shadow-sm border border-accent-4">
+          <div className="bg-accent-3 rounded-xl shadow-sm border border-accent-4">
             {/* Custom Header Section */}
             <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-accent-4 rounded-t-xl">
               <div className="flex items-center gap-4">
@@ -288,7 +288,7 @@ export const GeneralSettingsPage: React.FC = () => {
             </div>
 
             {/* Footer Action Bar for Logos */}
-            <div className="px-6 py-4 bg-accent-2 border-t border-accent-4 flex justify-end rounded-b-xl sticky bottom-0 z-10">
+            <div className="px-6 py-4 bg-accent-3 border-t border-accent-4 flex justify-end rounded-b-xl sticky bottom-0 z-10">
               <button
                 type="button"
                 onClick={handleSaveLogos}
@@ -302,7 +302,7 @@ export const GeneralSettingsPage: React.FC = () => {
 
 
           {/* CARD 2: FAVICON */}
-          <div className="bg-accent-2 rounded-xl shadow-sm border border-accent-4">
+          <div className="bg-accent-3 rounded-xl shadow-sm border border-accent-4">
             
             <div className="p-6 border-b border-accent-4">
                 <div className="flex items-center gap-4 mb-1">
@@ -438,7 +438,7 @@ export const GeneralSettingsPage: React.FC = () => {
             </div>
 
             {/* Footer Action Bar */}
-             <div className="px-6 py-4 bg-accent-2 border-t border-accent-4 flex justify-end gap-3 rounded-b-xl sticky bottom-0 z-10">
+             <div className="px-6 py-4 bg-accent-3 border-t border-accent-4 flex justify-end gap-3 rounded-b-xl sticky bottom-0 z-10">
 
 
                   <button

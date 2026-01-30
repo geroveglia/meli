@@ -205,7 +205,7 @@ export const SeoManagerForm: React.FC<SeoManagerFormProps> = ({
         </div>
       </div>
 
-       <div className="flex justify-end pt-4 pb-6 px-6 -mx-6 -mb-6 border-t border-accent-4 sticky bottom-0 z-10 bg-accent-2 rounded-b-xl">
+       <div className="flex justify-end pt-4 pb-6 px-6 -mx-6 -mb-6 border-t border-accent-4 sticky bottom-0 z-10 bg-accent-3 rounded-b-xl">
           <button
             type="submit"
             disabled={saving || loading}
