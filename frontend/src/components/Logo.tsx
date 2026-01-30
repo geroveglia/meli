@@ -47,14 +47,14 @@ export const Logo: React.FC<LogoProps> = ({ wrapperClassName = "flex items-cente
       ) : (
         <div className="flex items-center gap-3 group">
           {/* Logo Icon - FontAwesome Cube */}
-          <div className="relative w-8 h-8 flex items-center justify-center text-accent-9 dark:text-accent-1">
+          <div className="relative w-8 h-8 flex items-center justify-center text-accent-1 dark:text-accent-1">
             <FontAwesomeIcon icon={faCube} className="w-8 h-8 group-hover:animate-pulse transition-all" />
           </div>
 
           {/* Logo Text - TEMPLATE using provided style */}
           <div className="flex flex-col">
             <span
-              className="text-2xl font-black tracking-widest text-accent-9 dark:text-accent-1 uppercase select-none"
+              className="text-2xl font-black tracking-widest text-accent-1 dark:text-accent-1 uppercase select-none"
               style={{
                 fontFamily: "'Inter', sans-serif",
               }}

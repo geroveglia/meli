@@ -21,7 +21,7 @@ export const SeoSettingsPage: React.FC = () => {
         ),
       }}
     >
-      <div className="bg-accent-2 rounded-xl shadow-sm border border-accent-4 p-6">
+      <div className="bg-accent-3 rounded-xl shadow-sm border border-accent-4 p-6">
         <SeoManagerForm 
             entityType="global" 
             entityId="home" 

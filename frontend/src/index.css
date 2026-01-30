@@ -7,28 +7,28 @@
   :root,
   [data-theme="light"] {
     color-scheme: light;
-    --accent-1: #09090b;
-    --accent-2: #ffffff;
-    --accent-3: #f4f4f5;
-    --accent-4: #e4e4e7;
-    --accent-5: #d4d4d8;
-    --accent-6: #a1a1aa;
-    --accent-7: #71717a;
-    --accent-8: #52525b;
-    --accent-9: #27272a;
-    --accent-10: #18181b;
+    --accent-1: #000000;
+    --accent-2: #ebebeb;
+    --accent-3: #ffffff;
+    --accent-4: #e0e0e0;
+    --accent-5: #999999;
+    --accent-6: #666666;
+    --accent-7: #333333;
+    --accent-8: #2968c8;
+    --accent-9: #3483fa;
+    --accent-10: #1c4488;
 
-    --primary-50: #eff6ff;
-    --primary-100: #dbeafe;
-    --primary-200: #bfdbfe;
-    --primary-300: #93c5fd;
-    --primary-400: #60a5fa;
-    --primary-500: #3b82f6;
-    --primary-600: #2563eb;
-    --primary-700: #1d4ed8;
-    --primary-800: #1e40af;
-    --primary-900: #1e3a8a;
-    --primary-950: #172554;
+    --primary-50: #fffee5;
+    --primary-100: #fffbcc;
+    --primary-200: #fff599;
+    --primary-300: #ffea66;
+    --primary-400: #ffe600;
+    --primary-500: #ffe600;
+    --primary-600: #e6cf00;
+    --primary-700: #ccb800;
+    --primary-800: #b3a100;
+    --primary-900: #998a00;
+    --primary-950: #423b00;
   }
 
   /* 2. TEMA OSCURO */
@@ -122,7 +122,7 @@ body {
   .btn-primary {
     @apply px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
     background-color: var(--accent-9);
-    color: var(--accent-2);
+    color: #ffffff;
   }
 
   .btn-primary:hover:not(:disabled) {

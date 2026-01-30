@@ -151,11 +151,11 @@ export const PageLayout: React.FC<PageLayoutProps> = ({ title, subtitle, badge, 
   };
 
   return (
-    <div className="bg-accent-3 min-h-screen transition-colors duration-300">
+    <div className="bg-accent-2 min-h-screen transition-colors duration-300">
       <div className="lg:pl-64">
         <div className="px-4 sm:px-6 lg:px-8 pb-6">
           {/* Header sticky */}
-          <div className="sticky top-16 z-20 mb-4 bg-accent-3 border-b border-accent-4 transition-colors duration-300">
+          <div className="sticky top-16 z-20 mb-4 bg-accent-2 border-b border-accent-4 transition-colors duration-300">
             <div className="py-4">
               <div className="flex gap-3 flex-wrap min-w-0">
                 {renderClientMiniAvatar()}

@@ -440,9 +440,9 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
       );
     }
     return (
-      <Link key={item.path} to={item.path} onClick={onItemClick} aria-current={isActive(item.path) ? "page" : undefined} className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${isActive(item.path) ? "!bg-accent-3 !text-accent-1 border border-accent-4 shadow-sm" : "text-accent-7 dark:text-accent-6 hover:bg-accent-3 border border-transparent"}`}>
+      <Link key={item.path} to={item.path} onClick={onItemClick} aria-current={isActive(item.path) ? "page" : undefined} className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${isActive(item.path) ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}>
         <div className="flex items-center space-x-3 flex-1 min-w-0">
-          <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${isActive(item.path) ? "bg-accent-1 text-accent-2" : "bg-accent-4/50 text-accent-7 dark:bg-accent-4/30 dark:text-accent-6 group-hover:bg-accent-5 dark:group-hover:bg-accent-4/50"}`}>
+          <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${isActive(item.path) ? "bg-white text-blue-600" : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"}`}>
             <FontAwesomeIcon icon={item.icon} className="h-4 w-4" />
           </div>
           <span className="font-medium truncate">{item.label}</span>
@@ -463,18 +463,18 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
           {/* Información tab - subcategoría cuando hay cliente seleccionado */}
           {selectedClient && (
             <div className="mt-2 ml-2 space-y-1">
-              <Link to="/client-info" onClick={onItemClick} aria-current={isActive("/client-info") ? "page" : undefined} className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${isActive("/client-info") ? "!bg-accent-3 !text-accent-1 border border-accent-4 shadow-sm" : "text-accent-7 dark:text-accent-6 hover:bg-accent-3 border border-transparent"}`}>
+              <Link to="/client-info" onClick={onItemClick} aria-current={isActive("/client-info") ? "page" : undefined} className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${isActive("/client-info") ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}>
                 <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${isActive("/client-info") ? "bg-accent-1 text-accent-2" : "bg-accent-4/50 text-accent-7 dark:bg-accent-4/30 dark:text-accent-6 group-hover:bg-accent-5 dark:group-hover:bg-accent-4/50"}`}>
+                  <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${isActive("/client-info") ? "bg-white text-blue-600" : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"}`}>
                     <FontAwesomeIcon icon={faInfoCircle} className="h-4 w-4" />
                   </div>
                   <span className="font-medium truncate">Información</span>
                 </div>
               </Link>
 
-              <Link to="/client-projects" onClick={onItemClick} aria-current={isActive("/client-projects") ? "page" : undefined} className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${isActive("/client-projects") ? "!bg-accent-3 !text-accent-1 border border-accent-4 shadow-sm" : "text-accent-7 dark:text-accent-6 hover:bg-accent-3 border border-transparent"}`}>
+              <Link to="/client-projects" onClick={onItemClick} aria-current={isActive("/client-projects") ? "page" : undefined} className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${isActive("/client-projects") ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}>
                 <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${isActive("/client-projects") ? "bg-accent-1 text-accent-2" : "bg-accent-4/50 text-accent-7 dark:bg-accent-4/30 dark:text-accent-6 group-hover:bg-accent-5 dark:group-hover:bg-accent-4/50"}`}>
+                  <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${isActive("/client-projects") ? "bg-white text-blue-600" : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"}`}>
                     <FontAwesomeIcon icon={faBriefcase} className="h-4 w-4" />
                   </div>
                   <span className="font-medium truncate">Proyectos</span>
@@ -617,7 +617,7 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
 
   return (
     <>
-      <nav className="bg-accent-2 shadow-sm border-b border-accent-4 sticky top-0 z-40 transition-colors duration-300">
+      <nav className="bg-primary-400 dark:bg-accent-2 shadow-sm border-b border-accent-4 sticky top-0 z-40 transition-colors duration-300">
         <div className="px-4 sm:px-6">
           <div className="flex justify-between items-center h-16">
             <div className="lg:hidden">
@@ -649,7 +649,7 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
         </div>
 
         {open && <div className="fixed inset-0 z-40 bg-neutral-950/50 backdrop-blur-[2px]" onClick={() => setOpen(false)} />}
-        <div className={`fixed top-0 left-0 z-50 h-svh w-80 bg-accent-2 transform transition-transform duration-300 ease-in-out flex flex-col ${open ? "translate-x-0" : "-translate-x-full"}`} aria-hidden={!open}>
+        <div className={`fixed top-0 left-0 z-50 h-svh w-80 bg-accent-3 dark:bg-accent-3 transform transition-transform duration-300 ease-in-out flex flex-col ${open ? "translate-x-0" : "-translate-x-full"}`} aria-hidden={!open}>
           <div className="p-4 pb-0">
             <div className="flex items-start justify-between border-b border-neutral-700 mb-2">
               <div>
@@ -687,7 +687,7 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
             </div>
           </div>
 
-          <div className="lg:hidden flex-none bg-accent-2 border-t border-accent-4 p-4 flex justify-between items-end items-center">
+          <div className="lg:hidden flex-none bg-accent-3 border-t border-accent-4 p-4 flex justify-between items-end items-center">
             <div>
               <UserCard />
             </div>
@@ -698,7 +698,7 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
         </div>
       </nav>
 
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:bg-accent-2 lg:border-r lg:border-accent-4 transition-colors duration-300">
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:bg-accent-3 lg:border-r lg:border-accent-4 transition-colors duration-300">
         <div className="flex flex-col flex-1 min-h-0">
           <div className="flex flex-col pt-5 pb-4 overflow-y-auto mt-12">
             <div className="px-3 mb-4">
