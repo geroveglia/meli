@@ -31,6 +31,12 @@ import { MobileNavbar } from "./components/Navbar";
 import { PublicNavbar } from "./components/PublicNavbar";
 import { ServerStatusCard } from "./components/ServerStatusCard";
 
+// import { LumbaLayout } from "./components/lumba/LumbaLayout"; // Removed
+// Placeholder imports - I need to create these files first!
+import { VentasPage } from "./pages/lumba/VentasPage";
+import { LogisticaPage } from "./pages/lumba/LogisticaPage";
+import { PerfilPage } from "./pages/lumba/PerfilPage";
+
 // --- Layout público (sin Navbar) ---
 const PublicLayout: React.FC = () => {
   const location = useLocation();
@@ -267,6 +273,13 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+            </Route>
+
+            {/* Lumba Connect Routes */}
+            <Route element={<AppLayout />}>
+               <Route path="/ventas" element={<ProtectedRoute><VentasPage /></ProtectedRoute>} />
+               <Route path="/logistica" element={<ProtectedRoute><LogisticaPage /></ProtectedRoute>} />
+               <Route path="/perfil" element={<ProtectedRoute><PerfilPage /></ProtectedRoute>} />
             </Route>
 
             {/* Client Routes (Root Level) */}

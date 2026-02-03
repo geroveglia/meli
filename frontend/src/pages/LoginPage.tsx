@@ -219,6 +219,9 @@ export const LoginPage: React.FC = () => {
       const { hasPermission } = useAuthStore.getState();
 
       const routes = [
+        // Lumba Connect override for now
+        { permission: "dashboard:view", path: "/ventas" }, // Redirect dashboard access to ventas for Lumba
+        
         { permission: "dashboard:view", path: "/admin/dashboard" },
         { permission: "clients:view", path: "/admin/clients" },
         { permission: "tenants:view", path: "/admin/tenants" },

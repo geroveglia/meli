@@ -128,4 +128,11 @@ body {
   .btn-primary:hover:not(:disabled) {
     background-color: var(--accent-8);
   }
+
 }
+
+/* SweetAlert2 Global Overrides */
+div.swal2-container .swal2-actions button.swal2-cancel {
+  color: var(--accent-1) !important;
+}
+

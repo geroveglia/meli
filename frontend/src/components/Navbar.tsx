@@ -39,7 +39,7 @@ export const MobileNavbar: React.FC = () => {
     return localStorage.getItem("adminOpenSection") || "general";
   });
 
-  const toggleAdminSection = (section: "users" | "general" | "config") => {
+  const toggleAdminSection = (section: "users" | "general" | "config" | "logistica" | "ventas") => {
     const newVal = openAdminSection === section ? null : section;
     setOpenAdminSection(newVal);
     if (newVal) localStorage.setItem("adminOpenSection", newVal);
@@ -93,8 +93,12 @@ export const MobileNavbar: React.FC = () => {
   }, [user?.tenantSlug]);
 
   useEffect(() => {
-    if (["/admin/dashboard", "/admin/tenants", "/admin/clients"].includes(location.pathname)) {
+    if (["/admin/dashboard", "/admin/tenants", "/admin/clients", "/perfil"].includes(location.pathname)) {
       setOpenAdminSection("general");
+    } else if (["/logistica"].includes(location.pathname)) {
+         setOpenAdminSection("logistica");
+    } else if (["/ventas"].includes(location.pathname)) {
+         setOpenAdminSection("ventas");
     } else if (["/admin/carousel-images", "/admin/general", "/admin/seo"].includes(location.pathname)) {
       setOpenAdminSection("config");
     } else if (["/admin/roles", "/admin/users"].includes(location.pathname)) {
@@ -173,6 +177,23 @@ export const MobileNavbar: React.FC = () => {
         label: "Dashboard",
         scope: "global",
       });
+
+      // --- LUMBA CONNECT ---
+      base.push({
+        path: "/ventas",
+        icon: faUsersGear,
+        label: "Lumba - Ventas",
+        scope: "global",
+        badge: "Nuevo",
+        badgeColor: "bg-blue-600 text-white"
+      });
+      base.push({
+        path: "/logistica",
+        icon: faBuilding, // Using generic icon
+        label: "Lumba - Logistica",
+        scope: "global",
+      });
+
       base.push({
         path: "/admin/carousel-images",
         icon: faImages,
@@ -298,7 +319,7 @@ const LogoutButton: React.FC<{
 interface NavMenuProps {
   menuItems: any[];
   openAdminSection: string | null;
-  toggleAdminSection: (section: "users" | "general" | "config") => void;
+  toggleAdminSection: (section: "users" | "general" | "config" | "logistica" | "ventas") => void;
   onItemClick?: () => void;
   handleMenuClick: (e: React.MouseEvent<HTMLAnchorElement>, item: any) => void;
   setIsSettingsOpen: (open: boolean) => void;
@@ -324,8 +345,22 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
 
   const seoItem = menuItems.find((item) => item.path === "/admin/seo");
 
+  // Lumba Items
+  const ventasItem = menuItems.find((item) => item.path === "/ventas");
+  const logisticaItem = menuItems.find((item) => item.path === "/logistica");
+
   // Otros items que no pertenecen a ninguna sección
-  const otherAdminItems = menuItems.filter((item) => !userAdminItems.some((u) => u.path === item.path) && item.path !== "/admin/dashboard" && item.path !== "/admin/clients" && item.path !== "/admin/tenants" && item.path !== "/admin/carousel-images" && item.path !== "/admin/general" && item.path !== "/admin/seo");
+  const otherAdminItems = menuItems.filter((item) => 
+    !userAdminItems.some((u) => u.path === item.path) && 
+    item.path !== "/admin/dashboard" && 
+    item.path !== "/admin/clients" && 
+    item.path !== "/admin/tenants" && 
+    item.path !== "/admin/carousel-images" && 
+    item.path !== "/admin/general" && 
+    item.path !== "/admin/seo" &&
+    item.path !== "/ventas" &&
+    item.path !== "/logistica"
+  );
 
   const renderMenuItem = (item: any) => {
     // Debug log to verify HMR
@@ -427,6 +462,111 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
               </Link>
             </div>
           )}
+        </div>
+      )}
+
+      {/* SECCION VENTAS - Dedicada */}
+      {(ventasItem) && (
+        <div className="px-2 mb-4">
+          <button onClick={() => toggleAdminSection("ventas")} className="w-full flex items-center justify-between text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider transition-colors pb-2 pt-2">
+            <span>
+              <FontAwesomeIcon icon={faUsersGear} className="mr-2 h-4 w-4" />
+              <span className="uppercase">Ventas</span>
+            </span>
+            <FontAwesomeIcon icon={faChevronDown} className={`h-3 w-3 transform transition-transform ${openAdminSection === "ventas" ? "rotate-180" : ""}`} />
+          </button>
+
+          <AnimatePresence initial={false}>
+            {openAdminSection === "ventas" && (
+              <motion.nav
+                key="ventas"
+                initial="collapsed"
+                animate="open"
+                exit="collapsed"
+                variants={{
+                  open: { opacity: 1, height: "auto" },
+                  collapsed: { opacity: 0, height: 0 },
+                }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="overflow-hidden space-y-1"
+              >
+                <div className="pb-2">
+                    {/* Render predefined sub-items for Ventas */}
+                     {[
+                        { label: 'Pendiente Facturación', status: 'PENDIENTE_FACTURACION' },
+                        { label: 'Facturadas', status: 'FACTURADAS' },
+                        { label: 'Ventas Canceladas', status: 'VENTAS_CANCELADAS' },
+                        { label: 'Notas de Crédito', status: 'NOTAS_DE_CREDITO' },
+                     ].map(sub => (
+                         <Link 
+                            key={sub.status} 
+                            to={`/ventas?status=${sub.status}`}
+                            onClick={() => setOpen(false)}
+                            className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${location.search.includes(sub.status) ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}
+                         >
+                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                                <span className="font-medium truncate ml-8 text-sm">{sub.label}</span>
+                            </div>
+                         </Link>
+                     ))}
+                </div>
+              </motion.nav>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
+      {/* SECCION LOGISTICA - Dedicada */}
+      {(logisticaItem) && (
+        <div className="px-2 mb-4">
+          <button onClick={() => toggleAdminSection("logistica")} className="w-full flex items-center justify-between text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider transition-colors pb-2 pt-2">
+            <span>
+              <FontAwesomeIcon icon={faBuilding} className="mr-2 h-4 w-4" />
+              <span className="uppercase">Logística</span>
+            </span>
+            <FontAwesomeIcon icon={faChevronDown} className={`h-3 w-3 transform transition-transform ${openAdminSection === "logistica" ? "rotate-180" : ""}`} />
+          </button>
+
+          <AnimatePresence initial={false}>
+            {openAdminSection === "logistica" && (
+              <motion.nav
+                key="logistica"
+                initial="collapsed"
+                animate="open"
+                exit="collapsed"
+                variants={{
+                  open: { opacity: 1, height: "auto" },
+                  collapsed: { opacity: 0, height: 0 },
+                }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="overflow-hidden space-y-1"
+              >
+                <div className="pb-2">
+                    {/* Render predefined sub-items for Logistica */}
+                     {[
+                        { label: 'Pendiente de preparación', status: 'PENDIENTE_PREPARACION' },
+                        { label: 'Listo para entregar', status: 'LISTO_PARA_ENTREGAR' },
+                        { label: 'Despachado M.L', status: 'DESPACHADO_MELI' },
+                        { label: 'Retiro en Local', status: 'RETIRO_EN_LOCAL' },
+                        { label: 'Entregados', status: 'ENTREGADOS' },
+                        { label: 'Devolucion', status: 'DEVOLUCION' },
+                        { label: 'Cancelados', status: 'CANCELADOS' },
+                     ].map(sub => (
+                         <Link 
+                            key={sub.status} 
+                            to={`/logistica?status=${sub.status}`}
+                            onClick={() => setOpen(false)}
+                            className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${location.search.includes(sub.status) ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}
+                         >
+                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                                <span className="font-medium truncate ml-8 text-sm">{sub.label}</span>
+                            </div>
+                         </Link>
+                     ))}
+                </div>
+              </motion.nav>
+            )}
+          </AnimatePresence>
         </div>
       )}
 

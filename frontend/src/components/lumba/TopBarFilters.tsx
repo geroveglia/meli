@@ -1,0 +1,99 @@
+import React from 'react';
+import { useLumbaStore, MeliAccount } from '../../stores/lumbaStore';
+import { useAuthStore } from '../../stores/authStore';
+import { useNavigate } from 'react-router-dom';
+
+export const TopBarFilters: React.FC = () => {
+    const { 
+        selectedAccount, 
+        setAccount, 
+        searchQuery, 
+        setSearchQuery,
+        dateFrom,
+        dateTo,
+        setDateRange
+    } = useLumbaStore();
+    const { logout } = useAuthStore();
+    const navigate = useNavigate();
+
+    const accounts: MeliAccount[] = ['Todas', 'Cuenta 1', 'Cuenta 2', 'Cuenta 3'];
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
+
+    return (
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+            {/* Filters Group */}
+            <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+                
+                {/* Account Selector */}
+                <div className="flex flex-col gap-1">
+                    <label className="text-xs text-gray-500 font-medium uppercase">Cuenta MELI</label>
+                    <select 
+                        value={selectedAccount} 
+                        onChange={(e) => setAccount(e.target.value as MeliAccount)}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                    >
+                        {accounts.map(acc => (
+                            <option key={acc} value={acc}>{acc}</option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Search */}
+                <div className="flex flex-col gap-1 flex-grow md:flex-grow-0 md:min-w-[200px]">
+                    <label className="text-xs text-gray-500 font-medium uppercase">Buscar</label>
+                    <input 
+                        type="text" 
+                        placeholder="ID, Comprador..." 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                    />
+                </div>
+
+                {/* Dates */}
+                <div className="flex items-center gap-2">
+                    <div className="flex flex-col gap-1">
+                        <label className="text-xs text-gray-500 font-medium uppercase">Desde</label>
+                        <input 
+                            type="date" 
+                            value={dateFrom}
+                            onChange={(e) => setDateRange(e.target.value, dateTo)}
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-xs text-gray-500 font-medium uppercase">Hasta</label>
+                        <input 
+                            type="date" 
+                            value={dateTo}
+                            onChange={(e) => setDateRange(dateFrom, e.target.value)}
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                        />
+                    </div>
+                </div>
+
+            </div>
+
+            {/* User Menu */}
+            <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+                <button 
+                    onClick={() => navigate('/perfil')}
+                    className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400"
+                >
+                    Perfil
+                </button>
+                <div className="h-4 w-px bg-gray-300 dark:bg-gray-600"></div>
+                <button 
+                    onClick={handleLogout}
+                    className="text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                >
+                    Salir
+                </button>
+            </div>
+        </div>
+    );
+};
