@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { PageLayout } from '../../components/PageLayout';
 import { SearchAndFilters } from '../../components/SearchAndFilters';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTruck, faBox, faCheck, faEye, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { faTruck, faBox, faCheck, faEye } from '@fortawesome/free-solid-svg-icons';
 
 export const LogisticaPage: React.FC = () => {
     const { 
@@ -133,9 +133,18 @@ export const LogisticaPage: React.FC = () => {
         { value: 'Cuenta 3', label: 'Cuenta 3' },
     ];
 
-    const currentTitle = activeTab === 'TODAS' ? 'Logística: Todos los pedidos' : 
-                         activeTab === 'PENDIENTE_PREPARACION' ? 'Pendientes de Preparación' :
-                         activeTab.replace(/_/g, ' ');
+    const titleMap: Record<string, string> = {
+        'TODAS': 'Logística: Todos los pedidos',
+        'PENDIENTE_PREPARACION': 'Pendiente de preparación',
+        'LISTO_PARA_ENTREGAR': 'Listo para entregar',
+        'DESPACHADO_MELI': 'Despachado M.L.',
+        'RETIRO_EN_LOCAL': 'Retiro en local',
+        'ENTREGADOS': 'Entregados',
+        'CANCELADOS': 'Cancelados',
+        'DEVOLUCION': 'Devolución'
+    };
+
+    const currentTitle = titleMap[activeTab] || activeTab.replace(/_/g, ' ');
 
     return (
         <PageLayout
@@ -176,49 +185,51 @@ export const LogisticaPage: React.FC = () => {
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                          <thead className="bg-gray-50 dark:bg-gray-750">
                             <tr>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cuenta / ID</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Comprador</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Items</th>
-                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Estado Logistica</th>
-                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Estado MELI</th>
-                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Etiqueta</th>
-                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Acciones</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider">Id venta RTSS</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider">Pack Id ML</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider">Id venta ML</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider">Fecha ML</th>
+                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider">Antes de las 15hs</th>
+                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider">Estado ML</th>
+                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider">Estado etiqueta</th>
+                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider">Gestión Interna Venta</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider">Publicación</th>
+                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider">Cant</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider">Variante</th>
+                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider">Entrega ML</th>
+                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider">Estado Envío ML</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider">Última modificación</th>
+                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider">Acciones</th>
                             </tr>
                         </thead>
                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                            {filteredOrders.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                                    <td colSpan={15} className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
                                         No se encontraron pedidos
                                     </td>
                                 </tr>
                             ) : (
                                 filteredOrders.map((order) => (
                                     <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900 dark:text-white">{order.account}</div>
-                                            <div className="text-xs text-gray-500 font-mono mt-0.5">{order.meliOrderId}</div>
-                                            <div className="text-xs text-gray-400 mt-0.5">{new Date(order.date).toLocaleDateString()}</div>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                            {order.id}
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm font-medium text-gray-900 dark:text-white">{order.buyerName}</div>
-                                            <div className="text-xs text-gray-500 truncate max-w-[150px]" title={order.buyerAddress}>{order.buyerAddress}</div>
+                                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                                            {order.packId || '-'}
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-xs text-gray-600 dark:text-gray-300">
-                                                {order.items.length > 0 && (
-                                                    <span>{order.items[0].quantity}x {order.items[0].title} {order.items.length > 1 && <span className="text-gray-400">(+{order.items.length - 1} más)</span>}</span>
-                                                )}
-                                            </div>
+                                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-mono">
+                                            {order.meliOrderId}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${
-                                                order.logisticsStatus === 'entregado' ? 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-900/30 dark:text-green-400' :
-                                                order.logisticsStatus === 'cancelado_vuelto_stock' || order.logisticsStatus === 'devolucion_vuelto_stock' ? 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-900/30 dark:text-red-400' :
-                                                'bg-blue-50 text-blue-700 ring-blue-700/10 dark:bg-blue-900/30 dark:text-blue-400'
-                                            }`}>
-                                                {order.logisticsStatus.replace(/_/g, ' ')}
-                                            </span>
+                                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                                            {new Date(order.date).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-xs font-medium">
+                                            {order.shippingCutoff !== '-' ? (
+                                                <span className="text-red-600 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full">{order.shippingCutoff}</span>
+                                            ) : (
+                                                <span className="text-gray-400">-</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-center">
                                             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${
@@ -230,13 +241,48 @@ export const LogisticaPage: React.FC = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-center">
-                                            <button 
-                                                onClick={() => handleAction(order, 'ETIQUETA')}
-                                                className="text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400 transition-colors"
-                                                title="Imprimir Etiqueta"
-                                            >
-                                                <FontAwesomeIcon icon={faPrint} className="w-4 h-4" />
-                                            </button>
+                                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${
+                                                order.tagStatus === 'impresas' ? 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-900/30 dark:text-green-400' :
+                                                order.tagStatus === 'error' ? 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-900/30 dark:text-red-400' :
+                                                'bg-yellow-50 text-yellow-800 ring-yellow-600/20 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                            }`}>
+                                                {order.tagStatus}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${
+                                                order.logisticsStatus === 'entregado' ? 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-900/30 dark:text-green-400' :
+                                                order.logisticsStatus === 'cancelado_vuelto_stock' || order.logisticsStatus === 'devolucion_vuelto_stock' ? 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-900/30 dark:text-red-400' :
+                                                'bg-blue-50 text-blue-700 ring-blue-700/10 dark:bg-blue-900/30 dark:text-blue-400'
+                                            }`}>
+                                                {order.logisticsStatus.replace(/_/g, ' ')}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 cursor-pointer">
+                                                {order.items.length > 0 ? order.items[0].title : '-'}
+                                                {order.items.length > 1 && <span className="text-gray-400 ml-1">(+{order.items.length - 1})</span>}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-xs text-gray-500">
+                                            {order.items.length > 0 ? order.items[0].quantity : 0}
+                                        </td>
+                                        <td className="px-6 py-4 text-xs text-gray-500">
+                                            {order.items.length > 0 && order.items[0].variant ? order.items[0].variant : '-'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                                             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${
+                                                 order.shippingStatus === 'delivered' ? 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-900/30 dark:text-green-400' :
+                                                 'bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-700/30 dark:text-gray-400'
+                                            }`}>
+                                                {order.shippingStatus === 'delivered' ? 'Entregado' : 'No Entregado'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-xs text-gray-500">
+                                            {order.shippingSubStatus}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                                            {new Date(order.lastUpdated).toLocaleString()}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             {renderActions(order)}

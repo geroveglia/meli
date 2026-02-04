@@ -1,0 +1,466 @@
+[
+  {
+    "substatus_history": [
+      {
+        "date": "2026-02-02T15:29:56.375-04:00",
+        "substatus": "shipment_paid",
+        "status": "pending"
+      },
+      {
+        "date": "2026-02-02T15:30:02.732-04:00",
+        "substatus": "ready_to_print",
+        "status": "ready_to_ship"
+      }
+    ],
+    "snapshot_packing": {
+      "snapshot_id": "966ba833-142e-418f-bb12-ce53326d4dc3",
+      "pack_hash": "1"
+    },
+    "threshold_cancellation": null,
+    "receiver_id": 1725746711,
+    "base_cost": 30720.99,
+    "status_history": {
+      "date_shipped": null,
+      "date_returned": null,
+      "date_delivered": null,
+      "date_first_visit": null,
+      "date_not_delivered": null,
+      "date_cancelled": null,
+      "date_handling": "2026-02-02T15:29:59.000-04:00",
+      "date_ready_to_ship": "2026-02-02T15:30:02.732-04:00"
+    },
+    "type": "forward",
+    "return_details": null,
+    "sender_id": 437718603,
+    "mode": "me2",
+    "order_cost": 160424.07,
+    "priority_class": {
+      "id": "20"
+    },
+    "service_id": 158181,
+    "shipping_items": [
+      {
+        "item_ponderation": null,
+        "quantity": 1,
+        "measurable_picked_quantity": null,
+        "dimensions_source": {
+          "origin": "bmp",
+          "id": "MLA1570107281__1"
+        },
+        "description": "Microondas Digital Atma 28l Con Grill Negro Matdgb28uap - Bueno (Reacondicionado)",
+        "id": "MLA1570107281",
+        "bundle": null,
+        "user_product_id": "MLAU3529280150",
+        "sender_id": 437718603,
+        "dimensions": "32.0x45.0x54.0,14788.0"
+      }
+    ],
+    "tracking_number": "MEL46388500040FMXDF01",
+    "cost_components": {
+      "loyal_discount": 0,
+      "special_discount": 0,
+      "compensation": 0,
+      "gap_discount": 10710.49,
+      "ratio": 30720.99
+    },
+    "id": 46388500040,
+    "tracking_method": "MEL Distribution",
+    "last_updated": "2026-02-02T15:30:15.334-04:00",
+    "items_types": [
+      "reconditioned"
+    ],
+    "comments": null,
+    "substatus": "ready_for_pickup",
+    "date_created": "2026-02-02T15:29:54.981-04:00",
+    "date_first_printed": "2026-02-02T15:30:03.906-04:00",
+    "created_by": "receiver",
+    "application_id": null,
+    "shipping_option": {
+      "processing_time": null,
+      "cost": 0,
+      "estimated_schedule_limit": {
+        "date": null
+      },
+      "shipping_method_id": 510645,
+      "estimated_delivery_final": {
+        "date": "2026-02-05T00:00:00.000-03:00"
+      },
+      "buffering": {
+        "date": null
+      },
+      "desired_promised_delivery": {
+        "from": null
+      },
+      "pickup_promise": {
+        "from": null,
+        "to": null
+      },
+      "list_cost": 15360.49,
+      "estimated_delivery_limit": {
+        "date": "2026-02-05T00:00:00.000-03:00"
+      },
+      "priority_class": {
+        "id": "20"
+      },
+      "delivery_promise": "estimated",
+      "delivery_type": "estimated",
+      "estimated_delivery_time": {
+        "date": "2026-02-05T00:00:00.000-03:00",
+        "pay_before": "2026-02-03T00:00:00.000-03:00",
+        "schedule": null,
+        "unit": "hour",
+        "offset": {
+          "date": null,
+          "shipping": null
+        },
+        "shipping": 48,
+        "time_frame": {
+          "from": null,
+          "to": null
+        },
+        "handling": 24,
+        "type": "known"
+      },
+      "name": "Estándar a domicilio",
+      "id": 748310652,
+      "estimated_delivery_extended": {
+        "date": "2026-02-05T00:00:00.000-03:00"
+      },
+      "currency_id": "ARS"
+    },
+    "tags": [],
+    "sender_address": {
+      "country": {
+        "id": "AR",
+        "name": "Argentina"
+      },
+      "address_line": "XXXXXXX",
+      "types": [
+        "milkrun"
+      ],
+      "scoring": 1,
+      "agency": null,
+      "city": {
+        "id": "TUxBQlZJTDQyMjFa",
+        "name": "Villa Ortúzar"
+      },
+      "geolocation_type": "ROOFTOP",
+      "latitude": 0,
+      "municipality": {
+        "id": null,
+        "name": null
+      },
+      "version": "AR-e265a68132c099bd864f536014ff21ee",
+      "location_id": 48468088,
+      "street_name": "XXXXXXX",
+      "zip_code": "XXXXXXX",
+      "geolocation_source": "geolocation-visits",
+      "node": null,
+      "intersection": null,
+      "street_number": "XXXXXXX",
+      "comment": "XXXXXXX",
+      "id": 1350046044,
+      "state": {
+        "id": "AR-C",
+        "name": "Capital Federal"
+      },
+      "neighborhood": {
+        "id": null,
+        "name": "Villa Ortúzar"
+      },
+      "geolocation_last_updated": "2024-05-07T20:14:43.029Z",
+      "longitude": 0
+    },
+    "sibling": {
+      "reason": null,
+      "sibling_id": null,
+      "description": null,
+      "source": null,
+      "date_created": null,
+      "last_updated": null
+    },
+    "return_tracking_number": null,
+    "site_id": "MLA",
+    "carrier_info": null,
+    "market_place": "MELI",
+    "receiver_address": {
+      "country": {
+        "id": "AR",
+        "name": "Argentina"
+      },
+      "city": {
+        "id": "TUxBQ1NBTDY5MDE",
+        "name": "Salliqueló"
+      },
+      "geolocation_type": "ROOFTOP",
+      "latitude": -36.744425,
+      "municipality": {
+        "id": null,
+        "name": null
+      },
+      "location_id": 60924273,
+      "street_name": "Coronel Mansilla",
+      "zip_code": "6339",
+      "intersection": null,
+      "receiver_name": "María Elena Bray",
+      "id": 1486703082,
+      "state": {
+        "id": "AR-B",
+        "name": "Buenos Aires"
+      },
+      "longitude": -62.966095,
+      "address_line": "Coronel Mansilla 453",
+      "types": [
+        "default_buying_address"
+      ],
+      "scoring": 0,
+      "agency": null,
+      "version": "AR-0ed501c0d98833b858265dfc6317dacd",
+      "geolocation_source": "geolocation-visits",
+      "delivery_preference": "residential",
+      "node": null,
+      "street_number": "453",
+      "comment": "Referencia: Entre Stroeder y Providencias Argentinas....  Al lado de la pollería el Gallo Claudio",
+      "neighborhood": {
+        "id": null,
+        "name": "Salliqueló"
+      },
+      "geolocation_last_updated": "2025-10-28T21:56:48.79Z",
+      "receiver_phone": "XXXXXXX"
+    },
+    "customer_id": null,
+    "order_id": 2000014972428288,
+    "quotation": null,
+    "status": "ready_to_ship",
+    "logistic_type": "cross_docking"
+  },
+  {
+    "substatus_history": [
+      {
+        "date": "2026-02-02T16:27:01.850-04:00",
+        "substatus": "ready_to_print",
+        "status": "ready_to_ship"
+      }
+    ],
+    "snapshot_packing": {
+      "snapshot_id": "852b9ea3-c1f5-4a3b-994c-4d8014dab2b9",
+      "pack_hash": "1"
+    },
+    "threshold_cancellation": null,
+    "receiver_id": 1061240654,
+    "base_cost": 17015.99,
+    "status_history": {
+      "date_shipped": null,
+      "date_returned": null,
+      "date_delivered": null,
+      "date_first_visit": null,
+      "date_not_delivered": null,
+      "date_cancelled": null,
+      "date_handling": "2026-02-02T16:26:59.000-04:00",
+      "date_ready_to_ship": "2026-02-02T16:27:01.850-04:00"
+    },
+    "type": "forward",
+    "return_details": null,
+    "sender_id": 437718603,
+    "mode": "me2",
+    "order_cost": 52079.07,
+    "priority_class": {
+      "id": "20"
+    },
+    "service_id": 158181,
+    "shipping_items": [
+      {
+        "domain_id": null,
+        "item_ponderation": null,
+        "quantity": 1,
+        "measurable_picked_quantity": null,
+        "dimensions_source": {
+          "origin": "bmp",
+          "id": "MLA2819885694__1"
+        },
+        "description": "Freidora De Aire Philco Fr256ph 1700w 6 L 12 Programas De Cocción Negro - Bueno (Reacondicionado)",
+        "id": "MLA2819885694",
+        "bundle": null,
+        "user_product_id": "MLAU3579291322",
+        "sender_id": 437718603,
+        "dimensions": "33.0x36.0x37.0,6500.0"
+      }
+    ],
+    "tracking_number": "MEL46388692737FMXDF01",
+    "cost_components": {
+      "loyal_discount": 0,
+      "special_discount": 0,
+      "compensation": 0,
+      "gap_discount": 4157.99,
+      "ratio": 25715.99
+    },
+    "id": 46388692737,
+    "tracking_method": "MEL Distribution",
+    "last_updated": "2026-02-02T16:27:05.161-04:00",
+    "items_types": [
+      "reconditioned"
+    ],
+    "comments": null,
+    "substatus": "ready_for_pickup",
+    "date_created": "2026-02-02T16:26:52.551-04:00",
+    "date_first_printed": "2026-02-02T16:27:03.862-04:00",
+    "created_by": "receiver",
+    "application_id": null,
+    "shipping_option": {
+      "processing_time": null,
+      "cost": 0,
+      "estimated_schedule_limit": {
+        "date": null
+      },
+      "shipping_method_id": 510645,
+      "estimated_delivery_final": {
+        "date": "2026-02-05T00:00:00.000-03:00"
+      },
+      "buffering": {
+        "date": null
+      },
+      "desired_promised_delivery": {
+        "from": null
+      },
+      "pickup_promise": {
+        "from": null,
+        "to": null
+      },
+      "list_cost": 12857.99,
+      "estimated_delivery_limit": {
+        "date": "2026-02-05T00:00:00.000-03:00"
+      },
+      "priority_class": {
+        "id": "20"
+      },
+      "delivery_promise": "estimated",
+      "delivery_type": "estimated",
+      "estimated_delivery_time": {
+        "date": "2026-02-05T00:00:00.000-03:00",
+        "pay_before": "2026-02-03T00:00:00.000-03:00",
+        "schedule": null,
+        "unit": "hour",
+        "offset": {
+          "date": null,
+          "shipping": null
+        },
+        "shipping": 48,
+        "time_frame": {
+          "from": null,
+          "to": null
+        },
+        "handling": 24,
+        "type": "known"
+      },
+      "name": "Estándar a domicilio",
+      "id": 3002245380,
+      "estimated_delivery_extended": {
+        "date": "2026-02-05T00:00:00.000-03:00"
+      },
+      "currency_id": "ARS"
+    },
+    "tags": [],
+    "sender_address": {
+      "country": {
+        "id": "AR",
+        "name": "Argentina"
+      },
+      "address_line": "XXXXXXX",
+      "types": [
+        "milkrun"
+      ],
+      "scoring": 1,
+      "agency": null,
+      "city": {
+        "id": "TUxBQlZJTDQyMjFa",
+        "name": "Villa Ortúzar"
+      },
+      "geolocation_type": "ROOFTOP",
+      "latitude": 0,
+      "municipality": {
+        "id": null,
+        "name": null
+      },
+      "version": "AR-e265a68132c099bd864f536014ff21ee",
+      "location_id": 48468088,
+      "street_name": "XXXXXXX",
+      "zip_code": "XXXXXXX",
+      "geolocation_source": "geolocation-visits",
+      "node": null,
+      "intersection": null,
+      "street_number": "XXXXXXX",
+      "comment": "XXXXXXX",
+      "id": 1350046044,
+      "state": {
+        "id": "AR-C",
+        "name": "Capital Federal"
+      },
+      "neighborhood": {
+        "id": null,
+        "name": "Villa Ortúzar"
+      },
+      "geolocation_last_updated": "2024-05-07T20:14:43.029Z",
+      "longitude": 0
+    },
+    "sibling": {
+      "reason": null,
+      "sibling_id": null,
+      "description": null,
+      "source": null,
+      "date_created": null,
+      "last_updated": null
+    },
+    "return_tracking_number": null,
+    "site_id": "MLA",
+    "carrier_info": null,
+    "market_place": "MELI",
+    "receiver_address": {
+      "country": {
+        "id": "AR",
+        "name": "Argentina"
+      },
+      "city": {
+        "id": null,
+        "name": "Villa Parque Siquiman"
+      },
+      "geolocation_type": "RANGE_INTERPOLATED",
+      "latitude": -31.348328,
+      "municipality": {
+        "id": null,
+        "name": null
+      },
+      "location_id": null,
+      "street_name": "Cosquín",
+      "zip_code": "5158",
+      "intersection": null,
+      "receiver_name": "Constanza Gabriela Martina Herrera Nieto",
+      "id": 1272220179,
+      "state": {
+        "id": "AR-X",
+        "name": "Córdoba"
+      },
+      "longitude": -64.474151,
+      "address_line": "Cosquín 375",
+      "types": [],
+      "scoring": 0,
+      "agency": null,
+      "version": "AR-088e0eb13d90e790495c843675d3f84c",
+      "geolocation_source": "map-verified",
+      "delivery_preference": "residential",
+      "node": null,
+      "street_number": "375",
+      "comment": null,
+      "neighborhood": {
+        "id": null,
+        "name": "Villa Parque Siquimán"
+      },
+      "geolocation_last_updated": "2023-01-01T20:26:00Z",
+      "receiver_phone": "XXXXXXX"
+    },
+    "customer_id": null,
+    "order_id": 2000014973395576,
+    "quotation": null,
+    "status": "ready_to_ship",
+    "logistic_type": "cross_docking"
+  }
+]

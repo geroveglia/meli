@@ -30,22 +30,38 @@ export interface OrderItem {
   title: string;
   quantity: number;
   price: number;
+  variant: string; // New field
 }
 
 export interface Order {
-  id: string;
-  meliOrderId: string;
-  date: string; // ISO string
+  id: string; // Id venta RTSS
+  meliOrderId: string; // Id venta ML
+  packId: string | null; // Pack Id ML
+  date: string; // Fecha ML (ISO string)
+  
   account: MeliAccount;
   buyerName: string;
   buyerAddress: string;
+  
   total: number;
   items: OrderItem[];
   
   // Statuses
-  salesStatus: SalesState;
+  salesStatus: SalesState; // Gestión Interna Venta
   logisticsStatus: LogisticsState;
-  meliStatus: MeliStatus;
+  meliStatus: MeliStatus; // Estado ML
+  
+  // New Statuses / Fields
+  tagStatus: 'impresas' | 'pendientes' | 'error'; // Estado etiqueta
+  shippingStatus: 'not_delivered' | 'delivered' | 'cancelled'; // Entrega ML
+  shippingSubStatus: string; // Estado Envío ML (e.g. "En camino", "Entregado")
+  lastUpdated: string; // Última modificación
+  shippingCutoff: string; // Antes de las 15hs (Time string or "N/A")
+
+  // Ventas New Fields
+  invoiceStatus: 'pending' | 'invoiced' | 'cancelled'; // Estado Factura
+  docType: 'DNI' | 'CUIT' | 'CUIL' | 'Pasaporte' | null; // Tipo Doc
+  docNumber: string | null; // Nro Doc
 
   // Metadata for logic
   billingType: 'auto' | 'manual' | null; // null if not billed
@@ -73,67 +89,93 @@ interface LumbaState {
 
 // --- Mock Data Generator ---
 
+import mockOrders from '../mocks/orders.json';
+import mockShipments from '../mocks/shipments.json';
+
+// --- Mock Data Generator ---
+
 const generateMockOrders = (): Order[] => {
-  const accounts: MeliAccount[] = ['Cuenta 1', 'Cuenta 2', 'Cuenta 3'];
-  const orders: Order[] = [];
-  
-  const salesStates: SalesState[] = ['pendiente_facturacion', 'facturada', 'venta_cancelada', 'nota_credito'];
-  const logisticsStates: LogisticsState[] = ['pendiente_preparacion', 'listo_para_entregar', 'despachado_meli', 'retiro_local', 'entregado'];
-  const meliStatuses: MeliStatus[] = ['ready_to_ship', 'shipped', 'delivered', 'cancelled'];
-  
-  for (let i = 1; i <= 30; i++) {
-    const isCancelled = Math.random() > 0.9;
-    const account = accounts[Math.floor(Math.random() * accounts.length)];
+  const mappedOrders: Order[] = mockOrders.map((meliOrder: any) => {
+    // Find corresponding shipment
+    const shipment = mockShipments.find((s: any) => s.order_id === meliOrder.id || (meliOrder.shipping && s.id === meliOrder.shipping.id));
     
-    // Logic to try and make states somewhat consistent
-    let meliStatus: MeliStatus = 'ready_to_ship';
-    let logisticsStatus: LogisticsState = 'pendiente_preparacion';
-    let salesStatus: SalesState = 'pendiente_facturacion';
+    // Map items
+    const items: OrderItem[] = meliOrder.order_items.map((item: any) => {
+        // Try to find variant info in variation_attributes
+        const variantColor = item.item.variation_attributes?.find((attr: any) => attr.id === 'COLOR')?.value_name;
+        const variantVoltage = item.item.variation_attributes?.find((attr: any) => attr.id === 'VOLTAGE')?.value_name;
+        const variant = [variantColor, variantVoltage].filter(Boolean).join(' / ') || '-';
 
-    if (isCancelled) {
-      meliStatus = 'cancelled';
-      salesStatus = 'venta_cancelada';
-      logisticsStatus = 'cancelado_vuelto_stock';
-    } else {
-      const rand = Math.random();
-      if (rand > 0.8) {
-        meliStatus = 'delivered';
-        logisticsStatus = 'entregado';
-        salesStatus = 'facturada';
-      } else if (rand > 0.5) {
-        meliStatus = 'shipped';
-        logisticsStatus = 'despachado_meli';
-        salesStatus = 'facturada';
-      } else if (rand > 0.3) {
-        meliStatus = 'ready_to_ship';
-        logisticsStatus = 'listo_para_entregar';
-        salesStatus = 'facturada';
-      }
-    }
-
-    orders.push({
-      id: `internal-${i}`,
-      meliOrderId: `MELI-${100000 + i}`,
-      date: new Date(Date.now() - Math.floor(Math.random() * 1000000000)).toISOString(),
-      account: account,
-      buyerName: `Comprador ${i}`,
-      buyerAddress: `Calle Falsa ${123 + i}, CABA`,
-      total: Math.floor(Math.random() * 50000) + 1000,
-      items: [
-        {
-          id: `item-${i}`,
-          title: `Producto Mock ${i}`,
-          quantity: Math.floor(Math.random() * 3) + 1,
-          price: Math.floor(Math.random() * 10000) + 1000,
-        }
-      ],
-      salesStatus,
-      logisticsStatus,
-      meliStatus,
-      billingType: salesStatus === 'facturada' ? (Math.random() > 0.3 ? 'auto' : 'manual') : null,
+        return {
+            id: item.item.id,
+            title: item.item.title,
+            quantity: item.quantity,
+            price: item.unit_price,
+            variant: variant
+        };
     });
-  }
-  return orders;
+
+    // Determine derived statuses
+    let meliStatus: MeliStatus = 'ready_to_ship';
+    if (shipment?.status === 'ready_to_ship') meliStatus = 'ready_to_ship';
+    if (shipment?.status === 'shipped') meliStatus = 'shipped';
+    if (shipment?.status === 'delivered') meliStatus = 'delivered';
+    if (shipment?.status === 'cancelled') meliStatus = 'cancelled';
+    
+    // Fallback if no shipment found but order status exists
+    if (!shipment && meliOrder.status === 'paid') meliStatus = 'ready_to_ship'; 
+
+    let logisticsStatus: LogisticsState = 'pendiente_preparacion';
+    if (meliStatus === 'shipped') logisticsStatus = 'despachado_meli';
+    if (meliStatus === 'delivered') logisticsStatus = 'entregado';
+    if (shipment?.substatus === 'ready_to_print') logisticsStatus = 'pendiente_preparacion';
+
+    let salesStatus: SalesState = 'pendiente_facturacion';
+    if (meliOrder.status === 'paid') {
+        salesStatus = 'pendiente_facturacion';
+    } 
+    // Example logic if we wanted to map 'billed' status if it existed
+    // if (meliOrder.status === 'billed') salesStatus = 'facturada';
+
+    // Calculate Invoice Status
+    let invoiceStatus: 'pending' | 'invoiced' | 'cancelled' = 'pending';
+    // Logic: derived directly from salesStatus
+    if ((salesStatus as string) === 'facturada') {
+        invoiceStatus = 'invoiced';
+    } else if ((salesStatus as string) === 'venta_cancelada') {
+        invoiceStatus = 'cancelled';
+    }
+    
+    return {
+        id: `INT-${meliOrder.id.toString().slice(-6)}`, // Fake internal ID
+        meliOrderId: meliOrder.id.toString(),
+        packId: meliOrder.pack_id ? meliOrder.pack_id.toString() : null,
+        date: meliOrder.date_created,
+        account: 'Cuenta 1', // Hardcoded as mocks don't specify account mapping
+        buyerName: `${meliOrder.buyer.first_name} ${meliOrder.buyer.last_name}`,
+        buyerAddress: shipment?.receiver_address ? `${shipment.receiver_address.address_line}, ${shipment.receiver_address.city.name}` : '-',
+        total: meliOrder.total_amount,
+        items: items,
+
+        salesStatus,
+        logisticsStatus,
+        meliStatus,
+
+        tagStatus: shipment?.substatus === 'ready_to_print' ? 'pendientes' : 'impresas', // Logic assumption
+        shippingStatus: meliStatus === 'delivered' ? 'delivered' : 'not_delivered',
+        shippingSubStatus: shipment?.substatus || '-',
+        lastUpdated: meliOrder.last_updated,
+        shippingCutoff: '-', // Not in JSON
+
+        invoiceStatus,
+        docType: null, // Not explicit in provided JSON
+        docNumber: null, // Not explicit in provided JSON
+
+        billingType: null
+    };
+  });
+
+  return mappedOrders;
 };
 
 // --- Store Implementation ---

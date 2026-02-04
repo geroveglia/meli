@@ -19,7 +19,6 @@ import { UsersPage } from "./pages/admin/UsersPage";
 import { DashboardPage } from "./pages/admin/DashboardPage";
 import { ClientsPage } from "./pages/admin/ClientsPage";
 import { ClientInfoPage } from "./pages/admin/ClientInfoPage";
-import { ProjectsPage } from "./pages/admin/ProjectsPage";
 import { CarouselImagesPage } from "./pages/admin/CarouselImagesPage";
 import { TenantsPage } from "./pages/admin/TenantsPage";
 import { GeneralSettingsPage } from "./pages/admin/GeneralSettingsPage";
@@ -289,14 +288,6 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <ClientInfoPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/client-projects"
-                element={
-                  <ProtectedRoute>
-                    <ProjectsPage />
                   </ProtectedRoute>
                 }
               />

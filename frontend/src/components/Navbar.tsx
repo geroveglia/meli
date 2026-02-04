@@ -4,7 +4,7 @@ import { useAuthStore } from "../stores/authStore";
 import { useClientContextStore } from "../stores/clientContextStore";
 import { Link, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faBars, faRightFromBracket, faHouse, faUserGear, faBuilding, faArrowUpRightFromSquare, faCog, faUser, faUserShield, faChevronDown, faUsersGear, faInfoCircle, faBriefcase, faImages } from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faBars, faRightFromBracket, faHouse, faUserGear, faBuilding, faArrowUpRightFromSquare, faCog, faUser, faUserShield, faChevronDown, faUsersGear, faInfoCircle, faImages } from "@fortawesome/free-solid-svg-icons";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { Logo } from "./Logo";
 import axios from "../api/axiosConfig";
@@ -449,15 +449,6 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
                     <FontAwesomeIcon icon={faInfoCircle} className="h-4 w-4" />
                   </div>
                   <span className="font-medium truncate">Información</span>
-                </div>
-              </Link>
-
-              <Link to="/client-projects" onClick={onItemClick} aria-current={isActive("/client-projects") ? "page" : undefined} className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${isActive("/client-projects") ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}>
-                <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${isActive("/client-projects") ? "bg-white text-blue-600" : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"}`}>
-                    <FontAwesomeIcon icon={faBriefcase} className="h-4 w-4" />
-                  </div>
-                  <span className="font-medium truncate">Proyectos</span>
                 </div>
               </Link>
             </div>

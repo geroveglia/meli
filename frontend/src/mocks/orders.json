@@ -1,0 +1,337 @@
+[
+  {
+    "id": 2000014973395576,
+    "date_created": "2026-02-02T16:26:52.000-04:00",
+    "last_updated": "2026-02-02T16:28:35.000-04:00",
+    "date_closed": "2026-02-02T16:26:55.000-04:00",
+    "pack_id": null,
+    "fulfilled": null,
+    "buying_mode": "buy_equals_pay",
+    "shipping_cost": null,
+    "mediations": [],
+    "total_amount": 52079.07,
+    "paid_amount": 52079.07,
+    "order_items": [
+      {
+        "item": {
+          "id": "MLA2819885694",
+          "title": "Freidora De Aire Philco Fr256ph 1700w 6 L 12 Programas De Cocción Negro - Bueno (Reacondicionado)",
+          "category_id": "MLA456045",
+          "variation_id": null,
+          "seller_custom_field": null,
+          "variation_attributes": [
+            {
+              "name": "Color",
+              "id": "COLOR",
+              "value_id": "52049",
+              "value_name": "Negro"
+            },
+            {
+              "name": "Voltaje",
+              "id": "VOLTAGE",
+              "value_id": "198813",
+              "value_name": "220V"
+            }
+          ],
+          "warranty": "Garantía del vendedor: 90 días",
+          "condition": "new",
+          "seller_sku": "ELE VAR 5565",
+          "global_price": null,
+          "net_weight": null,
+          "user_product_id": "MLAU3579291322",
+          "release_date": null,
+          "attributes": [
+            {
+              "id": "ITEM_CONDITION",
+              "values": [
+                {
+                  "id": "2230582"
+                }
+              ]
+            }
+          ]
+        },
+        "quantity": 1,
+        "requested_quantity": {
+          "measure": "unit",
+          "value": 1
+        },
+        "picked_quantity": null,
+        "unit_price": 52079.07,
+        "full_unit_price": 55999,
+        "full_unit_price_currency_id": "ARS",
+        "currency_id": "ARS",
+        "manufacturing_days": null,
+        "sale_fee": 0,
+        "listing_type_id": "gold_pro",
+        "base_exchange_rate": null,
+        "base_currency_id": null,
+        "element_id": null,
+        "discounts": null,
+        "bundle": null,
+        "compat_id": null,
+        "stock": null,
+        "kit_instance_id": null,
+        "gross_price": 55999
+      }
+    ],
+    "currency_id": "ARS",
+    "payments": [
+      {
+        "id": 144533633000,
+        "order_id": 2000014973395576,
+        "payer_id": 1061240654,
+        "collector": {
+          "id": 437718603
+        },
+        "card_id": null,
+        "reason": "Freidora De Aire Philco Fr256ph 1700w 6 L 12 Programas De Cocción Negro - Bueno (Reacondicionado)",
+        "site_id": "MLA",
+        "payment_method_id": "debin_transfer",
+        "currency_id": "ARS",
+        "installments": 1,
+        "issuer_id": "12520",
+        "atm_transfer_reference": {
+          "transaction_id": null,
+          "company_id": "12520"
+        },
+        "coupon_id": null,
+        "activation_uri": null,
+        "operation_type": "regular_payment",
+        "payment_type": "bank_transfer",
+        "available_actions": [
+          "refund"
+        ],
+        "status": "approved",
+        "status_code": null,
+        "status_detail": "accredited",
+        "transaction_amount": 52079.07,
+        "transaction_amount_refunded": 0,
+        "taxes_amount": 0,
+        "shipping_cost": 0,
+        "coupon_amount": 0,
+        "overpaid_amount": 0,
+        "total_paid_amount": 52079.07,
+        "installment_amount": null,
+        "deferred_period": null,
+        "date_approved": "2026-02-02T16:26:55.000-04:00",
+        "transaction_order_id": null,
+        "date_created": "2026-02-02T16:26:52.000-04:00",
+        "date_last_modified": "2026-02-02T16:26:52.000-04:00",
+        "marketplace_fee": 0,
+        "reference_id": null,
+        "authorization_code": null
+      }
+    ],
+    "shipping": {
+      "id": 46388692737
+    },
+    "status": "paid",
+    "status_detail": null,
+    "tags": [
+      "order_has_discount",
+      "catalog",
+      "paid",
+      "not_delivered"
+    ],
+    "static_tags": [],
+    "feedback": {
+      "seller": null,
+      "buyer": null
+    },
+    "context": {
+      "channel": "marketplace",
+      "site": "MLA",
+      "flows": [
+        "catalog"
+      ]
+    },
+    "seller": {
+      "id": 437718603
+    },
+    "buyer": {
+      "id": 1061240654,
+      "nickname": "MARTINACONSTANZA20220122073130",
+      "first_name": "Constanza Gabriela",
+      "last_name": "Martin Herrera Nieto",
+      "billing_info": {
+        "id": "806258909180240593"
+      }
+    },
+    "taxes": {
+      "amount": null,
+      "currency_id": null,
+      "id": null
+    },
+    "cancel_detail": null,
+    "manufacturing_ending_date": null,
+    "order_request": {
+      "change": null,
+      "return": null
+    },
+    "related_orders": null
+  },
+  {
+    "id": 2000014972736050,
+    "date_created": "2026-02-02T15:47:12.000-04:00",
+    "last_updated": "2026-02-02T15:48:49.000-04:00",
+    "date_closed": "2026-02-02T15:47:16.000-04:00",
+    "pack_id": 2000011349129357,
+    "fulfilled": null,
+    "buying_mode": "buy_equals_pay",
+    "shipping_cost": null,
+    "mediations": [],
+    "total_amount": 78374.05,
+    "paid_amount": 78374.05,
+    "order_items": [
+      {
+        "item": {
+          "id": "MLA1568819651",
+          "title": "Freidora De Aire Hisense H09afbks4s 8l 1700w 8 Programas Negro",
+          "category_id": "MLA456045",
+          "variation_id": null,
+          "seller_custom_field": null,
+          "variation_attributes": [
+            {
+              "name": "Color",
+              "id": "COLOR",
+              "value_id": "52049",
+              "value_name": "Negro"
+            },
+            {
+              "name": "Voltaje",
+              "id": "VOLTAGE",
+              "value_id": "198813",
+              "value_name": "220V"
+            }
+          ],
+          "warranty": "Garantía del vendedor: 90 días",
+          "condition": "new",
+          "seller_sku": "ELE VAR 5562",
+          "global_price": null,
+          "net_weight": null,
+          "user_product_id": "MLAU3517772231",
+          "release_date": null,
+          "attributes": []
+        },
+        "quantity": 1,
+        "requested_quantity": {
+          "measure": "unit",
+          "value": 1
+        },
+        "picked_quantity": null,
+        "unit_price": 78374.05,
+        "full_unit_price": 82499,
+        "full_unit_price_currency_id": "ARS",
+        "currency_id": "ARS",
+        "manufacturing_days": null,
+        "sale_fee": 0,
+        "listing_type_id": "gold_pro",
+        "base_exchange_rate": null,
+        "base_currency_id": null,
+        "element_id": null,
+        "discounts": null,
+        "bundle": null,
+        "compat_id": null,
+        "stock": null,
+        "kit_instance_id": null,
+        "gross_price": 82499
+      }
+    ],
+    "currency_id": "ARS",
+    "payments": [
+      {
+        "id": 143847516879,
+        "order_id": 2000014972736050,
+        "payer_id": 207386175,
+        "collector": {
+          "id": 437718603
+        },
+        "card_id": 9595524328,
+        "reason": "Freidora De Aire Hisense H09afbks4s 8l 1700w 8 Programas Negro",
+        "site_id": "MLA",
+        "payment_method_id": "visa",
+        "currency_id": "ARS",
+        "installments": 6,
+        "issuer_id": "310",
+        "atm_transfer_reference": {
+          "transaction_id": null,
+          "company_id": null
+        },
+        "coupon_id": null,
+        "activation_uri": null,
+        "operation_type": "regular_payment",
+        "payment_type": "credit_card",
+        "available_actions": [
+          "refund"
+        ],
+        "status": "approved",
+        "status_code": null,
+        "status_detail": "accredited",
+        "transaction_amount": 78374.05,
+        "transaction_amount_refunded": 0,
+        "taxes_amount": 0,
+        "shipping_cost": 0,
+        "coupon_amount": 0,
+        "overpaid_amount": 0,
+        "total_paid_amount": 78374.05,
+        "installment_amount": 13062.34,
+        "deferred_period": null,
+        "date_approved": "2026-02-02T15:47:15.000-04:00",
+        "transaction_order_id": null,
+        "date_created": "2026-02-02T15:47:13.000-04:00",
+        "date_last_modified": "2026-02-02T15:47:15.000-04:00",
+        "marketplace_fee": 0,
+        "reference_id": null,
+        "authorization_code": "004886"
+      }
+    ],
+    "shipping": {
+      "id": 46388640402
+    },
+    "status": "paid",
+    "status_detail": null,
+    "tags": [
+      "d2c",
+      "pack_order",
+      "order_has_discount",
+      "paid",
+      "one_shot",
+      "not_delivered"
+    ],
+    "static_tags": [],
+    "feedback": {
+      "seller": null,
+      "buyer": null
+    },
+    "context": {
+      "channel": "marketplace",
+      "site": "MLA",
+      "flows": []
+    },
+    "seller": {
+      "id": 437718603
+    },
+    "buyer": {
+      "id": 207386175,
+      "nickname": "FEOS5785981",
+      "first_name": "Fernandez",
+      "last_name": "Oscar Alfredo",
+      "billing_info": {
+        "id": "806249122887509963"
+      }
+    },
+    "taxes": {
+      "amount": null,
+      "currency_id": null,
+      "id": null
+    },
+    "cancel_detail": null,
+    "manufacturing_ending_date": null,
+    "order_request": {
+      "change": null,
+      "return": null
+    },
+    "related_orders": null
+  }
+]
