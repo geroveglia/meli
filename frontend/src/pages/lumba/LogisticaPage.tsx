@@ -10,6 +10,8 @@ import { SearchAndFilters } from '../../components/SearchAndFilters';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBox, faCheck, faEye, faTable, faGrip, faTruck } from "@fortawesome/free-solid-svg-icons";
 import { Badge } from "../../components/Badge";
+import { Checkbox } from "../../components/Checkbox";
+import { Button } from "../../components/Button";
 
 export const LogisticaPage: React.FC = () => {
     const { 
@@ -29,6 +31,7 @@ export const LogisticaPage: React.FC = () => {
     const activeTab = searchParams.get('status') || 'TODAS';
 
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
     const [viewMode, setViewMode] = useState<'table' | 'cards'>(() => {
         const saved = localStorage.getItem('logistica_view_mode');
         return (saved === 'table' || saved === 'cards') ? saved : 'cards';
@@ -102,27 +105,87 @@ export const LogisticaPage: React.FC = () => {
         return result;
     }, [orders, selectedAccount, searchQuery, dateFrom, dateTo, activeTab]);
 
+    // --- Selection Logic ---
+
+    const toggleSelect = (orderId: string) => {
+        setSelectedOrderIds(prev => 
+            prev.includes(orderId) 
+                ? prev.filter(id => id !== orderId)
+                : [...prev, orderId]
+        );
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedOrderIds.length === filteredOrders.length) {
+            setSelectedOrderIds([]);
+        } else {
+            setSelectedOrderIds(filteredOrders.map(o => o.id));
+        }
+    };
+
     // --- Actions ---
 
-
-
-    const handleAction = (order: Order, action: string) => {
+    const executeAction = (orderId: string, action: string) => {
         switch (action) {
             case 'PASAR_A_LISTO':
-                updateOrderLogisticsStatus(order.id, 'listo_para_entregar');
-                sweetAlert.success('Estado actualizado', 'El pedido está listo para entregar');
+                updateOrderLogisticsStatus(orderId, 'listo_para_entregar');
                 break;
             case 'MARCAR_ENTREGADO':
-                updateOrderLogisticsStatus(order.id, 'entregado');
-                sweetAlert.success('Entregado', 'El pedido ha sido marcado como entregado');
-                break;
-            case 'VER':
-                setSelectedOrder(order);
+                updateOrderLogisticsStatus(orderId, 'entregado');
                 break;
             case 'ETIQUETA':
-                toast.success('Descargando etiqueta...');
-                sweetAlert.info('Descargando', 'La etiqueta se está generando...');
+                // For bulk, maybe just trigger download or show toast
+                // toast.success(`Descargando etiqueta para orden ${orderId}`);
                 break;
+        }
+    };
+
+    const handleAction = async (orderOrIds: Order | string[], action: string) => {
+        const isBulk = Array.isArray(orderOrIds);
+        const count = isBulk ? orderOrIds.length : 1;
+        
+        if (action === 'VER' && !isBulk) {
+            setSelectedOrder(orderOrIds as Order);
+            return;
+        }
+
+        if (action === 'ETIQUETA') {
+             toast.success(isBulk ? 'Descargando etiquetas...' : 'Descargando etiqueta...');
+             sweetAlert.info('Descargando', isBulk ? 'Las etiquetas se están generando...' : 'La etiqueta se está generando...');
+             return;
+        }
+
+        let title = '¿Estás seguro?';
+        let confirmText = 'Confirmar';
+        let icon: 'info' | 'warning' | 'success' | 'error' | 'question' = 'info';
+
+        switch (action) {
+            case 'PASAR_A_LISTO':
+                title = count > 1 ? 'Pasar a Listo para Entregar' : 'Pasar a Listo';
+                confirmText = 'Pasar a Listo';
+                break;
+            case 'MARCAR_ENTREGADO':
+                title = count > 1 ? 'Marcar como Entregados' : 'Marcar como Entregado';
+                confirmText = 'Entregar';
+                break;
+        }
+
+        const result = await sweetAlert.confirm(
+            title,
+            `Vas a aplicar la acción a ${count} orden(es).`,
+            icon,
+            confirmText
+        );
+
+        if (result.isConfirmed) {
+            if (isBulk) {
+                (orderOrIds as string[]).forEach(id => executeAction(id, action));
+                setSelectedOrderIds([]); // Clear selection handling
+                sweetAlert.success('Acción completada', `Se actualizaron ${count} ordenes.`);
+            } else {
+                executeAction((orderOrIds as Order).id, action);
+                sweetAlert.success('Acción completada', 'La orden ha sido actualizada.');
+            }
         }
     };
 
@@ -317,10 +380,51 @@ export const LogisticaPage: React.FC = () => {
         >
             {viewMode === 'table' ? (
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden border border-gray-200 dark:border-gray-700">
+                    {/* Bulk Actions Toolbar */}
+                    {/* Bulk Actions Toolbar */}
+                    <div className="bg-blue-50 dark:bg-blue-900/20 px-6 py-2 flex items-center justify-between border-b border-blue-100 dark:border-blue-800 h-14">
+                        <div className="flex gap-2">
+                            <Button 
+                                onClick={() => handleAction(selectedOrderIds, 'PASAR_A_LISTO')}
+                                variant="blue"
+                                size="sm"
+                                disabled={selectedOrderIds.length === 0}
+                            >
+                                Pasar a Listo
+                            </Button>
+                            <Button 
+                                onClick={() => handleAction(selectedOrderIds, 'MARCAR_ENTREGADO')}
+                                variant="blue"
+                                size="sm"
+                                disabled={selectedOrderIds.length === 0}
+                            >
+                                Marcar Entregado
+                            </Button>
+                            <Button 
+                                onClick={() => handleAction(selectedOrderIds, 'ETIQUETA')}
+                                variant="blue"
+                                size="sm"
+                                disabled={selectedOrderIds.length === 0}
+                            >
+                                Etiquetas
+                            </Button>
+                        </div>
+                        {selectedOrderIds.length > 0 && (
+                            <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                                {selectedOrderIds.length} seleccionados
+                            </span>
+                        )}
+                    </div>
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead className="bg-gray-50 dark:bg-gray-750">
                                 <tr>
+                                    <th scope="col" className="px-6 py-3 w-4">
+                                        <Checkbox 
+                                            checked={filteredOrders.length > 0 && selectedOrderIds.length === filteredOrders.length}
+                                            onChange={toggleSelectAll}
+                                        />
+                                    </th>
                                     <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Acciones</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Id venta RTSS</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Pack Id ML</th>
@@ -348,7 +452,13 @@ export const LogisticaPage: React.FC = () => {
                                     </tr>
                                 ) : (
                                     filteredOrders.map((order) => (
-                                        <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                        <tr key={order.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${selectedOrderIds.includes(order.id) ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <Checkbox 
+                                                    checked={selectedOrderIds.includes(order.id)}
+                                                    onChange={() => toggleSelect(order.id)}
+                                                />
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                                 {renderActions(order)}
                                             </td>

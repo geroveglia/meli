@@ -27,7 +27,7 @@ export const ButtonLink: React.FC<ButtonLinkProps> = ({ text, to = "/nosotros", 
 };
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "danger";
+  variant?: "primary" | "secondary" | "ghost" | "danger" | "blue";
   size?: "sm" | "md" | "lg";
   isLoading?: boolean;
 }
@@ -47,7 +47,8 @@ export const Button: React.FC<ButtonProps> = ({
     primary: "bg-accent-9 text-white hover:bg-accent-8 focus:ring-accent-5 rounded-full font-semibold",
     secondary: "bg-accent-3 text-accent-1 hover:bg-accent-4 focus:ring-accent-4",
     ghost: "bg-transparent text-accent-7 hover:bg-accent-3 focus:ring-accent-4",
-    danger: "bg-danger-600 text-white hover:bg-danger-700 focus:ring-danger-500",
+    danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
+    blue: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
   };
 
   const sizes = {

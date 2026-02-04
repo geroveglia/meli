@@ -7,6 +7,8 @@ import { SearchAndFilters } from '../../components/SearchAndFilters';
 import { useSearchParams } from 'react-router-dom';
 import { faFile, faBan, faFileInvoiceDollar, faUsersGear, faEye, faTable, faGrip } from "@fortawesome/free-solid-svg-icons";
 import { Badge } from "../../components/Badge";
+import { Checkbox } from "../../components/Checkbox";
+import { Button } from "../../components/Button";
 import { sweetAlert } from '../../utils/sweetAlert';
 import { Card } from '../../components/Card';
 
@@ -41,7 +43,9 @@ export const VentasPage: React.FC = () => {
         }
     ];
 
+    const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
     const [viewMode, setViewMode] = useState<'table' | 'cards'>(() => {
         const saved = localStorage.getItem('ventas_view_mode');
         return (saved === 'table' || saved === 'cards') ? saved : 'cards';
@@ -113,29 +117,88 @@ export const VentasPage: React.FC = () => {
         return result;
     }, [orders, selectedAccount, searchQuery, dateFrom, dateTo, activeTab]);
 
+    // --- Selection Logic ---
+
+    const toggleSelect = (orderId: string) => {
+        setSelectedOrderIds(prev => 
+            prev.includes(orderId) 
+                ? prev.filter(id => id !== orderId)
+                : [...prev, orderId]
+        );
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedOrderIds.length === filteredOrders.length) {
+            setSelectedOrderIds([]);
+        } else {
+            setSelectedOrderIds(filteredOrders.map(o => o.id));
+        }
+    };
+
     // --- Actions ---
 
-    const handleAction = (order: Order, action: string) => {
-        switch (action) {
+    const executeAction = (orderId: string, action: string) => {
+         switch (action) {
             case 'FACTURAR_AUTO':
-                updateOrderSalesStatus(order.id, 'facturada', 'auto');
-                sweetAlert.success('Facturado', 'La venta ha sido facturada automáticamente');
+                updateOrderSalesStatus(orderId, 'facturada', 'auto');
                 break;
             case 'FACTURAR_MANUAL':
-                updateOrderSalesStatus(order.id, 'facturada', 'manual');
-                sweetAlert.success('Facturado', 'La venta ha sido marcada como facturada manualmente');
+                updateOrderSalesStatus(orderId, 'facturada', 'manual');
                 break;
             case 'CANCELAR':
-                updateOrderSalesStatus(order.id, 'venta_cancelada');
-                sweetAlert.success('Cancelado', 'La venta ha sido cancelada');
+                updateOrderSalesStatus(orderId, 'venta_cancelada');
                 break;
             case 'GENERAR_NC':
-                updateOrderSalesStatus(order.id, 'nota_credito');
-                sweetAlert.success('Nota de Crédito', 'Se ha generado la nota de crédito');
+                updateOrderSalesStatus(orderId, 'nota_credito');
                 break;
-            case 'VER':
-                setSelectedOrder(order);
+        }
+    };
+
+    const handleAction = async (orderOrIds: Order | string[], action: string) => {
+        const isBulk = Array.isArray(orderOrIds);
+        const count = isBulk ? orderOrIds.length : 1;
+        
+        if (action === 'VER' && !isBulk) {
+            setSelectedOrder(orderOrIds as Order);
+            return;
+        }
+
+        let title = '¿Estás seguro?';
+        let confirmText = 'Confirmar';
+        let icon: 'info' | 'warning' | 'success' | 'error' | 'question' = 'info';
+
+        switch (action) {
+            case 'FACTURAR_MANUAL':
+                title = count > 1 ? 'Facturar Pedidos' : 'Facturar Pedido';
+                confirmText = 'Facturar';
                 break;
+            case 'CANCELAR':
+                title = count > 1 ? 'Cancelar Ventas' : 'Cancelar Venta';
+                confirmText = 'Cancelar';
+                icon = 'warning';
+                break;
+            case 'GENERAR_NC':
+                title = 'Generar Nota de Crédito';
+                confirmText = 'Generar NC';
+                break;
+        }
+
+        const result = await sweetAlert.confirm(
+            title,
+            `Vas a aplicar la acción a ${count} orden(es).`,
+            icon,
+            confirmText
+        );
+
+        if (result.isConfirmed) {
+            if (isBulk) {
+                (orderOrIds as string[]).forEach(id => executeAction(id, action));
+                setSelectedOrderIds([]); // Clear selection after action
+                sweetAlert.success('Acción completada', `Se actualizaron ${count} ordenes.`);
+            } else {
+                executeAction((orderOrIds as Order).id, action);
+                sweetAlert.success('Acción completada', 'La orden ha sido actualizada.');
+            }
         }
     };
 
@@ -145,7 +208,7 @@ export const VentasPage: React.FC = () => {
         // 1. Primary Actions (Invoice, NC) - Left
         if (order.salesStatus === 'pendiente_facturacion') {
             buttons.push(
-                <button key="manual" onClick={() => handleAction(order, 'FACTURAR_MANUAL')} className="text-blue-600 hover:text-blue-800 p-1.5 transition-colors" title="Facturar Manual">
+                <button key="manual" onClick={() => handleAction(order, 'FACTURAR_MANUAL')} className="text-blue-600 hover:text-blue-800 p-1.5 transition-colors" title="Facturar">
                     <FontAwesomeIcon icon={faFile} className="h-4 w-4" />
                 </button>
             );
@@ -313,10 +376,43 @@ export const VentasPage: React.FC = () => {
         >
             {viewMode === 'table' ? (
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden border border-gray-200 dark:border-gray-700">
+                    {/* Bulk Actions Toolbar */}
+                    {/* Bulk Actions Toolbar */}
+                    <div className="bg-blue-50 dark:bg-blue-900/20 px-6 py-2 flex items-center justify-between border-b border-blue-100 dark:border-blue-800 h-14">
+                        <div className="flex gap-2">
+                            <Button 
+                                onClick={() => handleAction(selectedOrderIds, 'FACTURAR_MANUAL')}
+                                variant="blue"
+                                size="sm"
+                                disabled={selectedOrderIds.length === 0}
+                            >
+                                Facturar
+                            </Button>
+                            <Button 
+                                onClick={() => handleAction(selectedOrderIds, 'CANCELAR')}
+                                variant="danger"
+                                size="sm"
+                                disabled={selectedOrderIds.length === 0}
+                            >
+                                Cancelar
+                            </Button>
+                        </div>
+                        {selectedOrderIds.length > 0 && (
+                            <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                                {selectedOrderIds.length} seleccionados
+                            </span>
+                        )}
+                    </div>
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead className="bg-gray-50 dark:bg-gray-750">
                                 <tr>
+                                    <th scope="col" className="px-6 py-3 w-4">
+                                        <Checkbox 
+                                            checked={filteredOrders.length > 0 && selectedOrderIds.length === filteredOrders.length}
+                                            onChange={toggleSelectAll}
+                                        />
+                                    </th>
                                     <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Acciones</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Id venta RTSS</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Pack Id ML</th>
@@ -343,7 +439,13 @@ export const VentasPage: React.FC = () => {
                                     </tr>
                                 ) : (
                                     filteredOrders.map((order) => (
-                                        <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                        <tr key={order.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${selectedOrderIds.includes(order.id) ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <Checkbox 
+                                                    checked={selectedOrderIds.includes(order.id)}
+                                                    onChange={() => toggleSelect(order.id)}
+                                                />
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                                 {renderActions(order)}
                                             </td>
