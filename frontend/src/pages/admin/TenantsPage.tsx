@@ -79,15 +79,15 @@ const getPlanBadge = (plan: SubscriptionPlan) => {
   const config = {
     free: { text: "Free", classes: "bg-accent-3 text-accent-8" },
     basic: { text: "Basic", classes: "bg-accent-3 text-accent-9 border border-accent-4" },
-    pro: { text: "Pro", classes: "bg-accent-9 text-accent-2" },
-    enterprise: { text: "Enterprise", classes: "bg-accent-9 text-accent-2 border border-neutral-400" },
+    pro: { text: "Pro", classes: "bg-accent-5 text-white" },
+    enterprise: { text: "Enterprise", classes: "bg-accent-5 text-white border border-neutral-400" },
   };
   return config[plan] || config.free;
 };
 
 const getStatusBadge = (status: SubscriptionStatus) => {
   const config = {
-    active: { text: "Activo", classes: "bg-accent-9 text-accent-2" },
+    active: { text: "Activo", classes: "bg-accent-5 text-white" },
     suspended: { text: "Suspendido", classes: "bg-accent-4 text-accent-8" },
     cancelled: { text: "Cancelado", classes: "bg-accent-3 text-accent-6" },
   };
@@ -498,7 +498,7 @@ export const TenantsPage: React.FC = () => {
                 {getPlanBadge(viewTenant.subscription.plan).text}
               </span>
               {viewTenant.isSystem && (
-                <span className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-accent-9 text-accent-2">
+                <span className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-accent-5 text-white">
                   <FontAwesomeIcon icon={faShield} className="h-3 w-3 mr-1" />
                   Sistema
                 </span>

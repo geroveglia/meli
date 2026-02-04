@@ -5,7 +5,8 @@ import { OrderDetailModal } from '../../components/lumba/OrderDetailModal';
 import { PageLayout } from '../../components/PageLayout';
 import { SearchAndFilters } from '../../components/SearchAndFilters';
 import { useSearchParams } from 'react-router-dom';
-import { faUsersGear, faTable, faGrip, faCheck, faEye, faBan, faFileInvoiceDollar, faBolt, faFilePen } from '@fortawesome/free-solid-svg-icons';
+import { faBolt, faFilePen, faBan, faFileInvoiceDollar, faUsersGear, faEye, faTable, faGrip } from "@fortawesome/free-solid-svg-icons";
+import { Badge } from "../../components/Badge";
 import { sweetAlert } from '../../utils/sweetAlert';
 import { Card } from '../../components/Card';
 
@@ -221,16 +222,16 @@ export const VentasPage: React.FC = () => {
                             <div className="pt-2 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-2">
                                 <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-750 p-2 rounded">
                                     <span className="text-xs text-gray-500">Gestión:</span>
-                                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100">
+                                    <Badge>
                                         {order.salesStatus.replace(/_/g, ' ')}
-                                    </span>
+                                    </Badge>
                                 </div>
                                 <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-750 p-2 rounded">
                                     <span className="text-xs text-gray-500">Factura:</span>
-                                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100">
+                                    <Badge>
                                         {order.invoiceStatus === 'invoiced' ? 'Facturada' : 
                                          order.invoiceStatus === 'cancelled' ? 'Cancelada' : 'Pendiente'}
-                                    </span>
+                                    </Badge>
                                 </div>
                             </div>
                          </div>
@@ -318,22 +319,22 @@ export const VentasPage: React.FC = () => {
                                                 {new Date(order.date).toLocaleDateString()}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100">
+                                                <Badge>
                                                     {order.meliStatus}
-                                                </span>
+                                                </Badge>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
                                                 <div className="flex items-center justify-center gap-2">
-                                                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100">
+                                                    <Badge>
                                                         {order.salesStatus.replace(/_/g, ' ')}
-                                                    </span>
+                                                    </Badge>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100">
+                                                <Badge>
                                                     {order.invoiceStatus === 'invoiced' ? 'Facturada' : 
                                                      order.invoiceStatus === 'cancelled' ? 'Cancelada' : 'Pendiente'}
-                                                </span>
+                                                </Badge>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 cursor-pointer line-clamp-2" title={order.items.length > 0 ? order.items[0].title : ''}>

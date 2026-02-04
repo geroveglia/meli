@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
 import { getImageUrl } from "../utils/imageHelpers";
+import { Badge } from "./Badge";
 
 interface CardAction {
   icon: IconDefinition;
@@ -74,9 +75,7 @@ export const Card: React.FC<CardProps> = ({ header, children, footer, onClick, c
     }
   };
 
-  const getBadgeClasses = () => {
-    return "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100";
-  };
+
 
   const getActionClasses = (actionVariant: string = "default") => {
     // Base classes for minimalist icons
@@ -147,10 +146,12 @@ export const Card: React.FC<CardProps> = ({ header, children, footer, onClick, c
               <div className="flex items-center space-x-2">
                 <div className="flex flex-wrap gap-2 w-full justify-between">
                   {header.badges?.map((badge, index) => (
-                    <span key={index} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium shadow-sm ${badge.className || getBadgeClasses()}`}>
-                      {badge.icon && <FontAwesomeIcon icon={badge.icon} className="h-3 w-3" />}
-                      <span className="text-nowrap">{badge.text}</span>
-                    </span>
+                    <Badge
+                      key={index}
+                      icon={badge.icon}
+                      text={badge.text}
+                      className={badge.className}
+                    />
                   ))}
                 </div>
               </div>

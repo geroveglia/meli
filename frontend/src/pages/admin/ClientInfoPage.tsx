@@ -31,7 +31,7 @@ const getStatusBadge = (status: ClientStatus) => {
   const config = {
     active: {
       text: "Activo",
-      classes: "bg-accent-9 text-accent-2",
+      classes: "bg-accent-5 text-white",
     },
     inactive: {
       text: "Inactivo",

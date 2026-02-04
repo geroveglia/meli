@@ -60,7 +60,7 @@ export const GitBranchBadge: React.FC = () => {
   const fullTooltip = `Branch: ${branch}\nCommit: ${commitHash}\nMessage: ${commitMessage}\nAuthor: ${commitAuthor}`;
 
   return (
-    <div title={fullTooltip} className="inline-flex flex-col items-start gap-1 px-2 py-1.5 rounded-lg text-xs font-medium bg-accent-9 text-accent-2">
+    <div title={fullTooltip} className="inline-flex flex-col items-start gap-1 px-2 py-1.5 rounded-lg text-xs font-medium bg-accent-5 text-white">
       <div className="flex items-center gap-2 w-full justify-between">
         <div className="flex items-center gap-1.5 overflow-hidden">
           <GitBranch className="h-3 w-3 shrink-0" />

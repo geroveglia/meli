@@ -437,8 +437,8 @@ export const UsersPage: React.FC = () => {
         content: viewUser ? (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${viewUser.isActive ? "bg-accent-9 text-accent-2" : "bg-accent-3 text-accent-8"}`}>{viewUser.isActive ? "Activo" : "Inactivo"}</span>
-              {viewUser.primaryRole && <span className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-accent-3 text-accent-8 uppercase">{viewUser.primaryRole}</span>}
+              <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-accent-5 text-white`}>{viewUser.isActive ? "Activo" : "Inactivo"}</span>
+              {viewUser.primaryRole && <span className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-accent-5 text-white uppercase">{viewUser.primaryRole}</span>}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -489,7 +489,7 @@ export const UsersPage: React.FC = () => {
                   {viewUser.roles
                     .filter((role) => role.name.toLowerCase() !== "superadmin")
                     .map((role) => (
-                      <span key={role._id} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-accent-9 text-accent-2">
+                      <span key={role._id} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-accent-5 text-white">
                         {role.name}
                       </span>
                     ))}

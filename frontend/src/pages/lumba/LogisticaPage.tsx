@@ -8,7 +8,8 @@ import { Card } from '../../components/Card';
 import { PageLayout } from '../../components/PageLayout';
 import { SearchAndFilters } from '../../components/SearchAndFilters';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTruck, faBox, faCheck, faEye, faTable, faGrip } from '@fortawesome/free-solid-svg-icons';
+import { faBox, faCheck, faEye, faUsersGear, faTable, faGrip, faTruck } from "@fortawesome/free-solid-svg-icons";
+import { Badge } from "../../components/Badge";
 
 export const LogisticaPage: React.FC = () => {
     const { 
@@ -219,15 +220,15 @@ export const LogisticaPage: React.FC = () => {
                             <div className="pt-2 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-2">
                                 <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-750 p-2 rounded">
                                     <span className="text-xs text-gray-500">Etiqueta:</span>
-                                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100">
+                                    <Badge>
                                         {order.tagStatus}
-                                    </span>
+                                    </Badge>
                                 </div>
                                 <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-750 p-2 rounded">
                                     <span className="text-xs text-gray-500">Entrega ML:</span>
-                                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100">
+                                    <Badge>
                                         {order.shippingStatus === 'delivered' ? 'Entregado' : 'No Entregado'}
-                                    </span>
+                                    </Badge>
                                 </div>
                             </div>
                         </div>
@@ -329,19 +330,19 @@ export const LogisticaPage: React.FC = () => {
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100">
+                                                <Badge>
                                                     {order.meliStatus}
-                                                </span>
+                                                </Badge>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100">
+                                                <Badge>
                                                     {order.tagStatus}
-                                                </span>
+                                                </Badge>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100">
+                                                <Badge>
                                                     {order.logisticsStatus.replace(/_/g, ' ')}
-                                                </span>
+                                                </Badge>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 cursor-pointer line-clamp-2" title={order.items.length > 0 ? order.items[0].title : ''}>
@@ -356,12 +357,9 @@ export const LogisticaPage: React.FC = () => {
                                                 {order.items.length > 0 && order.items[0].variant ? order.items[0].variant : '-'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${
-                                                    order.shippingStatus === 'delivered' ? 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-900/30 dark:text-green-400' :
-                                                    'bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-700/30 dark:text-gray-400'
-                                                }`}>
+                                                <Badge>
                                                     {order.shippingStatus === 'delivered' ? 'Entregado' : 'No Entregado'}
-                                                </span>
+                                                </Badge>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center text-xs text-gray-500">
                                                 {order.shippingSubStatus}

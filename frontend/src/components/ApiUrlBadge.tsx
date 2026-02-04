@@ -36,11 +36,11 @@ export const ApiUrlBadge: React.FC = () => {
     if (isLocal) {
       label = "Local | Development";
       ddbb = envInfo.mongoDbName;
-      classes = "inline-flex flex-col px-2 py-0.5 rounded-full text-xs font-medium bg-accent-9 text-accent-2";
+      classes = "inline-flex flex-col px-2 py-0.5 rounded-full text-xs font-medium bg-accent-5 text-white";
     } else if (isAutolab) {
       label = "Autolab.fun | Production";
       ddbb = envInfo.mongoDbName;
-      classes = "inline-flex flex-col items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent-9 text-accent-2";
+      classes = "inline-flex flex-col items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent-5 text-white";
     } else {
       label = host;
       ddbb = envInfo.mongoDbName;

@@ -432,7 +432,7 @@ export const LevelsPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span>{level.name}</span>
                   {/* Eliminado el badge del cargo en el header */}
-                  {level.type === "general" && <span className="text-xs bg-accent-9 text-accent-2 px-2 py-0.5 rounded-full">General</span>}
+                  {level.type === "general" && <span className="text-xs bg-accent-5 text-white px-2 py-0.5 rounded-full">General</span>}
                 </div>
               ),
               subtitle: level.description,
@@ -476,7 +476,7 @@ export const LevelsPage: React.FC = () => {
 
                 {typeof level.positionId === "object" && level.positionId?.name ? (
                   <div className="flex flex-wrap gap-1">
-                    <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-accent-9 text-accent-2">{level.positionId.name}</span>
+                    <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-accent-5 text-white">{level.positionId.name}</span>
                   </div>
                 ) : (
                   <span className="text-xs text-accent-5">Sin cargo asignado</span>

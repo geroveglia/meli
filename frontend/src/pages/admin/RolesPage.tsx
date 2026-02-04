@@ -387,8 +387,8 @@ export const RolesPage: React.FC = () => {
           <div className="space-y-4">
             {/* Badge siempre presente */}
             <div className="flex items-center gap-2">
-              <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${viewRole.isDefault ? "bg-accent-9 text-accent-2" : "bg-accent-3 text-accent-8"}`}>{viewRole.isDefault ? "Por defecto" : "Personalizado"}</span>
-              {viewRole.permissions.some((p) => p.startsWith("tenants:")) && <span className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-accent-9 text-accent-2">SuperAdmin</span>}
+              <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-accent-5 text-white`}>{viewRole.isDefault ? "Por defecto" : "Personalizado"}</span>
+              {viewRole.permissions.some((p) => p.startsWith("tenants:")) && <span className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-accent-5 text-white">SuperAdmin</span>}
             </div>
 
             <div>
@@ -419,8 +419,8 @@ export const RolesPage: React.FC = () => {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <h5 className="font-semibold text-accent-9 text-sm">{moduleData.label}</h5>
-                              {isSuperAdminModule && <span className="text-xs px-2 py-0.5 rounded-full bg-accent-9 text-accent-2 font-medium">SuperAdmin</span>}
-                              {isAdminModule && <span className="text-xs px-2 py-0.5 rounded-full bg-accent-9 text-accent-2 font-medium">Admin/SuperAdmin</span>}
+                              {isSuperAdminModule && <span className="text-xs px-2 py-0.5 rounded-full bg-accent-5 text-white font-medium">SuperAdmin</span>}
+                              {isAdminModule && <span className="text-xs px-2 py-0.5 rounded-full bg-accent-5 text-white font-medium">Admin/SuperAdmin</span>}
                             </div>
                             <p className="text-xs text-accent-6 mb-2">{moduleData.description}</p>
                           </div>
@@ -538,7 +538,7 @@ export const RolesPage: React.FC = () => {
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
                                 <h4 className="font-semibold text-accent-9">{moduleData.label}</h4>
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-accent-9 text-accent-2 font-medium">SuperAdmin</span>
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-accent-5 text-white font-medium">SuperAdmin</span>
                               </div>
                               <p className="text-xs text-accent-6 mt-0.5">{moduleData.description}</p>
                             </div>
