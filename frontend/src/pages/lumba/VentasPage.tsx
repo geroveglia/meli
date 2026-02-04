@@ -5,7 +5,7 @@ import { OrderDetailModal } from '../../components/lumba/OrderDetailModal';
 import { PageLayout } from '../../components/PageLayout';
 import { SearchAndFilters } from '../../components/SearchAndFilters';
 import { useSearchParams } from 'react-router-dom';
-import { faBolt, faFilePen, faBan, faFileInvoiceDollar, faUsersGear, faEye, faTable, faGrip } from "@fortawesome/free-solid-svg-icons";
+import { faFilePen, faBan, faFileInvoiceDollar, faUsersGear, faEye, faTable, faGrip } from "@fortawesome/free-solid-svg-icons";
 import { Badge } from "../../components/Badge";
 import { sweetAlert } from '../../utils/sweetAlert';
 import { Card } from '../../components/Card';
@@ -42,7 +42,30 @@ export const VentasPage: React.FC = () => {
     ];
 
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-    const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+    const [viewMode, setViewMode] = useState<'table' | 'cards'>(() => {
+        const saved = localStorage.getItem('ventas_view_mode');
+        return (saved === 'table' || saved === 'cards') ? saved : 'cards';
+    });
+
+    // Save preference
+    React.useEffect(() => {
+        localStorage.setItem('ventas_view_mode', viewMode);
+    }, [viewMode]);
+
+    // Force cards view on mobile
+    React.useEffect(() => {
+        const handleResize = () => {
+             if (window.innerWidth < 768) {
+                 setViewMode('cards');
+             }
+        };
+
+        // Initial check
+        handleResize();
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // --- Derived Data / Filtering ---
 
@@ -119,37 +142,37 @@ export const VentasPage: React.FC = () => {
     const renderActions = (order: Order, isModal: boolean = false, isCard: boolean = false) => {
         const buttons = [];
 
+        // 1. Primary Actions (Invoice, NC) - Left
         if (order.salesStatus === 'pendiente_facturacion') {
             buttons.push(
-                <button key="auto" onClick={() => handleAction(order, 'FACTURAR_AUTO')} className="text-gray-400 hover:text-green-600 p-1.5 transition-colors" title="Facturar Auto">
-                    <FontAwesomeIcon icon={faBolt} className="h-4 w-4" />
-                </button>
-            );
-            buttons.push(
-                <button key="manual" onClick={() => handleAction(order, 'FACTURAR_MANUAL')} className="text-gray-400 hover:text-blue-600 p-1.5 transition-colors" title="Facturar Manual">
+                <button key="manual" onClick={() => handleAction(order, 'FACTURAR_MANUAL')} className="text-blue-600 hover:text-blue-800 p-1.5 transition-colors" title="Facturar Manual">
                     <FontAwesomeIcon icon={faFilePen} className="h-4 w-4" />
-                </button>
-            );
-            buttons.push(
-                <button key="cancel" onClick={() => handleAction(order, 'CANCELAR')} className="text-gray-400 hover:text-red-600 p-1.5 transition-colors" title="Cancelar">
-                    <FontAwesomeIcon icon={faBan} className="h-4 w-4" />
                 </button>
             );
         }
 
         if (order.salesStatus === 'facturada') {
             buttons.push(
-                <button key="nc" onClick={() => handleAction(order, 'GENERAR_NC')} className="text-gray-400 hover:text-orange-600 p-1.5 transition-colors" title="Generar Nota de Crédito">
+                <button key="nc" onClick={() => handleAction(order, 'GENERAR_NC')} className="text-blue-600 hover:text-blue-800 p-1.5 transition-colors" title="Generar Nota de Crédito">
                     <FontAwesomeIcon icon={faFileInvoiceDollar} className="h-4 w-4" />
                 </button>
             );
         }
-        
-        // Common "Ver" button
+
+        // 2. View - Middle
         if (!isModal && !isCard) {
             buttons.push(
-                <button key="ver" onClick={(e) => { e.stopPropagation(); handleAction(order, 'VER'); }} className="text-gray-400 hover:text-blue-600 p-1.5 transition-colors" title="Ver Detalle">
+                <button key="ver" onClick={(e) => { e.stopPropagation(); handleAction(order, 'VER'); }} className="text-blue-600 hover:text-blue-800 p-1.5 transition-colors" title="Ver Detalle">
                      <FontAwesomeIcon icon={faEye} className="h-4 w-4" />
+                </button>
+            );
+        }
+
+        // 3. Destructive/Cancel - Right (Last)
+        if (order.salesStatus === 'pendiente_facturacion') {
+            buttons.push(
+                <button key="cancel" onClick={() => handleAction(order, 'CANCELAR')} className="text-blue-600 hover:text-blue-800 p-1.5 transition-colors" title="Cancelar">
+                    <FontAwesomeIcon icon={faBan} className="h-4 w-4" />
                 </button>
             );
         }
@@ -246,19 +269,6 @@ export const VentasPage: React.FC = () => {
             title={currentTitle}
             subtitle="Gestión de ventas y facturación"
             faIcon={{ icon: faUsersGear }}
-            headerActions={
-                <div className="flex items-center gap-2">
-                    <button 
-                        onClick={() => setViewMode(viewMode === 'table' ? 'cards' : 'table')}
-                        className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 shadow-sm transition-colors flex items-center gap-2"
-                        title={viewMode === 'table' ? 'Ver como tarjetas' : 'Ver como tabla'}
-                    >
-                        <FontAwesomeIcon icon={viewMode === 'table' ? faGrip : faTable} />
-                        {viewMode === 'table' ? 'Cards' : 'Tabla'}
-                    </button>
-
-                </div>
-            }
             searchAndFilters={
                 <SearchAndFilters
                     searchTerm={searchQuery}
@@ -271,7 +281,34 @@ export const VentasPage: React.FC = () => {
                         onStartDateChange: (val) => setDateRange(val, dateTo),
                         onEndDateChange: (val) => setDateRange(dateFrom, val)
                     }}
-                />
+                >
+                    <div className="hidden md:flex items-center bg-accent-3 border border-accent-4 rounded-lg p-1 gap-1">
+                        <button
+                            onClick={() => setViewMode('table')}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2 ${
+                                viewMode === 'table' 
+                                ? 'bg-blue-600 text-white shadow-sm' 
+                                : 'text-accent-4 hover:text-accent-5 hover:bg-accent-2'
+                            }`}
+                            title="Ver como tabla"
+                        >
+                            <FontAwesomeIcon icon={faTable} />
+                            <span className="hidden sm:inline">Tabla</span>
+                        </button>
+                        <button
+                            onClick={() => setViewMode('cards')}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2 ${
+                                viewMode === 'cards' 
+                                ? 'bg-blue-600 text-white shadow-sm' 
+                                : 'text-accent-4 hover:text-accent-5 hover:bg-accent-2'
+                            }`}
+                            title="Ver como tarjetas"
+                        >
+                            <FontAwesomeIcon icon={faGrip} />
+                            <span className="hidden sm:inline">Cards</span>
+                        </button>
+                    </div>
+                </SearchAndFilters>
             }
         >
             {viewMode === 'table' ? (
@@ -280,6 +317,7 @@ export const VentasPage: React.FC = () => {
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead className="bg-gray-50 dark:bg-gray-750">
                                 <tr>
+                                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Acciones</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Id venta RTSS</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Pack Id ML</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Id venta ML</th>
@@ -293,7 +331,7 @@ export const VentasPage: React.FC = () => {
                                     <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Tipo Doc</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Nro Doc</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Última modificación</th>
-                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Acciones</th>
+
                                 </tr>
                             </thead>
                             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -306,6 +344,9 @@ export const VentasPage: React.FC = () => {
                                 ) : (
                                     filteredOrders.map((order) => (
                                         <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                                {renderActions(order)}
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                                 {order.id}
                                             </td>
@@ -337,7 +378,7 @@ export const VentasPage: React.FC = () => {
                                                 </Badge>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 cursor-pointer line-clamp-2" title={order.items.length > 0 ? order.items[0].title : ''}>
+                                                <div className="text-xs text-gray-900 dark:text-white line-clamp-2" title={order.items.length > 0 ? order.items[0].title : ''}>
                                                     {order.items.length > 0 ? order.items[0].title : '-'}
                                                     {order.items.length > 1 && <span className="text-gray-400 ml-1">(+{order.items.length - 1})</span>}
                                                 </div>
@@ -357,9 +398,7 @@ export const VentasPage: React.FC = () => {
                                             <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
                                                 {new Date(order.lastUpdated).toLocaleString()}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                {renderActions(order)}
-                                            </td>
+
                                         </tr>
                                     ))
                                 )}

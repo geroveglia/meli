@@ -97,6 +97,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ isOpen, onCl
                                 </div>
 
                                 <div className="flex flex-row justify-end space-x-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                    {renderActions(order)}
                                     <button
                                         type="button"
                                         className="inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
@@ -104,7 +105,6 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ isOpen, onCl
                                     >
                                         Cerrar
                                     </button>
-                                    {renderActions(order)}
                                 </div>
                             </Dialog.Panel>
                         </Transition.Child>

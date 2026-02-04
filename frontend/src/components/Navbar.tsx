@@ -266,7 +266,7 @@ export const MobileNavbar: React.FC = () => {
     userRoleNames.length ? (
       <div className="flex flex-wrap gap-1">
         {userRoleNames.map((label) => (
-          <div key={label} className={`flex text-transform: capitalize font-semibold items-center justify-center px-3 py-1 rounded-full ${className} text-xs bg-accent-3 text-accent-1 border border-accent-4`}>
+          <div key={label} className={`flex text-transform: capitalize font-semibold items-center justify-center px-3 py-1 rounded-full ${className} text-xs bg-accent-5 text-white`}>
             <FontAwesomeIcon icon={faUserShield} className="h-3 w-3 mr-1.5" />
             {label}
           </div>
@@ -274,7 +274,7 @@ export const MobileNavbar: React.FC = () => {
       </div>
     ) : (
       <div className="mt-2">
-        <span className={`inline-flex items-center px-2 py-0.5 rounded-full ${className} font-medium bg-accent-3 text-accent-1 border border-accent-4 uppercase`}>{user?.primaryRole ?? "user"}</span>
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-full ${className} font-medium bg-accent-5 text-white uppercase`}>{user?.primaryRole ?? "user"}</span>
       </div>
     );
 
@@ -284,11 +284,11 @@ export const MobileNavbar: React.FC = () => {
       <div>
         {user?.tenantSlug && (
           <div className="flex flex-col lg:flex-row gap-2 w-full lg:justify-between items-center lg:items-start lg:px-2">
-            <div className="hidden lg:flex text-transform: capitalize font-semibold items-center justify-center px-3 py-1 rounded-full text-xs bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100" title={user.tenantSlug}>
+            <div className="hidden lg:flex text-transform: capitalize font-semibold items-center justify-center px-3 py-1 rounded-full text-xs bg-accent-5 text-white" title={user.tenantSlug}>
               <FontAwesomeIcon icon={faBuilding} className="h-3 w-3 mr-1.5" />
               {user.tenantSlug}
             </div>
-            <div className="flex text-transform: capitalize font-semibold items-center justify-center px-3 py-1 rounded-full text-xs bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100" title={displayName}>
+            <div className="flex text-transform: capitalize font-semibold items-center justify-center px-3 py-1 rounded-full text-xs bg-accent-5 text-white" title={displayName}>
               <FontAwesomeIcon icon={faUser} className="h-3 w-3 mr-1.5" /> {displayName}
             </div>
             <div className="hidden lg:block">

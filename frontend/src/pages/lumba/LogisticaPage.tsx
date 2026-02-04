@@ -8,7 +8,7 @@ import { Card } from '../../components/Card';
 import { PageLayout } from '../../components/PageLayout';
 import { SearchAndFilters } from '../../components/SearchAndFilters';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBox, faCheck, faEye, faUsersGear, faTable, faGrip, faTruck } from "@fortawesome/free-solid-svg-icons";
+import { faBox, faCheck, faEye, faTable, faGrip, faTruck } from "@fortawesome/free-solid-svg-icons";
 import { Badge } from "../../components/Badge";
 
 export const LogisticaPage: React.FC = () => {
@@ -29,7 +29,30 @@ export const LogisticaPage: React.FC = () => {
     const activeTab = searchParams.get('status') || 'TODAS';
 
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-    const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+    const [viewMode, setViewMode] = useState<'table' | 'cards'>(() => {
+        const saved = localStorage.getItem('logistica_view_mode');
+        return (saved === 'table' || saved === 'cards') ? saved : 'cards';
+    });
+
+    // Save preference
+    React.useEffect(() => {
+        localStorage.setItem('logistica_view_mode', viewMode);
+    }, [viewMode]);
+
+    // Force cards view on mobile
+    React.useEffect(() => {
+        const handleResize = () => {
+             if (window.innerWidth < 768) {
+                 setViewMode('cards');
+             }
+        };
+
+        // Initial check
+        handleResize();
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // --- Derived Data / Filtering ---
     const filteredOrders = useMemo(() => {
@@ -115,7 +138,7 @@ export const LogisticaPage: React.FC = () => {
                 );
             } else {
                  buttons.push(
-                    <button key="listo" onClick={() => handleAction(order, 'PASAR_A_LISTO')} className="text-gray-400 hover:text-blue-600 p-1.5 transition-colors" title="Listo para entregar">
+                    <button key="listo" onClick={() => handleAction(order, 'PASAR_A_LISTO')} className="text-blue-600 hover:text-blue-800 p-1.5 transition-colors" title="Listo para entregar">
                         <FontAwesomeIcon icon={faBox} className="h-4 w-4"/>
                     </button>
                 );
@@ -124,7 +147,7 @@ export const LogisticaPage: React.FC = () => {
 
         if (order.logisticsStatus === 'retiro_local') {
              buttons.push(
-                <button key="entregado" onClick={() => handleAction(order, 'MARCAR_ENTREGADO')} className="text-gray-400 hover:text-green-600 p-1.5 transition-colors" title="Marcar Entregado">
+                <button key="entregado" onClick={() => handleAction(order, 'MARCAR_ENTREGADO')} className="text-blue-600 hover:text-blue-800 p-1.5 transition-colors" title="Marcar Entregado">
                     <FontAwesomeIcon icon={faCheck} className="h-4 w-4"/>
                 </button>
             );
@@ -133,7 +156,7 @@ export const LogisticaPage: React.FC = () => {
         // Common "Ver" button
         if (!isModal && !isCard) {
             buttons.push(
-                <button key="ver" onClick={(e) => { e.stopPropagation(); handleAction(order, 'VER'); }} className="text-gray-400 hover:text-blue-600 p-1.5 transition-colors" title="Ver Detalle">
+                <button key="ver" onClick={(e) => { e.stopPropagation(); handleAction(order, 'VER'); }} className="text-blue-600 hover:text-blue-800 p-1.5 transition-colors" title="Ver Detalle">
                     <FontAwesomeIcon icon={faEye} className="h-4 w-4"/>
                 </button>
             );
@@ -243,19 +266,7 @@ export const LogisticaPage: React.FC = () => {
             title={currentTitle}
             subtitle="Gestión de envíos y logística"
             faIcon={{ icon: faTruck }}
-            headerActions={
-                <div className="flex items-center gap-2">
-                     <button 
-                        onClick={() => setViewMode(viewMode === 'table' ? 'cards' : 'table')}
-                        className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 shadow-sm transition-colors flex items-center gap-2"
-                        title={viewMode === 'table' ? 'Ver como tarjetas' : 'Ver como tabla'}
-                    >
-                        <FontAwesomeIcon icon={viewMode === 'table' ? faGrip : faTable} />
-                        {viewMode === 'table' ? 'Cards' : 'Tabla'}
-                    </button>
-
-                </div>
-            }
+            headerActions={null}
             searchAndFilters={
                 <SearchAndFilters
                     searchTerm={searchQuery}
@@ -274,7 +285,34 @@ export const LogisticaPage: React.FC = () => {
                         onStartDateChange: (val) => setDateRange(val, dateTo),
                         onEndDateChange: (val) => setDateRange(dateFrom, val)
                     }}
-                />
+                >
+                    <div className="hidden md:flex items-center bg-accent-3 border border-accent-4 rounded-lg p-1 gap-1">
+                        <button
+                            onClick={() => setViewMode('table')}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2 ${
+                                viewMode === 'table' 
+                                ? 'bg-blue-600 text-white shadow-sm' 
+                                : 'text-accent-4 hover:text-accent-5 hover:bg-accent-2'
+                            }`}
+                            title="Ver como tabla"
+                        >
+                            <FontAwesomeIcon icon={faTable} />
+                            <span className="hidden sm:inline">Tabla</span>
+                        </button>
+                        <button
+                            onClick={() => setViewMode('cards')}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-2 ${
+                                viewMode === 'cards' 
+                                ? 'bg-blue-600 text-white shadow-sm' 
+                                : 'text-accent-4 hover:text-accent-5 hover:bg-accent-2'
+                            }`}
+                            title="Ver como tarjetas"
+                        >
+                            <FontAwesomeIcon icon={faGrip} />
+                            <span className="hidden sm:inline">Cards</span>
+                        </button>
+                    </div>
+                </SearchAndFilters>
             }
         >
             {viewMode === 'table' ? (
@@ -283,6 +321,7 @@ export const LogisticaPage: React.FC = () => {
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead className="bg-gray-50 dark:bg-gray-750">
                                 <tr>
+                                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Acciones</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Id venta RTSS</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Pack Id ML</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Id venta ML</th>
@@ -297,7 +336,7 @@ export const LogisticaPage: React.FC = () => {
                                     <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Entrega ML</th>
                                     <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Estado Envío ML</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Última modificación</th>
-                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">Acciones</th>
+
                                 </tr>
                             </thead>
                         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -310,6 +349,9 @@ export const LogisticaPage: React.FC = () => {
                                 ) : (
                                     filteredOrders.map((order) => (
                                         <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                                {renderActions(order)}
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                                 {order.id}
                                             </td>
@@ -345,7 +387,7 @@ export const LogisticaPage: React.FC = () => {
                                                 </Badge>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 cursor-pointer line-clamp-2" title={order.items.length > 0 ? order.items[0].title : ''}>
+                                                <div className="text-xs text-gray-900 dark:text-white line-clamp-2" title={order.items.length > 0 ? order.items[0].title : ''}>
                                                     {order.items.length > 0 ? order.items[0].title : '-'}
                                                     {order.items.length > 1 && <span className="text-gray-400 ml-1">(+{order.items.length - 1})</span>}
                                                 </div>
@@ -367,9 +409,7 @@ export const LogisticaPage: React.FC = () => {
                                             <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
                                                 {new Date(order.lastUpdated).toLocaleString()}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                {renderActions(order)}
-                                            </td>
+
                                         </tr>
                                     ))
                                 )}

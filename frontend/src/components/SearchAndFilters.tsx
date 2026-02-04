@@ -29,6 +29,7 @@ interface SearchAndFiltersProps {
   filters?: FilterProps[];
   dateFilter?: DateRangeFilter;
   className?: string;
+  children?: React.ReactNode;
 }
 
 const FilterSelect: React.FC<FilterProps> = ({ value, onChange, options, placeholder }) => {
@@ -54,7 +55,7 @@ const FilterSelect: React.FC<FilterProps> = ({ value, onChange, options, placeho
   );
 };
 
-export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({ searchTerm, onSearchChange, searchPlaceholder = "Buscar...", filters = [], dateFilter, className = "" }) => {
+export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({ searchTerm, onSearchChange, searchPlaceholder = "Buscar...", filters = [], dateFilter, className = "", children }) => {
   const [showDateModal, setShowDateModal] = useState(false);
 
   const hasActiveFilters = dateFilter && (dateFilter.startDate || dateFilter.endDate);
@@ -105,6 +106,8 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({ searchTerm, 
             {filters.map((filter, idx) => (
               <FilterSelect key={idx} value={filter.value} onChange={filter.onChange} options={filter.options} placeholder={filter.placeholder} />
             ))}
+
+            {children}
 
             {/* Date Filter Button */}
             {dateFilter && (
