@@ -11,6 +11,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Card } from "../../components/Card";
 import { Checkbox } from "../../components/Checkbox";
+import { Badge } from "../../components/Badge";
 import { sweetAlert } from "../../utils/sweetAlert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser, faUserShield, faUserTie, faUserGraduate, faEdit, faTrash, faKey, faPlus, faShieldHalved, faEye, faEyeSlash, faLayerGroup } from "@fortawesome/free-solid-svg-icons";
@@ -443,33 +444,33 @@ export const UsersPage: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <h4 className="text-sm font-semibold text-accent-9 mb-1">Nombre</h4>
-                <p className="text-sm text-accent-7">{viewUser.firstName || "—"}</p>
+                <h4 className="text-sm font-semibold text-accent-1 mb-1">Nombre</h4>
+                <p className="text-sm text-accent-1">{viewUser.firstName || "—"}</p>
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-accent-9 mb-1">Apellido</h4>
-                <p className="text-sm text-accent-7">{viewUser.lastName || "—"}</p>
+                <h4 className="text-sm font-semibold text-accent-1 mb-1">Apellido</h4>
+                <p className="text-sm text-accent-1">{viewUser.lastName || "—"}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <h4 className="text-sm font-semibold text-accent-9 mb-1">Cargo</h4>
-                <p className="text-sm text-accent-7">{typeof viewUser.positionId === "object" && viewUser.positionId?.name ? viewUser.positionId.name : "Sin cargo"}</p>
+                <h4 className="text-sm font-semibold text-accent-1 mb-1">Cargo</h4>
+                <p className="text-sm text-accent-1">{typeof viewUser.positionId === "object" && viewUser.positionId?.name ? viewUser.positionId.name : "Sin cargo"}</p>
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-accent-9 mb-1">Area</h4>
-                <p className="text-sm text-accent-7">{typeof viewUser.areaId === "object" && viewUser.areaId?.name ? viewUser.areaId.name : "Sin area"}</p>
+                <h4 className="text-sm font-semibold text-accent-1 mb-1">Area</h4>
+                <p className="text-sm text-accent-1">{typeof viewUser.areaId === "object" && viewUser.areaId?.name ? viewUser.areaId.name : "Sin area"}</p>
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-accent-9 mb-1">Nivel</h4>
-                <p className="text-sm text-accent-7">{typeof viewUser.levelId === "object" && viewUser.levelId?.name ? viewUser.levelId.name : "Sin nivel"}</p>
+                <h4 className="text-sm font-semibold text-accent-1 mb-1">Nivel</h4>
+                <p className="text-sm text-accent-1">{typeof viewUser.levelId === "object" && viewUser.levelId?.name ? viewUser.levelId.name : "Sin nivel"}</p>
               </div>
             </div>
 
             {viewUser.clientIds && viewUser.clientIds.length > 0 && (
               <div>
-                <h4 className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 mb-2">Clientes asignados</h4>
+                <h4 className="text-sm font-semibold text-accent-1 dark:text-neutral-100 mb-2">Clientes asignados</h4>
                 <div className="flex flex-wrap gap-1">
                   {viewUser.clientIds.map((client) => (
                     <span key={client._id} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-accent-2 border border-accent-4 text-accent-8">
@@ -481,7 +482,7 @@ export const UsersPage: React.FC = () => {
             )}
 
             <div>
-              <h4 className="text-sm font-semibold text-accent-9 mb-2">Roles ({viewUser.roles.filter((r) => r.name.toLowerCase() !== "superadmin").length})</h4>
+              <h4 className="text-sm font-semibold text-accent-1 mb-2">Roles ({viewUser.roles.filter((r) => r.name.toLowerCase() !== "superadmin").length})</h4>
               {viewUser.roles.filter((r) => r.name.toLowerCase() !== "superadmin").length === 0 ? (
                 <p className="text-sm text-accent-6">Sin roles</p>
               ) : (
@@ -498,8 +499,8 @@ export const UsersPage: React.FC = () => {
             </div>
 
             <div>
-              <h4 className="text-sm font-semibold text-accent-9 mb-1">Último ingreso</h4>
-              <p className="text-sm text-accent-7">{viewUser.lastLoginAt ? new Date(viewUser.lastLoginAt).toLocaleString() : "Nunca"}</p>
+              <h4 className="text-sm font-semibold text-accent-1 mb-1">Último ingreso</h4>
+              <p className="text-sm text-accent-1">{viewUser.lastLoginAt ? new Date(viewUser.lastLoginAt).toLocaleString() : "Nunca"}</p>
             </div>
           </div>
         ) : null,
@@ -806,59 +807,68 @@ export const UsersPage: React.FC = () => {
                     }
                   : undefined
               }
-            >
-              {/* Roles */}
-              <div className="mb-3">
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 flex gap-1 items-center">
-                  <FontAwesomeIcon icon={faUserShield} className="h-2 w-2 lg:h-3 lg:w-3 text-gray-400" />
-                  Rol/es
-                </label>
-                {user.roles.length === 0 ? (
-                  <span className="text-xs text-gray-500 dark:text-gray-500">Sin roles asignados</span>
-                ) : (
-                  <div className="flex flex-wrap gap-1">
-                    {user.roles.slice(0, 3).map((role) => (
-                      <span key={role._id} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-accent-3 text-accent-8">
-                        {role.name}
-                      </span>
-                    ))}
-                    {user.roles.length > 3 && <span className="text-xs text-gray-500 dark:text-gray-500">+{user.roles.length - 3} más</span>}
+              >
+              <div className="mt-4 grid grid-cols-2 gap-y-3 gap-x-2">
+                <div className="col-span-2">
+                  <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+                    <FontAwesomeIcon icon={faUserShield} className="h-3 w-3" />
+                    <span>Rol/es</span>
                   </div>
-                )}
-              </div>
+                  <div className="flex flex-wrap gap-1">
+                      {user.roles.filter((r) => r.name !== "superadmin").length > 0 ? (
+                        user.roles
+                          .filter((r) => r.name !== "superadmin")
+                          .map((role) => (
+                              <Badge key={role._id}>
+                                  {role.name}
+                              </Badge>
+                          ))
+                      ) : (
+                        <span className="text-sm font-medium text-neutral-600 dark:text-neutral-300">Sin roles</span>
+                      )}
+                  </div>
+                </div>
 
-              <div className="flex flex-wrap gap-3">
-                {/* Área */}
-                <div className="flex flex-col">
-                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 flex gap-1 items-center">
-                    <FontAwesomeIcon icon={faLayerGroup} className="h-2 w-2 lg:h-3 lg:w-3 text-gray-400" />
-                    Área
-                  </label>
+                <div>
+                  <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+                    <FontAwesomeIcon icon={faLayerGroup} className="h-3 w-3" />
+                    <span>Área</span>
+                  </div>
                   {typeof user.areaId === "object" && user.areaId?.name ? (
-                    <div className="flex flex-wrap gap-1">
-                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-accent-3 text-accent-8">{user.areaId.name}</span>
-                    </div>
+                      <Badge>
+                           {user.areaId.name}
+                      </Badge>
                   ) : (
-                    <span className="text-xs text-gray-500 dark:text-gray-500">Sin área asignada</span>
+                    <span className="text-sm text-neutral-400 dark:text-neutral-600 italic">No asignada</span>
                   )}
                 </div>
 
-                {/* Cargo - Separado e independiente */}
-                <div className="flex flex-col">
-                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 flex gap-1 items-center">
-                    <FontAwesomeIcon icon={faUserTie} className="h-2 w-2 lg:h-3 lg:w-3 text-gray-400" />
-                    Cargo
-                  </label>
-                  {typeof user.positionId === "object" && user.positionId?.name ? <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-accent-3 text-accent-9">{user.positionId.name}</span> : <span className="text-xs text-gray-500 dark:text-gray-500">Sin cargo asignado</span>}
+                <div>
+                  <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+                    <FontAwesomeIcon icon={faUserTie} className="h-3 w-3" />
+                    <span>Cargo</span>
+                  </div>
+                  {typeof user.positionId === "object" && user.positionId?.name ? (
+                     <Badge>
+                          {user.positionId.name}
+                     </Badge>
+                  ) : (
+                    <span className="text-sm text-neutral-400 dark:text-neutral-600 italic">No asignado</span>
+                  )}
                 </div>
 
-                {/* Nivel - Separado e independiente */}
-                <div className="flex flex-col">
-                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 flex gap-1 items-center">
-                    <FontAwesomeIcon icon={faUserGraduate} className="h-2 w-2 lg:h-3 lg:w-3 text-gray-400" />
-                    Nivel
-                  </label>
-                  {typeof user.levelId === "object" && user.levelId?.name ? <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-accent-3 text-accent-9">{user.levelId.name}</span> : <span className="text-xs text-gray-500 dark:text-gray-500">Sin nivel asignado</span>}
+                <div>
+                  <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+                    <FontAwesomeIcon icon={faUserGraduate} className="h-3 w-3" />
+                    <span>Nivel</span>
+                  </div>
+                  {typeof user.levelId === "object" && user.levelId?.name ? (
+                      <Badge>
+                          {user.levelId.name}
+                      </Badge>
+                  ) : (
+                    <span className="text-sm text-neutral-400 dark:text-neutral-600 italic">No asignado</span>
+                  )}
                 </div>
               </div>
               {/* Clientes asignados (si los hay) */}

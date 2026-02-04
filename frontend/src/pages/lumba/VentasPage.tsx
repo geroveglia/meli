@@ -5,7 +5,7 @@ import { OrderDetailModal } from '../../components/lumba/OrderDetailModal';
 import { PageLayout } from '../../components/PageLayout';
 import { SearchAndFilters } from '../../components/SearchAndFilters';
 import { useSearchParams } from 'react-router-dom';
-import { faFilePen, faBan, faFileInvoiceDollar, faUsersGear, faEye, faTable, faGrip } from "@fortawesome/free-solid-svg-icons";
+import { faFile, faBan, faFileInvoiceDollar, faUsersGear, faEye, faTable, faGrip } from "@fortawesome/free-solid-svg-icons";
 import { Badge } from "../../components/Badge";
 import { sweetAlert } from '../../utils/sweetAlert';
 import { Card } from '../../components/Card';
@@ -146,7 +146,7 @@ export const VentasPage: React.FC = () => {
         if (order.salesStatus === 'pendiente_facturacion') {
             buttons.push(
                 <button key="manual" onClick={() => handleAction(order, 'FACTURAR_MANUAL')} className="text-blue-600 hover:text-blue-800 p-1.5 transition-colors" title="Facturar Manual">
-                    <FontAwesomeIcon icon={faFilePen} className="h-4 w-4" />
+                    <FontAwesomeIcon icon={faFile} className="h-4 w-4" />
                 </button>
             );
         }

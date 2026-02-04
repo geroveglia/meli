@@ -17,7 +17,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ icon, title, description
   return (
     <div className="flex justify-center items-center flex-col py-12">
       <FontAwesomeIcon icon={icon} className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-      <div className="inline-block w-fit px-2 py-1 text-lg font-medium text-accent-9 mb-2">{title}</div>
+      <div className="inline-block w-fit px-2 py-1 text-lg font-medium text-accent-1 mb-2">{title}</div>
       <div>
         <p className="text-accent-6 mb-6">{description}</p>
       </div>
