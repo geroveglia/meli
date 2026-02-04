@@ -75,20 +75,7 @@ export const Card: React.FC<CardProps> = ({ header, children, footer, onClick, c
   };
 
   const getBadgeClasses = (badgeVariant: string = "default") => {
-    switch (badgeVariant) {
-      case "success":
-      case "blue":
-      case "green":
-        return "bg-accent-9 text-accent-2";
-      case "warning":
-        return "bg-accent-4 text-accent-1";
-      case "info":
-      case "cyan":
-      case "social":
-        return "bg-accent-3 text-accent-7";
-      default:
-        return "bg-accent-3 text-accent-7";
-    }
+    return "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100";
   };
 
   const getActionClasses = (actionVariant: string = "default") => {

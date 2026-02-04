@@ -186,7 +186,7 @@ export const MobileNavbar: React.FC = () => {
         label: "Lumba - Ventas",
         scope: "global",
         badge: "Nuevo",
-        badgeColor: "bg-blue-600 text-white"
+        badgeColor: "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100"
       });
       base.push({
         path: "/logistica",
@@ -222,7 +222,7 @@ export const MobileNavbar: React.FC = () => {
           scope: "global",
           count: adminCounts.roles,
           badge: "",
-          badgeColor: "bg-accent-9",
+          badgeColor: "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100",
         });
 
       if (hasPermission("users:view"))
@@ -233,7 +233,7 @@ export const MobileNavbar: React.FC = () => {
           scope: "global",
           count: adminCounts.users,
           badge: "",
-          badgeColor: "bg-accent-9",
+          badgeColor: "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100",
         });
       if (hasPermission("clients:view"))
         base.push({
@@ -242,7 +242,7 @@ export const MobileNavbar: React.FC = () => {
           label: "Cliente",
           scope: "global",
           badge: "",
-          badgeColor: "bg-accent-9",
+          badgeColor: "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100",
         });
     }
 
@@ -284,7 +284,7 @@ export const MobileNavbar: React.FC = () => {
       <div>
         {user?.tenantSlug && (
           <div className="flex flex-col lg:flex-row gap-2 w-full lg:justify-between items-center lg:items-start lg:px-2">
-            <div className="hidden lg:flex text-transform: capitalize font-semibold items-center justify-center px-3 py-1 rounded-full text-xs bg-accent-9 text-accent-2" title={user.tenantSlug}>
+            <div className="hidden lg:flex text-transform: capitalize font-semibold items-center justify-center px-3 py-1 rounded-full text-xs bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100" title={user.tenantSlug}>
               <FontAwesomeIcon icon={faBuilding} className="h-3 w-3 mr-1.5" />
               {user.tenantSlug}
             </div>
@@ -622,7 +622,7 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
       )}
 
       {/* CONFIGURACIÓN - Web (Carrusel, Logo, SEO) */}
-      {(carouselItem || generalItem || seoItem) && (
+      {false && (carouselItem || generalItem || seoItem) && (
         <div className="px-2 mb-4">
           <button onClick={() => toggleAdminSection("config")} className="w-full flex items-center justify-between text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider transition-colors pb-2 pt-2">
             <span>

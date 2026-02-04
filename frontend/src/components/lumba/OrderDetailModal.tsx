@@ -66,19 +66,19 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ isOpen, onCl
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">Estado Interno (Ventas)</p>
-                                        <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                        <span className="inline-flex items-center rounded-md bg-gray-800 px-2 py-1 text-xs font-medium text-white dark:bg-gray-700 dark:text-gray-100">
                                             {order.salesStatus}
                                         </span>
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">Estado Logistica</p>
-                                        <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">
+                                        <span className="inline-flex items-center rounded-md bg-gray-800 px-2 py-1 text-xs font-medium text-white dark:bg-gray-700 dark:text-gray-100">
                                             {order.logisticsStatus}
                                         </span>
                                     </div>
                                     <div className="md:col-span-2">
                                         <p className="text-sm text-gray-500 dark:text-gray-400">Estado MELI</p>
-                                        <span className="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20">
+                                        <span className="inline-flex items-center rounded-md bg-gray-800 px-2 py-1 text-xs font-medium text-white dark:bg-gray-700 dark:text-gray-100">
                                             {order.meliStatus}
                                         </span>
                                     </div>
