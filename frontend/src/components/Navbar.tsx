@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthStore } from "../stores/authStore";
 
 import { useClientContextStore } from "../stores/clientContextStore";
+import { useLumbaStore } from "../stores/lumbaStore";
 import { Link, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark, faBars, faRightFromBracket, faHouse, faUserGear, faBuilding, faArrowUpRightFromSquare, faCog, faUser, faUserShield, faChevronDown, faUsersGear, faInfoCircle, faImages } from "@fortawesome/free-solid-svg-icons";
@@ -328,9 +329,21 @@ interface NavMenuProps {
 const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAdminSection, onItemClick, handleMenuClick, setIsSettingsOpen }) => {
   const location = useLocation();
   const selectedClient = useClientContextStore((state) => state.selectedClient);
-  const SHOW_MENU_COUNTS = false;
+  const { orders } = useLumbaStore();
+  const SHOW_MENU_COUNTS = true;
 
   const isActive = (path: string) => location.pathname === path;
+
+  // Calculate counts
+  const getCount = (type: 'logistics' | 'sales', status: string) => {
+      if (type === 'logistics') {
+          return orders.filter(o => o.logisticsStatus === status).length;
+      }
+      if (type === 'sales') {
+          return orders.filter(o => o.salesStatus === status).length;
+      }
+      return 0;
+  };
 
   // Partición de items: Admin Usuarios (sin clients ni dashboard)
   const userAdminItems = menuItems.filter((item) => ["/admin/roles", "/admin/users"].includes(item.path));
@@ -484,10 +497,10 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
                 <div className="pb-2">
                     {/* Render predefined sub-items for Ventas */}
                      {[
-                        { label: 'Pendiente Facturación', status: 'PENDIENTE_FACTURACION' },
-                        { label: 'Facturadas', status: 'FACTURADAS' },
-                        { label: 'Ventas Canceladas', status: 'VENTAS_CANCELADAS' },
-                        { label: 'Notas de Crédito', status: 'NOTAS_DE_CREDITO' },
+                        { label: 'Pendiente Facturación', status: 'PENDIENTE_FACTURACION', count: getCount('sales', 'pendiente_facturacion') },
+                        { label: 'Facturadas', status: 'FACTURADAS', count: getCount('sales', 'facturada') },
+                        { label: 'Ventas Canceladas', status: 'VENTAS_CANCELADAS', count: getCount('sales', 'venta_cancelada') },
+                        { label: 'Notas de Crédito', status: 'NOTAS_DE_CREDITO', count: getCount('sales', 'nota_credito') },
                      ].map(sub => (
                          <Link 
                             key={sub.status} 
@@ -498,6 +511,9 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
                             <div className="flex items-center space-x-3 flex-1 min-w-0">
                                 <span className="font-medium truncate ml-8 text-sm">{sub.label}</span>
                             </div>
+                            <span className="ml-2 flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                {sub.count}
+                            </span>
                          </Link>
                      ))}
                 </div>
@@ -535,13 +551,13 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
                 <div className="pb-2">
                     {/* Render predefined sub-items for Logistica */}
                      {[
-                        { label: 'Pendiente de preparación', status: 'PENDIENTE_PREPARACION' },
-                        { label: 'Listo para entregar', status: 'LISTO_PARA_ENTREGAR' },
-                        { label: 'Despachado M.L', status: 'DESPACHADO_MELI' },
-                        { label: 'Retiro en Local', status: 'RETIRO_EN_LOCAL' },
-                        { label: 'Entregados', status: 'ENTREGADOS' },
-                        { label: 'Devolucion', status: 'DEVOLUCION' },
-                        { label: 'Cancelados', status: 'CANCELADOS' },
+                        { label: 'Pendiente de preparación', status: 'PENDIENTE_PREPARACION', count: getCount('logistics', 'pendiente_preparacion') },
+                        { label: 'Listo para entregar', status: 'LISTO_PARA_ENTREGAR', count: getCount('logistics', 'listo_para_entregar') },
+                        { label: 'Despachado M.L', status: 'DESPACHADO_MELI', count: getCount('logistics', 'despachado_meli') },
+                        { label: 'Retiro en Local', status: 'RETIRO_EN_LOCAL', count: getCount('logistics', 'retiro_local') },
+                        { label: 'Entregados', status: 'ENTREGADOS', count: getCount('logistics', 'entregado') },
+                        { label: 'Devolucion', status: 'DEVOLUCION', count: getCount('logistics', 'devolucion_vuelto_stock') },
+                        { label: 'Cancelados', status: 'CANCELADOS', count: getCount('logistics', 'cancelado_vuelto_stock') },
                      ].map(sub => (
                          <Link 
                             key={sub.status} 
@@ -552,6 +568,9 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
                             <div className="flex items-center space-x-3 flex-1 min-w-0">
                                 <span className="font-medium truncate ml-8 text-sm">{sub.label}</span>
                             </div>
+                            <span className="ml-2 flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                {sub.count}
+                            </span>
                          </Link>
                      ))}
                 </div>
