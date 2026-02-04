@@ -5,7 +5,7 @@ import { OrderDetailModal } from '../../components/lumba/OrderDetailModal';
 import { PageLayout } from '../../components/PageLayout';
 import { SearchAndFilters } from '../../components/SearchAndFilters';
 import { useSearchParams } from 'react-router-dom';
-import { faUsersGear, faTable, faGrip, faCheck, faEye, faBan, faFileInvoiceDollar } from '@fortawesome/free-solid-svg-icons';
+import { faUsersGear, faTable, faGrip, faCheck, faEye, faBan, faFileInvoiceDollar, faBolt, faFilePen } from '@fortawesome/free-solid-svg-icons';
 import { sweetAlert } from '../../utils/sweetAlert';
 import { Card } from '../../components/Card';
 
@@ -115,45 +115,52 @@ export const VentasPage: React.FC = () => {
         }
     };
 
-    const renderActions = (order: Order, isModal: boolean = false) => {
+    const renderActions = (order: Order, isModal: boolean = false, isCard: boolean = false) => {
         const buttons = [];
 
         if (order.salesStatus === 'pendiente_facturacion') {
             buttons.push(
-                <button key="auto" onClick={() => handleAction(order, 'FACTURAR_AUTO')} className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 dark:bg-green-900 dark:text-green-300">
-                    Facturar Auto
+                <button key="auto" onClick={() => handleAction(order, 'FACTURAR_AUTO')} className="text-gray-400 hover:text-green-600 p-1.5 transition-colors" title="Facturar Auto">
+                    <FontAwesomeIcon icon={faBolt} className="h-4 w-4" />
                 </button>
             );
             buttons.push(
-                <button key="manual" onClick={() => handleAction(order, 'FACTURAR_MANUAL')} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300">
-                    Facturar Manual
+                <button key="manual" onClick={() => handleAction(order, 'FACTURAR_MANUAL')} className="text-gray-400 hover:text-blue-600 p-1.5 transition-colors" title="Facturar Manual">
+                    <FontAwesomeIcon icon={faFilePen} className="h-4 w-4" />
                 </button>
             );
             buttons.push(
-                <button key="cancel" onClick={() => handleAction(order, 'CANCELAR')} className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 dark:bg-red-900 dark:text-red-300">
-                    Cancelar
+                <button key="cancel" onClick={() => handleAction(order, 'CANCELAR')} className="text-gray-400 hover:text-red-600 p-1.5 transition-colors" title="Cancelar">
+                    <FontAwesomeIcon icon={faBan} className="h-4 w-4" />
                 </button>
             );
         }
 
         if (order.salesStatus === 'facturada') {
             buttons.push(
-                <button key="nc" onClick={() => handleAction(order, 'GENERAR_NC')} className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded hover:bg-orange-200 dark:bg-orange-900 dark:text-orange-300">
-                    Generar NC
+                <button key="nc" onClick={() => handleAction(order, 'GENERAR_NC')} className="text-gray-400 hover:text-orange-600 p-1.5 transition-colors" title="Generar Nota de Crédito">
+                    <FontAwesomeIcon icon={faFileInvoiceDollar} className="h-4 w-4" />
                 </button>
             );
         }
         
         // Common "Ver" button
-        if (!isModal) {
+        if (!isModal && !isCard) {
             buttons.push(
-                <button key="ver" onClick={() => handleAction(order, 'VER')} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300">
-                    Ver
+                <button key="ver" onClick={(e) => { e.stopPropagation(); handleAction(order, 'VER'); }} className="text-gray-400 hover:text-blue-600 p-1.5 transition-colors" title="Ver Detalle">
+                     <FontAwesomeIcon icon={faEye} className="h-4 w-4" />
                 </button>
             );
         }
 
-        return <div className="flex gap-2 flex-wrap items-center justify-end">{buttons}</div>;
+        return (
+            <div 
+                className="flex gap-2 flex-nowrap items-center justify-end" 
+                onClick={(e) => e.stopPropagation()}
+            >
+                {buttons}
+            </div>
+        );
     };
 
 
@@ -191,10 +198,11 @@ export const VentasPage: React.FC = () => {
                         footer={{
                             leftContent: (
                                 <div className="w-full">
-                                    {renderActions(order)}
+                                    {renderActions(order, false, true)}
                                 </div>
                             )
                         }}
+                        onClick={() => handleAction(order, 'VER')}
                     >
                          <div className="space-y-2">
                             <div className="flex justify-between text-sm">
@@ -213,13 +221,13 @@ export const VentasPage: React.FC = () => {
                             <div className="pt-2 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-2">
                                 <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-750 p-2 rounded">
                                     <span className="text-xs text-gray-500">Gestión:</span>
-                                    <span className="text-xs font-medium px-2 py-0.5 rounded bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100">
+                                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100">
                                         {order.salesStatus.replace(/_/g, ' ')}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-750 p-2 rounded">
                                     <span className="text-xs text-gray-500">Factura:</span>
-                                    <span className="text-xs font-medium px-2 py-0.5 rounded bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100">
+                                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100">
                                         {order.invoiceStatus === 'invoiced' ? 'Facturada' : 
                                          order.invoiceStatus === 'cancelled' ? 'Cancelada' : 'Pendiente'}
                                     </span>

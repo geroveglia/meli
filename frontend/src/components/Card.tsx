@@ -74,20 +74,25 @@ export const Card: React.FC<CardProps> = ({ header, children, footer, onClick, c
     }
   };
 
-  const getBadgeClasses = (badgeVariant: string = "default") => {
+  const getBadgeClasses = () => {
     return "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100";
   };
 
   const getActionClasses = (actionVariant: string = "default") => {
+    // Base classes for minimalist icons
+    const base = "text-accent-5 transition-colors";
+    
     switch (actionVariant) {
       case "blue":
+        return `${base} hover:!text-blue-600 dark:text-gray-500 dark:hover:!text-blue-400`;
       case "success":
+        return `${base} hover:!text-green-600 dark:text-gray-500 dark:hover:!text-green-400`;
       case "warning":
-        return "hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-900 dark:text-white";
+        return `${base} hover:!text-orange-600 dark:text-gray-500 dark:hover:!text-orange-400`;
       case "danger":
-        return "hover:bg-danger-50 dark:hover:bg-danger-900/20 text-danger-600 dark:text-danger-400";
+        return `${base} hover:!text-red-600 dark:text-gray-500 dark:hover:!text-red-400`;
       default:
-        return "hover:text-accent-1 text-accent-1 dark:text-neutral-400";
+        return `${base} hover:!text-accent-9 dark:text-gray-500 dark:hover:!text-blue-400`;
     }
   };
 
@@ -142,7 +147,7 @@ export const Card: React.FC<CardProps> = ({ header, children, footer, onClick, c
               <div className="flex items-center space-x-2">
                 <div className="flex flex-wrap gap-2 w-full justify-between">
                   {header.badges?.map((badge, index) => (
-                    <span key={index} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium shadow-sm ${badge.className || getBadgeClasses(badge.variant)}`}>
+                    <span key={index} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium shadow-sm ${badge.className || getBadgeClasses()}`}>
                       {badge.icon && <FontAwesomeIcon icon={badge.icon} className="h-3 w-3" />}
                       <span className="text-nowrap">{badge.text}</span>
                     </span>
@@ -200,7 +205,7 @@ export const Card: React.FC<CardProps> = ({ header, children, footer, onClick, c
                     action.onClick(e);
                   }}
                   disabled={action.disabled}
-                  className={`p-1 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${getActionClasses(action.variant)}`}
+                  className={`p-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${getActionClasses(action.variant)}`}
                   title={action.title}
                 >
                   <FontAwesomeIcon icon={action.icon} className="h-4 w-4" />

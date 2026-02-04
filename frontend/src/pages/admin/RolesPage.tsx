@@ -626,7 +626,7 @@ export const RolesPage: React.FC = () => {
                           openEdit(role);
                         },
                         title: "Editar",
-                        variant: "default",
+                        variant: "default" as const,
                       },
                       ...(hasPermission("roles:delete")
                         ? [

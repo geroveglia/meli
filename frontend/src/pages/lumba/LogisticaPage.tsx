@@ -102,35 +102,50 @@ export const LogisticaPage: React.FC = () => {
         }
     };
 
-    const renderActions = (order: Order, isModal: boolean = false) => {
+    const renderActions = (order: Order, isModal: boolean = false, isCard: boolean = false) => {
         const buttons = [];
 
         if (order.logisticsStatus === 'pendiente_preparacion') {
-            buttons.push(
-                <button key="listo" onClick={() => handleAction(order, 'PASAR_A_LISTO')} className="flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300">
-                    <FontAwesomeIcon icon={faBox} size="xs"/> Listo
-                </button>
-            );
+            if (isModal) {
+                 buttons.push(
+                    <button key="listo" onClick={() => handleAction(order, 'PASAR_A_LISTO')} className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                        Listo
+                    </button>
+                );
+            } else {
+                 buttons.push(
+                    <button key="listo" onClick={() => handleAction(order, 'PASAR_A_LISTO')} className="text-gray-400 hover:text-blue-600 p-1.5 transition-colors" title="Listo para entregar">
+                        <FontAwesomeIcon icon={faBox} className="h-4 w-4"/>
+                    </button>
+                );
+            }
         }
 
         if (order.logisticsStatus === 'retiro_local') {
              buttons.push(
-                <button key="entregado" onClick={() => handleAction(order, 'MARCAR_ENTREGADO')} className="flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 dark:bg-green-900 dark:text-green-300">
-                    <FontAwesomeIcon icon={faCheck} size="xs"/> Entregado
+                <button key="entregado" onClick={() => handleAction(order, 'MARCAR_ENTREGADO')} className="text-gray-400 hover:text-green-600 p-1.5 transition-colors" title="Marcar Entregado">
+                    <FontAwesomeIcon icon={faCheck} className="h-4 w-4"/>
                 </button>
             );
         }
         
         // Common "Ver" button
-        if (!isModal) {
+        if (!isModal && !isCard) {
             buttons.push(
-                <button key="ver" onClick={() => handleAction(order, 'VER')} className="flex items-center gap-1 text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300">
-                    <FontAwesomeIcon icon={faEye} size="xs"/> Ver
+                <button key="ver" onClick={(e) => { e.stopPropagation(); handleAction(order, 'VER'); }} className="text-gray-400 hover:text-blue-600 p-1.5 transition-colors" title="Ver Detalle">
+                    <FontAwesomeIcon icon={faEye} className="h-4 w-4"/>
                 </button>
             );
         }
 
-        return <div className="flex gap-2 flex-wrap items-center justify-end">{buttons}</div>;
+        return (
+            <div 
+                className="flex gap-2 flex-nowrap items-center justify-end" 
+                onClick={(e) => e.stopPropagation()}
+            >
+                {buttons}
+            </div>
+        );
     };
 
     // Filter Options
@@ -179,10 +194,11 @@ export const LogisticaPage: React.FC = () => {
                         footer={{
                             leftContent: (
                                 <div className="w-full">
-                                    {renderActions(order)}
+                                    {renderActions(order, false, true)}
                                 </div>
                             )
                         }}
+                        onClick={() => handleAction(order, 'VER')}
                     >
                         <div className="space-y-2">
                             <div className="flex justify-between text-sm">
@@ -203,13 +219,13 @@ export const LogisticaPage: React.FC = () => {
                             <div className="pt-2 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-2">
                                 <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-750 p-2 rounded">
                                     <span className="text-xs text-gray-500">Etiqueta:</span>
-                                    <span className="text-xs font-medium px-2 py-0.5 rounded bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100">
+                                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100">
                                         {order.tagStatus}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-750 p-2 rounded">
                                     <span className="text-xs text-gray-500">Entrega ML:</span>
-                                    <span className="text-xs font-medium px-2 py-0.5 rounded bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100">
+                                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100">
                                         {order.shippingStatus === 'delivered' ? 'Entregado' : 'No Entregado'}
                                     </span>
                                 </div>
