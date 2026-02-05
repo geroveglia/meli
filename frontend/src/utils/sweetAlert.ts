@@ -55,11 +55,11 @@ export const sweetAlert = {
     });
   },
 
-  confirm: (title: string, text: string, confirmText = "Sí, eliminar", cancelText = "Cancelar") => {
+  confirm: (title: string, text: string, icon: any = "warning", confirmText = "Sí, eliminar", cancelText = "Cancelar") => {
     return Swal.fire({
       title,
       text,
-      icon: "warning",
+      icon,
       showCancelButton: true,
       confirmButtonColor: "var(--accent-9)",
       cancelButtonColor: "var(--accent-4)",

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Search, User, Check } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -14,7 +14,6 @@ interface ClientSelectorProps {
 }
 
 const ClientSelector = ({ className = "", onClientChange }: ClientSelectorProps) => {
-  const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Store
@@ -87,8 +86,16 @@ const ClientSelector = ({ className = "", onClientChange }: ClientSelectorProps)
     setIsOpen(false);
     setSearchQuery("");
     onClientChange?.(client);
-    // Opcional: redirigir al dashboard
-    navigate("/admin");
+    // No navegamos - solo cambiamos el contexto para que la página actual filtre los datos
+  };
+
+  // Handle "Todos" selection
+  const handleSelectAll = () => {
+    clearClient();
+    setIsOpen(false);
+    setSearchQuery("");
+    onClientChange?.(null);
+    // No navegamos - solo limpiamos el contexto para mostrar todos los datos
   };
 
   // Handle clear client
@@ -119,7 +126,7 @@ const ClientSelector = ({ className = "", onClientChange }: ClientSelectorProps)
             <User size={20} />
           </div>
 
-          <span className="text-accent-1 font-semibold truncate text-sm">{selectedClient ? selectedClient.name : "Seleccionar..."}</span>
+          <span className="text-accent-1 font-semibold truncate text-sm">{selectedClient ? selectedClient.name : "Todos"}</span>
         </span>
 
         <div className="flex items-center ml-2">
@@ -179,6 +186,32 @@ const ClientSelector = ({ className = "", onClientChange }: ClientSelectorProps)
 
             {/* Client List */}
             <div className="max-h-56 overflow-y-auto">
+              {/* "Todos" option - Always visible */}
+              <button
+                onClick={handleSelectAll}
+                className={`
+                  w-full flex items-center gap-2 px-2 py-2
+                  text-left transition-colors duration-150 border-b border-accent-3
+                  ${!selectedClient ? "bg-accent-3" : "hover:bg-accent-2"}
+                `}
+              >
+                <div
+                  className={`
+                    flex items-center justify-center
+                    w-7 h-7 rounded-md shrink-0
+                    ${!selectedClient ? "bg-accent-9 text-accent-2" : "bg-accent-3 text-accent-7"}
+                    text-xs font-bold
+                  `}
+                >
+                  <User size={14} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium truncate ${!selectedClient ? "text-accent-9" : "text-accent-8"}`}>Todos</p>
+                  <p className="text-[10px] text-accent-7 truncate">Ver todos los clientes</p>
+                </div>
+                {!selectedClient && <Check size={14} className="text-accent-9 shrink-0" />}
+              </button>
+
               {isLoading ? (
                 <div className="p-4 text-center text-accent-7">
                   <div className="animate-spin w-5 h-5 border-2 border-accent-9 border-t-transparent rounded-full mx-auto mb-2" />

@@ -9,6 +9,7 @@
     "buying_mode": "buy_equals_pay",
     "shipping_cost": null,
     "mediations": [],
+    "client_name": "Cliente Demo 1",
     "total_amount": 52079.07,
     "paid_amount": 52079.07,
     "order_items": [
@@ -99,9 +100,7 @@
         "activation_uri": null,
         "operation_type": "regular_payment",
         "payment_type": "bank_transfer",
-        "available_actions": [
-          "refund"
-        ],
+        "available_actions": ["refund"],
         "status": "approved",
         "status_code": null,
         "status_detail": "accredited",
@@ -128,12 +127,7 @@
     },
     "status": "paid",
     "status_detail": null,
-    "tags": [
-      "order_has_discount",
-      "catalog",
-      "paid",
-      "not_delivered"
-    ],
+    "tags": ["order_has_discount", "catalog", "paid", "not_delivered"],
     "static_tags": [],
     "feedback": {
       "seller": null,
@@ -142,9 +136,7 @@
     "context": {
       "channel": "marketplace",
       "site": "MLA",
-      "flows": [
-        "catalog"
-      ]
+      "flows": ["catalog"]
     },
     "seller": {
       "id": 437718603
@@ -181,6 +173,7 @@
     "buying_mode": "buy_equals_pay",
     "shipping_cost": null,
     "mediations": [],
+    "client_name": "Cliente Demo 2",
     "total_amount": 78374.05,
     "paid_amount": 78374.05,
     "order_items": [
@@ -262,9 +255,7 @@
         "activation_uri": null,
         "operation_type": "regular_payment",
         "payment_type": "credit_card",
-        "available_actions": [
-          "refund"
-        ],
+        "available_actions": ["refund"],
         "status": "approved",
         "status_code": null,
         "status_detail": "accredited",
@@ -291,14 +282,7 @@
     },
     "status": "paid",
     "status_detail": null,
-    "tags": [
-      "d2c",
-      "pack_order",
-      "order_has_discount",
-      "paid",
-      "one_shot",
-      "not_delivered"
-    ],
+    "tags": ["d2c", "pack_order", "order_has_discount", "paid", "one_shot", "not_delivered"],
     "static_tags": [],
     "feedback": {
       "seller": null,

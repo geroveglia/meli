@@ -34,6 +34,7 @@ import { ServerStatusCard } from "./components/ServerStatusCard";
 // Placeholder imports - I need to create these files first!
 import { VentasPage } from "./pages/lumba/VentasPage";
 import { LogisticaPage } from "./pages/lumba/LogisticaPage";
+import { LabelPrint } from "./pages/lumba/LabelPrint";
 import { PerfilPage } from "./pages/lumba/PerfilPage";
 
 // --- Layout público (sin Navbar) ---
@@ -276,10 +277,40 @@ function App() {
 
             {/* Lumba Connect Routes */}
             <Route element={<AppLayout />}>
-               <Route path="/ventas" element={<ProtectedRoute><VentasPage /></ProtectedRoute>} />
-               <Route path="/logistica" element={<ProtectedRoute><LogisticaPage /></ProtectedRoute>} />
-               <Route path="/perfil" element={<ProtectedRoute><PerfilPage /></ProtectedRoute>} />
+              <Route
+                path="/ventas"
+                element={
+                  <ProtectedRoute>
+                    <VentasPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/logistica"
+                element={
+                  <ProtectedRoute>
+                    <LogisticaPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/perfil"
+                element={
+                  <ProtectedRoute>
+                    <PerfilPage />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
+
+            <Route
+              path="/print-label/:orderId"
+              element={
+                <ProtectedRoute>
+                  <LabelPrint />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Client Routes (Root Level) */}
             <Route element={<AppLayout />}>

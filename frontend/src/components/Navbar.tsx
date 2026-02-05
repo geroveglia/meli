@@ -23,7 +23,6 @@ interface AdminCounts {
 export const MobileNavbar: React.FC = () => {
   const { user, logout, hasPermission } = useAuthStore();
 
-
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -66,8 +65,6 @@ export const MobileNavbar: React.FC = () => {
         if (hasPermission("roles:view")) promises.push(axios.get("/roles/count").catch(() => ({ data: { count: 0 } })));
         else promises.push(Promise.resolve({ data: { count: 0 } }));
 
-
-
         if (hasPermission("users:view")) {
           promises.push(axios.get("/users/count").catch(() => ({ data: { count: 0 } })));
         } else {
@@ -97,9 +94,9 @@ export const MobileNavbar: React.FC = () => {
     if (["/admin/dashboard", "/admin/tenants", "/admin/clients", "/perfil"].includes(location.pathname)) {
       setOpenAdminSection("general");
     } else if (["/logistica"].includes(location.pathname)) {
-         setOpenAdminSection("logistica");
+      setOpenAdminSection("logistica");
     } else if (["/ventas"].includes(location.pathname)) {
-         setOpenAdminSection("ventas");
+      setOpenAdminSection("ventas");
     } else if (["/admin/carousel-images", "/admin/general", "/admin/seo"].includes(location.pathname)) {
       setOpenAdminSection("config");
     } else if (["/admin/roles", "/admin/users"].includes(location.pathname)) {
@@ -132,7 +129,7 @@ export const MobileNavbar: React.FC = () => {
       isCreativeSuite?: boolean;
       badge?: string;
       badgeColor?: string;
-      disabled?: boolean; // 👈 AGREGAR ESTO
+      disabled?: boolean;
     }> = [];
 
     if (isSuperAdminTenant) {
@@ -168,7 +165,7 @@ export const MobileNavbar: React.FC = () => {
           icon: faSearch,
           label: "SEO",
           scope: "global",
-        }
+        },
       );
     } else {
       // Dashboard siempre visible
@@ -186,7 +183,7 @@ export const MobileNavbar: React.FC = () => {
         label: "Lumba - Ventas",
         scope: "global",
         badge: "Nuevo",
-        badgeColor: "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100"
+        badgeColor: "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100",
       });
       base.push({
         path: "/logistica",
@@ -239,7 +236,7 @@ export const MobileNavbar: React.FC = () => {
         base.push({
           path: "/admin/clients",
           icon: faBuilding,
-          label: "Cliente",
+          label: "Clientes",
           scope: "global",
           badge: "",
           badgeColor: "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100",
@@ -300,414 +297,421 @@ export const MobileNavbar: React.FC = () => {
     );
   };
 
-const LogoutButton: React.FC<{
-  onClick?: () => void;
-  className?: string;
-  logout: () => void;
-}> = ({ onClick, className = "", logout }) => (
-  <button
-    onClick={() => {
-      logout();
-      onClick?.();
-    }}
-    className={`flex items-center space-x-3 w-full py-3 rounded-lg text-accent-7 dark:text-accent-6 hover:text-accent-1 transition-colors ${className}`}
-  >
-    <FontAwesomeIcon icon={faRightFromBracket} className="h-5 w-5" />
-    <span className="font-medium lg:hidden"></span>
-  </button>
-);
-
-interface NavMenuProps {
-  menuItems: any[];
-  openAdminSection: string | null;
-  toggleAdminSection: (section: "users" | "general" | "config" | "logistica" | "ventas") => void;
-  onItemClick?: () => void;
-  handleMenuClick: (e: React.MouseEvent<HTMLAnchorElement>, item: any) => void;
-  setIsSettingsOpen: (open: boolean) => void;
-}
-
-const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAdminSection, onItemClick, handleMenuClick, setIsSettingsOpen }) => {
-  const location = useLocation();
-  const selectedClient = useClientContextStore((state) => state.selectedClient);
-  const { orders } = useLumbaStore();
-  const SHOW_MENU_COUNTS = true;
-
-  const isActive = (path: string) => location.pathname === path;
-
-  // Calculate counts
-  const getCount = (type: 'logistics' | 'sales', status: string) => {
-      if (type === 'logistics') {
-          return orders.filter(o => o.logisticsStatus === status).length;
-      }
-      if (type === 'sales') {
-          return orders.filter(o => o.salesStatus === status).length;
-      }
-      return 0;
-  };
-
-  // Partición de items: Admin Usuarios (sin clients ni dashboard)
-  const userAdminItems = menuItems.filter((item) => ["/admin/roles", "/admin/users"].includes(item.path));
-
-  // Items de Admin General (Dashboard + Clientes + Tenants para superadmin + SEO)
-  const dashboardItem = menuItems.find((item) => item.path === "/admin/dashboard");
-  const clientItem = menuItems.find((item) => item.path === "/admin/clients");
-  const tenantsItem = menuItems.find((item) => item.path === "/admin/tenants");
-  const carouselItem = menuItems.find((item) => item.path === "/admin/carousel-images");
-
-  const generalItem = menuItems.find((item) => item.path === "/admin/general");
-
-  const seoItem = menuItems.find((item) => item.path === "/admin/seo");
-
-  // Lumba Items
-  const ventasItem = menuItems.find((item) => item.path === "/ventas");
-  const logisticaItem = menuItems.find((item) => item.path === "/logistica");
-
-  // Otros items que no pertenecen a ninguna sección
-  const otherAdminItems = menuItems.filter((item) => 
-    !userAdminItems.some((u) => u.path === item.path) && 
-    item.path !== "/admin/dashboard" && 
-    item.path !== "/admin/clients" && 
-    item.path !== "/admin/tenants" && 
-    item.path !== "/admin/carousel-images" && 
-    item.path !== "/admin/general" && 
-    item.path !== "/admin/seo" &&
-    item.path !== "/ventas" &&
-    item.path !== "/logistica"
+  const LogoutButton: React.FC<{
+    onClick?: () => void;
+    className?: string;
+    logout: () => void;
+  }> = ({ onClick, className = "", logout }) => (
+    <button
+      onClick={() => {
+        logout();
+        onClick?.();
+      }}
+      className={`flex items-center space-x-3 w-full py-3 rounded-lg text-accent-7 dark:text-accent-6 hover:text-accent-1 transition-colors ${className}`}
+    >
+      <FontAwesomeIcon icon={faRightFromBracket} className="h-5 w-5" />
+      <span className="font-medium lg:hidden"></span>
+    </button>
   );
 
-  const renderMenuItem = (item: any) => {
-    // Debug log to verify HMR
-    console.log("NavMenu rendering item:", item.label);
-    if (item.external) {
-      return (
-        <a
-          key={item.path}
-          href={item.path}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => {
-            handleMenuClick(e, item);
-            onItemClick?.();
-          }}
-          className="group flex items-center justify-between px-2 py-2 transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-        >
-          <div className="flex items-center space-x-3">
-            <FontAwesomeIcon icon={item.icon} className="h-5 w-5" />
-            <span className="font-medium">{item.label}</span>
-          </div>
-          <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="h-3 w-3 opacity-50 group-hover:opacity-100 transition-opacity" />
-        </a>
-      );
-    }
+  interface NavMenuProps {
+    menuItems: any[];
+    openAdminSection: string | null;
+    toggleAdminSection: (section: "users" | "general" | "config" | "logistica" | "ventas") => void;
+    onItemClick?: () => void;
+    handleMenuClick: (e: React.MouseEvent<HTMLAnchorElement>, item: any) => void;
+    setIsSettingsOpen: (open: boolean) => void;
+  }
 
-    if (item.path === "#") {
-      return (
-        <button
-          key={item.label}
-          onClick={() => {
-            setIsSettingsOpen(true);
-            onItemClick?.();
-          }}
-          className="group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all w-full text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-        >
-          <div className="flex items-center space-x-3 flex-1 min-w-0">
-            <FontAwesomeIcon icon={item.icon} className="h-5 w-5 flex-shrink-0" />
-            <span className="font-medium truncate">{item.label}</span>
-          </div>
-          {SHOW_MENU_COUNTS && item.count !== undefined && <span className={`ml-2 flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${item.count > 0 ? "bg-slate-500/20 text-slate-500 dark:bg-white/20 dark:text-white" : "bg-red-500/20 text-red-700 dark:bg-red-500/20 dark:text-red-400"}`}>{item.count}</span>}
-        </button>
-      );
-    }
+  const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAdminSection, onItemClick, handleMenuClick, setIsSettingsOpen }) => {
+    const location = useLocation();
+    const selectedClient = useClientContextStore((state) => state.selectedClient);
+    const { orders, notifications, setNotification } = useLumbaStore();
+    const SHOW_MENU_COUNTS = true;
 
-    // Disabled state
-    if (item.disabled) {
+    const isActive = (path: string) => location.pathname === path;
+
+    // Calculate counts - filter by client if one is selected
+    const getCount = (type: "logistics" | "sales", status: string) => {
+      let filteredOrders = orders;
+
+      // Filter by client if one is selected (use clientName to match LogisticaPage logic)
+      if (selectedClient) {
+        filteredOrders = orders.filter((o) => o.clientName === selectedClient.name);
+      }
+
+      if (type === "logistics") {
+        return filteredOrders.filter((o) => o.logisticsStatus === status).length;
+      }
+      if (type === "sales") {
+        return filteredOrders.filter((o) => o.salesStatus === status).length;
+      }
+      return 0;
+    };
+
+    // Partición de items: Admin Usuarios (sin clients ni dashboard)
+    const userAdminItems = menuItems.filter((item) => ["/admin/roles", "/admin/users"].includes(item.path));
+
+    // Items de Admin General (Dashboard + Clientes + Tenants para superadmin + SEO)
+    const dashboardItem = menuItems.find((item) => item.path === "/admin/dashboard");
+    const clientItem = menuItems.find((item) => item.path === "/admin/clients");
+    const tenantsItem = menuItems.find((item) => item.path === "/admin/tenants");
+    const carouselItem = menuItems.find((item) => item.path === "/admin/carousel-images");
+
+    const generalItem = menuItems.find((item) => item.path === "/admin/general");
+
+    const seoItem = menuItems.find((item) => item.path === "/admin/seo");
+
+    // Lumba Items
+    const ventasItem = menuItems.find((item) => item.path === "/ventas");
+    const logisticaItem = menuItems.find((item) => item.path === "/logistica");
+
+    // Otros items que no pertenecen a ninguna sección
+    const otherAdminItems = menuItems.filter((item) => !userAdminItems.some((u) => u.path === item.path) && item.path !== "/admin/dashboard" && item.path !== "/admin/clients" && item.path !== "/admin/tenants" && item.path !== "/admin/carousel-images" && item.path !== "/admin/general" && item.path !== "/admin/seo" && item.path !== "/ventas" && item.path !== "/logistica");
+
+    const renderMenuItem = (item: any) => {
+      // Debug log to verify HMR
+      console.log("NavMenu rendering item:", item.label);
+      if (item.external) {
+        return (
+          <a
+            key={item.path}
+            href={item.path}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => {
+              handleMenuClick(e, item);
+              onItemClick?.();
+            }}
+            className="group flex items-center justify-between px-2 py-2 transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <div className="flex items-center space-x-3">
+              <FontAwesomeIcon icon={item.icon} className="h-5 w-5" />
+              <span className="font-medium">{item.label}</span>
+            </div>
+            <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="h-3 w-3 opacity-50 group-hover:opacity-100 transition-opacity" />
+          </a>
+        );
+      }
+
+      if (item.path === "#") {
+        return (
+          <button
+            key={item.label}
+            onClick={() => {
+              setIsSettingsOpen(true);
+              onItemClick?.();
+            }}
+            className="group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all w-full text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+          >
+            <div className="flex items-center space-x-3 flex-1 min-w-0">
+              <FontAwesomeIcon icon={item.icon} className="h-5 w-5 flex-shrink-0" />
+              <span className="font-medium truncate">{item.label}</span>
+            </div>
+            {SHOW_MENU_COUNTS && item.count !== undefined && <span className={`ml-2 flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${item.count > 0 ? "bg-slate-500/20 text-slate-500 dark:bg-white/20 dark:text-white" : "bg-red-500/20 text-red-700 dark:bg-red-500/20 dark:text-red-400"}`}>{item.count}</span>}
+          </button>
+        );
+      }
+
+      // Disabled state
+      if (item.disabled) {
+        return (
+          <div key={item.path} className="group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all cursor-not-allowed opacity-40 bg-neutral-100 dark:bg-neutral-700 select-none">
+            <div className="flex items-center space-x-3 flex-1 min-w-0">
+              <div className="h-8 w-8 flex items-center justify-center rounded-md bg-neutral-200 dark:bg-neutral-600">
+                <FontAwesomeIcon icon={item.icon} className="h-4 w-4" />
+              </div>
+              <span className="font-medium truncate">{item.label}</span>
+            </div>
+          </div>
+        );
+      }
       return (
-        <div key={item.path} className="group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all cursor-not-allowed opacity-40 bg-neutral-100 dark:bg-neutral-700 select-none">
+        <Link key={item.path} to={item.path} onClick={onItemClick} aria-current={isActive(item.path) ? "page" : undefined} className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${isActive(item.path) ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}>
           <div className="flex items-center space-x-3 flex-1 min-w-0">
-            <div className="h-8 w-8 flex items-center justify-center rounded-md bg-neutral-200 dark:bg-neutral-600">
+            <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${isActive(item.path) ? "bg-white text-blue-600" : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"}`}>
               <FontAwesomeIcon icon={item.icon} className="h-4 w-4" />
             </div>
             <span className="font-medium truncate">{item.label}</span>
+            {item.badge && <span className={`ml-1 px-2 py-0.5 rounded-full text-[8px] font-bold bg-accent-2 text-accent-9 border border-accent-9 dark:bg-black dark:text-white dark:border-white uppercase`}>{item.badge}</span>}
           </div>
-        </div>
-      );
-    }
-    return (
-      <Link key={item.path} to={item.path} onClick={onItemClick} aria-current={isActive(item.path) ? "page" : undefined} className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${isActive(item.path) ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}>
-        <div className="flex items-center space-x-3 flex-1 min-w-0">
-          <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${isActive(item.path) ? "bg-white text-blue-600" : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"}`}>
-            <FontAwesomeIcon icon={item.icon} className="h-4 w-4" />
-          </div>
-          <span className="font-medium truncate">{item.label}</span>
-          {item.badge && <span className={`ml-1 px-2 py-0.5 rounded-full text-[8px] font-bold bg-accent-2 text-accent-9 border border-accent-9 dark:bg-black dark:text-white dark:border-white uppercase`}>{item.badge}</span>}
-        </div>
 
-        {SHOW_MENU_COUNTS && item.count !== undefined && <span className={`ml-2 flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${item.count > 0 ? "bg-slate-500/20 text-slate-500 dark:bg-white/20 dark:text-white" : "bg-red-500/20 text-red-700 dark:bg-red-500/20 dark:text-red-400"}`}>{item.count}</span>}
-      </Link>
+          {SHOW_MENU_COUNTS && item.count !== undefined && <span className={`ml-2 flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${item.count > 0 ? "bg-slate-500/20 text-slate-500 dark:bg-white/20 dark:text-white" : "bg-red-500/20 text-red-700 dark:bg-red-500/20 dark:text-red-400"}`}>{item.count}</span>}
+        </Link>
+      );
+    };
+    return (
+      <div>
+        {/* CLIENT SELECTOR - Arriba de todo */}
+        {clientItem && (
+          <div className="px-2 mb-4">
+            <ClientSelector className="w-full" />
+
+            {/* Menú del contexto del cliente */}
+            <div className="mt-3 space-y-1">
+              {/* Información - solo cuando hay cliente específico */}
+              {selectedClient && (
+                <Link to="/client-info" onClick={onItemClick} aria-current={isActive("/client-info") ? "page" : undefined} className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${isActive("/client-info") ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}>
+                  <div className="flex items-center space-x-3 flex-1 min-w-0">
+                    <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${isActive("/client-info") ? "bg-white text-blue-600" : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"}`}>
+                      <FontAwesomeIcon icon={faInfoCircle} className="h-4 w-4" />
+                    </div>
+                    <span className="font-medium truncate">Información</span>
+                  </div>
+                </Link>
+              )}
+
+              {/* Logística - como menú desplegable */}
+              {logisticaItem && (
+                <div>
+                  <button onClick={() => toggleAdminSection("logistica")} className={`w-full group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${location.pathname === "/logistica" ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}>
+                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${location.pathname === "/logistica" ? "bg-white text-blue-600" : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"}`}>
+                        <FontAwesomeIcon icon={faBuilding} className="h-4 w-4" />
+                      </div>
+                      <span className="font-medium truncate">Logística</span>
+                    </div>
+                    <FontAwesomeIcon icon={faChevronDown} className={`h-3 w-3 text-gray-400 transform transition-transform ${openAdminSection === "logistica" ? "rotate-180" : ""}`} />
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {openAdminSection === "logistica" && (
+                      <motion.nav
+                        key="logistica"
+                        initial="collapsed"
+                        animate="open"
+                        exit="collapsed"
+                        variants={{
+                          open: { opacity: 1, height: "auto" },
+                          collapsed: { opacity: 0, height: 0 },
+                        }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        className="overflow-hidden space-y-1 ml-4"
+                      >
+                        <div className="py-1">
+                          {[
+                            { label: "En preparación", status: "PENDIENTE_PREPARACION", count: getCount("logistics", "pendiente_preparacion") },
+                            { label: "Listo para entregar", status: "LISTO_PARA_ENTREGAR", count: getCount("logistics", "listo_para_entregar") },
+                            { label: "Despachado ML", status: "DESPACHADO_MELI", count: getCount("logistics", "despachado_meli") },
+                            { label: "Retiro en Local", status: "RETIRO_EN_LOCAL", count: getCount("logistics", "retiro_local") },
+                            { label: "Entregados", status: "ENTREGADOS", count: getCount("logistics", "entregado") },
+                            { label: "Devolucion", status: "DEVOLUCION", count: getCount("logistics", "devolucion_vuelto_stock") },
+                            { label: "Cancelados", status: "CANCELADOS", count: getCount("logistics", "cancelado_vuelto_stock") },
+                          ].map((sub) => {
+                            const hasNotification = notifications?.[sub.status];
+                            return (
+                              <Link
+                                key={sub.status}
+                                to={`/logistica?status=${sub.status}`}
+                                onClick={() => {
+                                  setOpen(false);
+                                  if (hasNotification) {
+                                    setNotification(sub.status, false);
+                                  }
+                                }}
+                                className={`group relative flex items-center justify-between px-2 py-1.5 rounded-lg transition-all ${location.search.includes(sub.status) ? "!bg-gray-100 !text-accent-1" : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900"}`}
+                              >
+                                <span className="font-medium truncate text-sm">{sub.label}</span>
+                                <span className={`ml-2 flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${hasNotification ? "bg-blue-600 text-white animate-breath-blue border-none" : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"}`}>{sub.count}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </motion.nav>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+
+              {/* Facturación - como menú desplegable */}
+              {ventasItem && (
+                <div>
+                  <button onClick={() => toggleAdminSection("ventas")} className={`w-full group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${location.pathname === "/ventas" ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}>
+                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${location.pathname === "/ventas" ? "bg-white text-blue-600" : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"}`}>
+                        <FontAwesomeIcon icon={faUsersGear} className="h-4 w-4" />
+                      </div>
+                      <span className="font-medium truncate">Facturación</span>
+                    </div>
+                    <FontAwesomeIcon icon={faChevronDown} className={`h-3 w-3 text-gray-400 transform transition-transform ${openAdminSection === "ventas" ? "rotate-180" : ""}`} />
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {openAdminSection === "ventas" && (
+                      <motion.nav
+                        key="ventas"
+                        initial="collapsed"
+                        animate="open"
+                        exit="collapsed"
+                        variants={{
+                          open: { opacity: 1, height: "auto" },
+                          collapsed: { opacity: 0, height: 0 },
+                        }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        className="overflow-hidden space-y-1 ml-4"
+                      >
+                        <div className="py-1">
+                          {[
+                            { label: "Pendiente Facturación", status: "PENDIENTE_FACTURACION", count: getCount("sales", "pendiente_facturacion") },
+                            { label: "Facturadas", status: "FACTURADAS", count: getCount("sales", "facturada") },
+                            { label: "Ventas Canceladas", status: "VENTAS_CANCELADAS", count: getCount("sales", "venta_cancelada") },
+                            { label: "Notas de Crédito", status: "NOTAS_DE_CREDITO", count: getCount("sales", "nota_credito") },
+                          ].map((sub) => {
+                            const hasNotification = notifications?.[sub.status];
+                            return (
+                              <Link
+                                key={sub.status}
+                                to={`/ventas?status=${sub.status}`}
+                                onClick={() => {
+                                  setOpen(false);
+                                  if (hasNotification) {
+                                    setNotification(sub.status, false);
+                                  }
+                                }}
+                                className={`group relative flex items-center justify-between px-2 py-1.5 rounded-lg transition-all ${location.search.includes(sub.status) ? "!bg-gray-100 !text-accent-1" : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900"}`}
+                              >
+                                <span className="font-medium truncate text-sm">{sub.label}</span>
+                                <span className={`ml-2 flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${hasNotification ? "bg-blue-600 text-white animate-breath-blue border-none" : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"}`}>{sub.count}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </motion.nav>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* DIVIDER - Línea divisoria */}
+        {clientItem && (dashboardItem || tenantsItem || userAdminItems.length > 0) && <div className="border-t border-gray-200 dark:border-gray-700 mx-4 my-3" />}
+
+        {/* ADMIN GENERAL - Dashboard, Tenants y Clientes */}
+        {(dashboardItem || clientItem || tenantsItem) && (
+          <div className="px-2 mb-2">
+            <button onClick={() => toggleAdminSection("general")} className="w-full flex items-center justify-between text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider transition-colors pb-2 pt-2">
+              <span>
+                <FontAwesomeIcon icon={faCog} className="mr-2 h-4 w-4" />
+                <span className="uppercase">Admin General</span>
+              </span>
+              <FontAwesomeIcon icon={faChevronDown} className={`h-3 w-3 transform transition-transform ${openAdminSection === "general" ? "rotate-180" : ""}`} />
+            </button>
+
+            <AnimatePresence initial={false}>
+              {openAdminSection === "general" && (
+                <motion.nav
+                  key="general"
+                  initial="collapsed"
+                  animate="open"
+                  exit="collapsed"
+                  variants={{
+                    open: { opacity: 1, height: "auto" },
+                    collapsed: { opacity: 0, height: 0 },
+                  }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="overflow-hidden space-y-1"
+                >
+                  <div className="pb-2">
+                    {/* Dashboard */}
+                    {dashboardItem && renderMenuItem(dashboardItem)}
+
+                    {/* Tenants (solo superadmin) */}
+                    {tenantsItem && renderMenuItem(tenantsItem)}
+
+                    {/* Clientes */}
+                    {clientItem && renderMenuItem(clientItem)}
+                  </div>
+                </motion.nav>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {/* CONFIGURACIÓN - Web (Carrusel, Logo, SEO) */}
+        {false && (carouselItem || generalItem || seoItem) && (
+          <div className="px-2 mb-2">
+            <button onClick={() => toggleAdminSection("config")} className="w-full flex items-center justify-between text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider transition-colors pb-2 pt-2">
+              <span>
+                <FontAwesomeIcon icon={faCog} className="mr-2 h-4 w-4" />
+                <span className="uppercase">Configuración</span>
+              </span>
+              <FontAwesomeIcon icon={faChevronDown} className={`h-3 w-3 transform transition-transform ${openAdminSection === "config" ? "rotate-180" : ""}`} />
+            </button>
+
+            <AnimatePresence initial={false}>
+              {openAdminSection === "config" && (
+                <motion.nav
+                  key="config"
+                  initial="collapsed"
+                  animate="open"
+                  exit="collapsed"
+                  variants={{
+                    open: { opacity: 1, height: "auto" },
+                    collapsed: { opacity: 0, height: 0 },
+                  }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="overflow-hidden space-y-1"
+                >
+                  <div className="pb-2">
+                    <div className="pl-2 pt-1 pb-1 text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">Web</div>
+                    {/* SEO */}
+                    {seoItem && renderMenuItem(seoItem)}
+
+                    {/* Carousel */}
+                    {carouselItem && renderMenuItem(carouselItem)}
+
+                    {/* General/Logo */}
+                    {generalItem && renderMenuItem(generalItem)}
+                  </div>
+                </motion.nav>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {/* ADMIN USUARIOS */}
+        {userAdminItems.length > 0 && (
+          <div className="px-2 mb-2">
+            <button onClick={() => toggleAdminSection("users")} className="w-full flex items-center justify-between text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider transition-colors pb-2 pt-2">
+              <span>
+                <FontAwesomeIcon icon={faUsersGear} className="mr-2 h-4 w-4" />
+                <span className="uppercase"> Admin Usuarios</span>
+              </span>
+              <FontAwesomeIcon icon={faChevronDown} className={`h-3 w-3 transform transition-transform ${openAdminSection === "users" ? "rotate-180" : ""}`} />
+            </button>
+
+            <AnimatePresence initial={false}>
+              {openAdminSection === "users" && (
+                <motion.nav
+                  key="users"
+                  initial="collapsed"
+                  animate="open"
+                  exit="collapsed"
+                  variants={{
+                    open: { opacity: 1, height: "auto" },
+                    collapsed: { opacity: 0, height: 0 },
+                  }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="overflow-hidden space-y-1"
+                >
+                  <div className="pb-2">{userAdminItems.map((item) => renderMenuItem(item))}</div>
+                </motion.nav>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {/* OTROS ITEMS (si existen) */}
+        {otherAdminItems.length > 0 && (
+          <div className="px-2 mb-2">
+            <nav className="space-y-1 pb-2">{otherAdminItems.map((item) => renderMenuItem(item))}</nav>
+          </div>
+        )}
+      </div>
     );
   };
-  return (
-    <div>
-      {/* CLIENT SELECTOR - Arriba de todo */}
-      {clientItem && (
-        <div className="px-2 mb-4">
-          <ClientSelector className="w-full" />
-
-          {/* Información tab - subcategoría cuando hay cliente seleccionado */}
-          {selectedClient && (
-            <div className="mt-2 ml-2 space-y-1">
-              <Link to="/client-info" onClick={onItemClick} aria-current={isActive("/client-info") ? "page" : undefined} className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${isActive("/client-info") ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}>
-                <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${isActive("/client-info") ? "bg-white text-blue-600" : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"}`}>
-                    <FontAwesomeIcon icon={faInfoCircle} className="h-4 w-4" />
-                  </div>
-                  <span className="font-medium truncate">Información</span>
-                </div>
-              </Link>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* SECCION VENTAS - Dedicada */}
-      {(ventasItem) && (
-        <div className="px-2 mb-4">
-          <button onClick={() => toggleAdminSection("ventas")} className="w-full flex items-center justify-between text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider transition-colors pb-2 pt-2">
-            <span>
-              <FontAwesomeIcon icon={faUsersGear} className="mr-2 h-4 w-4" />
-              <span className="uppercase">Ventas</span>
-            </span>
-            <FontAwesomeIcon icon={faChevronDown} className={`h-3 w-3 transform transition-transform ${openAdminSection === "ventas" ? "rotate-180" : ""}`} />
-          </button>
-
-          <AnimatePresence initial={false}>
-            {openAdminSection === "ventas" && (
-              <motion.nav
-                key="ventas"
-                initial="collapsed"
-                animate="open"
-                exit="collapsed"
-                variants={{
-                  open: { opacity: 1, height: "auto" },
-                  collapsed: { opacity: 0, height: 0 },
-                }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="overflow-hidden space-y-1"
-              >
-                <div className="pb-2">
-                    {/* Render predefined sub-items for Ventas */}
-                     {[
-                        { label: 'Pendiente Facturación', status: 'PENDIENTE_FACTURACION', count: getCount('sales', 'pendiente_facturacion') },
-                        { label: 'Facturadas', status: 'FACTURADAS', count: getCount('sales', 'facturada') },
-                        { label: 'Ventas Canceladas', status: 'VENTAS_CANCELADAS', count: getCount('sales', 'venta_cancelada') },
-                        { label: 'Notas de Crédito', status: 'NOTAS_DE_CREDITO', count: getCount('sales', 'nota_credito') },
-                     ].map(sub => (
-                         <Link 
-                            key={sub.status} 
-                            to={`/ventas?status=${sub.status}`}
-                            onClick={() => setOpen(false)}
-                            className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${location.search.includes(sub.status) ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}
-                         >
-                            <div className="flex items-center space-x-3 flex-1 min-w-0">
-                                <span className="font-medium truncate ml-8 text-sm">{sub.label}</span>
-                            </div>
-                            <span className="ml-2 flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                                {sub.count}
-                            </span>
-                         </Link>
-                     ))}
-                </div>
-              </motion.nav>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
-
-      {/* SECCION LOGISTICA - Dedicada */}
-      {(logisticaItem) && (
-        <div className="px-2 mb-4">
-          <button onClick={() => toggleAdminSection("logistica")} className="w-full flex items-center justify-between text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider transition-colors pb-2 pt-2">
-            <span>
-              <FontAwesomeIcon icon={faBuilding} className="mr-2 h-4 w-4" />
-              <span className="uppercase">Logística</span>
-            </span>
-            <FontAwesomeIcon icon={faChevronDown} className={`h-3 w-3 transform transition-transform ${openAdminSection === "logistica" ? "rotate-180" : ""}`} />
-          </button>
-
-          <AnimatePresence initial={false}>
-            {openAdminSection === "logistica" && (
-              <motion.nav
-                key="logistica"
-                initial="collapsed"
-                animate="open"
-                exit="collapsed"
-                variants={{
-                  open: { opacity: 1, height: "auto" },
-                  collapsed: { opacity: 0, height: 0 },
-                }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="overflow-hidden space-y-1"
-              >
-                <div className="pb-2">
-                    {/* Render predefined sub-items for Logistica */}
-                     {[
-                        { label: 'Pendiente de preparación', status: 'PENDIENTE_PREPARACION', count: getCount('logistics', 'pendiente_preparacion') },
-                        { label: 'Listo para entregar', status: 'LISTO_PARA_ENTREGAR', count: getCount('logistics', 'listo_para_entregar') },
-                        { label: 'Despachado M.L', status: 'DESPACHADO_MELI', count: getCount('logistics', 'despachado_meli') },
-                        { label: 'Retiro en Local', status: 'RETIRO_EN_LOCAL', count: getCount('logistics', 'retiro_local') },
-                        { label: 'Entregados', status: 'ENTREGADOS', count: getCount('logistics', 'entregado') },
-                        { label: 'Devolucion', status: 'DEVOLUCION', count: getCount('logistics', 'devolucion_vuelto_stock') },
-                        { label: 'Cancelados', status: 'CANCELADOS', count: getCount('logistics', 'cancelado_vuelto_stock') },
-                     ].map(sub => (
-                         <Link 
-                            key={sub.status} 
-                            to={`/logistica?status=${sub.status}`}
-                            onClick={() => setOpen(false)}
-                            className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${location.search.includes(sub.status) ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}
-                         >
-                            <div className="flex items-center space-x-3 flex-1 min-w-0">
-                                <span className="font-medium truncate ml-8 text-sm">{sub.label}</span>
-                            </div>
-                            <span className="ml-2 flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                                {sub.count}
-                            </span>
-                         </Link>
-                     ))}
-                </div>
-              </motion.nav>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
-
-      {/* ADMIN GENERAL - Dashboard, Tenants y Clientes */}
-      {(dashboardItem || clientItem || tenantsItem) && (
-        <div className="px-2 mb-4">
-          <button onClick={() => toggleAdminSection("general")} className="w-full flex items-center justify-between text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider transition-colors pb-2 pt-2">
-            <span>
-              <FontAwesomeIcon icon={faCog} className="mr-2 h-4 w-4" />
-              <span className="uppercase">Admin General</span>
-            </span>
-            <FontAwesomeIcon icon={faChevronDown} className={`h-3 w-3 transform transition-transform ${openAdminSection === "general" ? "rotate-180" : ""}`} />
-          </button>
-
-          <AnimatePresence initial={false}>
-            {openAdminSection === "general" && (
-              <motion.nav
-                key="general"
-                initial="collapsed"
-                animate="open"
-                exit="collapsed"
-                variants={{
-                  open: { opacity: 1, height: "auto" },
-                  collapsed: { opacity: 0, height: 0 },
-                }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="overflow-hidden space-y-1"
-              >
-                <div className="pb-2">
-                  {/* Dashboard */}
-                  {dashboardItem && renderMenuItem(dashboardItem)}
-
-                  {/* Tenants (solo superadmin) */}
-                  {tenantsItem && renderMenuItem(tenantsItem)}
-
-                  {/* Clientes */}
-                  {clientItem && renderMenuItem(clientItem)}
-                </div>
-              </motion.nav>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
-
-      {/* CONFIGURACIÓN - Web (Carrusel, Logo, SEO) */}
-      {false && (carouselItem || generalItem || seoItem) && (
-        <div className="px-2 mb-4">
-          <button onClick={() => toggleAdminSection("config")} className="w-full flex items-center justify-between text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider transition-colors pb-2 pt-2">
-            <span>
-              <FontAwesomeIcon icon={faCog} className="mr-2 h-4 w-4" />
-              <span className="uppercase">Configuración</span>
-            </span>
-            <FontAwesomeIcon icon={faChevronDown} className={`h-3 w-3 transform transition-transform ${openAdminSection === "config" ? "rotate-180" : ""}`} />
-          </button>
-
-          <AnimatePresence initial={false}>
-            {openAdminSection === "config" && (
-              <motion.nav
-                key="config"
-                initial="collapsed"
-                animate="open"
-                exit="collapsed"
-                variants={{
-                  open: { opacity: 1, height: "auto" },
-                  collapsed: { opacity: 0, height: 0 },
-                }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="overflow-hidden space-y-1"
-              >
-                <div className="pb-2">
-                  <div className="pl-2 pt-1 pb-1 text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
-                    Web
-                  </div>
-                  {/* SEO */}
-                  {seoItem && renderMenuItem(seoItem)}
-
-                  {/* Carousel */}
-                  {carouselItem && renderMenuItem(carouselItem)}
-
-                  {/* General/Logo */}
-                  {generalItem && renderMenuItem(generalItem)}
-
-
-                </div>
-              </motion.nav>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
-
-      {/* ADMIN USUARIOS */}
-      {userAdminItems.length > 0 && (
-        <div className="px-2 mb-2">
-          <button onClick={() => toggleAdminSection("users")} className="w-full flex items-center justify-between text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider transition-colors pb-2 pt-2">
-            <span>
-              <FontAwesomeIcon icon={faUsersGear} className="mr-2 h-4 w-4" />
-              <span className="uppercase"> Admin Usuarios</span>
-            </span>
-            <FontAwesomeIcon icon={faChevronDown} className={`h-3 w-3 transform transition-transform ${openAdminSection === "users" ? "rotate-180" : ""}`} />
-          </button>
-
-          <AnimatePresence initial={false}>
-            {openAdminSection === "users" && (
-              <motion.nav
-                key="users"
-                initial="collapsed"
-                animate="open"
-                exit="collapsed"
-                variants={{
-                  open: { opacity: 1, height: "auto" },
-                  collapsed: { opacity: 0, height: 0 },
-                }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="overflow-hidden space-y-1"
-              >
-                <div className="pb-2">{userAdminItems.map((item) => renderMenuItem(item))}</div>
-              </motion.nav>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
-
-      {/* OTROS ITEMS (si existen) */}
-      {otherAdminItems.length > 0 && (
-        <div className="px-2 mb-2">
-          <nav className="space-y-1 pb-2">{otherAdminItems.map((item) => renderMenuItem(item))}</nav>
-        </div>
-      )}
-    </div>
-  );
-};
 
   return (
     <>
@@ -720,11 +724,7 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
               </button>
             </div>
             <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 lg:static lg:transform-none lg:w-64 lg:-ml-6 lg:flex lg:justify-center lg:items-center">
-              <Logo 
-                sizeClass="text-3xl" 
-                wrapperClassName="flex items-center cursor-pointer hover:opacity-80 transition-opacity" 
-                imgClassName="max-h-12 max-w-[200px]"
-              />
+              <Logo sizeClass="text-3xl" wrapperClassName="flex items-center cursor-pointer hover:opacity-80 transition-opacity" imgClassName="max-h-12 max-w-[200px]" />
             </div>
             <div className="flex items-center justify-center space-x-2 ml-auto">
               <div className="hidden lg:block">
@@ -770,15 +770,8 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
                   </div>
                 </div>
               )} */}
-                <div>
-                <NavMenu 
-                  menuItems={menuItems}
-                  openAdminSection={openAdminSection}
-                  toggleAdminSection={toggleAdminSection}
-                  onItemClick={() => setOpen(false)} 
-                  handleMenuClick={handleMenuClick}
-                  setIsSettingsOpen={setIsSettingsOpen}
-                />
+              <div>
+                <NavMenu menuItems={menuItems} openAdminSection={openAdminSection} toggleAdminSection={toggleAdminSection} onItemClick={() => setOpen(false)} handleMenuClick={handleMenuClick} setIsSettingsOpen={setIsSettingsOpen} />
               </div>
             </div>
           </div>
@@ -799,14 +792,7 @@ const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAd
           <div className="flex flex-col pt-5 pb-4 overflow-y-auto mt-12">
             <div className="px-3 mb-4">
               <div className={`bg-transparent dark:bg-transparent py-2`}>
-                <NavMenu 
-                  menuItems={menuItems}
-                  openAdminSection={openAdminSection}
-                  toggleAdminSection={toggleAdminSection}
-                  onItemClick={() => setOpen(false)} 
-                  handleMenuClick={handleMenuClick}
-                  setIsSettingsOpen={setIsSettingsOpen}
-                />
+                <NavMenu menuItems={menuItems} openAdminSection={openAdminSection} toggleAdminSection={toggleAdminSection} onItemClick={() => setOpen(false)} handleMenuClick={handleMenuClick} setIsSettingsOpen={setIsSettingsOpen} />
               </div>
             </div>
           </div>
