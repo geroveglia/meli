@@ -209,7 +209,15 @@ export const useLumbaStore = create<LumbaState>()(
 
       updateOrderSalesStatus: (orderId, status, billingType) =>
         set((state) => {
-          const statusKey = status.toUpperCase();
+          // Map internal status to Tab/Notification Key
+          const statusToKey: Record<string, string> = {
+            pendiente_facturacion: "PENDIENTE_FACTURACION",
+            facturada: "FACTURADAS",
+            venta_cancelada: "VENTAS_CANCELADAS",
+            nota_credito: "NOTAS_DE_CREDITO",
+          };
+          const statusKey = statusToKey[status] || status.toUpperCase();
+
           return {
             orders: state.orders.map((o) => (o.id === orderId ? { ...o, salesStatus: status, billingType: billingType || o.billingType } : o)),
             notifications: { ...state.notifications, [statusKey]: true },
@@ -218,7 +226,18 @@ export const useLumbaStore = create<LumbaState>()(
 
       updateOrderLogisticsStatus: (orderId, status) =>
         set((state) => {
-          const statusKey = status.toUpperCase();
+          // Map internal status to Tab/Notification Key
+          const statusToKey: Record<string, string> = {
+            pendiente_preparacion: "PENDIENTE_PREPARACION",
+            listo_para_entregar: "LISTO_PARA_ENTREGAR",
+            despachado_meli: "DESPACHADO_MELI",
+            retiro_local: "RETIRO_EN_LOCAL",
+            entregado: "ENTREGADOS",
+            cancelado_vuelto_stock: "CANCELADOS",
+            devolucion_vuelto_stock: "DEVOLUCION",
+          };
+          const statusKey = statusToKey[status] || status.toUpperCase();
+
           return {
             orders: state.orders.map((o) => (o.id === orderId ? { ...o, logisticsStatus: status } : o)),
             notifications: { ...state.notifications, [statusKey]: true },

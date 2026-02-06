@@ -36,6 +36,7 @@ export const VentasPage: React.FC = () => {
   ];
 
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
+  const [exitingOrderIds, setExitingOrderIds] = useState<string[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const [viewMode, setViewMode] = useState<"table" | "cards">(() => {
@@ -175,65 +176,70 @@ export const VentasPage: React.FC = () => {
     const result = await sweetAlert.confirm(title, `Vas a aplicar la acción a ${count} orden(es).`, icon, confirmText);
 
     if (result.isConfirmed) {
-      if (isBulk) {
-        (orderOrIds as string[]).forEach((id) => executeAction(id, action));
-        setSelectedOrderIds([]); // Clear selection after action
-        sweetAlert.success("Acción completada", `Se actualizaron ${count} ordenes.`);
+      if (action === "FACTURAR_MANUAL") {
+        const idsToUpdate = isBulk ? (orderOrIds as string[]) : [(orderOrIds as Order).id];
+        setExitingOrderIds((prev) => [...prev, ...idsToUpdate]);
+
+        setTimeout(() => {
+          if (isBulk) {
+            (orderOrIds as string[]).forEach((id) => executeAction(id, action));
+            setSelectedOrderIds([]);
+            sweetAlert.success("Acción completada", `Se actualizaron ${count} ordenes.`);
+          } else {
+            executeAction((orderOrIds as Order).id, action);
+            sweetAlert.success("Acción completada", "La orden ha sido actualizada.");
+          }
+          setExitingOrderIds((prev) => prev.filter((id) => !idsToUpdate.includes(id)));
+        }, 500);
       } else {
-        executeAction((orderOrIds as Order).id, action);
-        sweetAlert.success("Acción completada", "La orden ha sido actualizada.");
+        if (isBulk) {
+          (orderOrIds as string[]).forEach((id) => executeAction(id, action));
+          setSelectedOrderIds([]); // Clear selection after action
+          sweetAlert.success("Acción completada", `Se actualizaron ${count} ordenes.`);
+        } else {
+          executeAction((orderOrIds as Order).id, action);
+          sweetAlert.success("Acción completada", "La orden ha sido actualizada.");
+        }
       }
     }
   };
 
   const renderActions = (order: Order, isModal: boolean = false, isCard: boolean = false) => {
+    if (isModal) return null;
+
     const buttons = [];
 
     // 1. Primary Actions (Invoice, NC) - Left
     if (order.salesStatus === "pendiente_facturacion") {
       buttons.push(
-        <button key="manual" onClick={() => handleAction(order, "FACTURAR_MANUAL")} className="text-blue-600 hover:text-blue-800 p-1.5 transition-colors" title="Facturar">
-          <FontAwesomeIcon icon={faFile} className="h-4 w-4" />
-        </button>,
+        <Button key="manual" onClick={() => handleAction(order, "FACTURAR_MANUAL")} variant="blue" size="sm" className="flex items-center gap-2">
+          <FontAwesomeIcon icon={faFile} />
+          Facturar
+        </Button>,
       );
     }
 
     if (order.salesStatus === "facturada") {
       buttons.push(
-        <button key="nc" onClick={() => handleAction(order, "GENERAR_NC")} className="text-blue-600 hover:text-blue-800 p-1.5 transition-colors" title="Generar Nota de Crédito">
-          <FontAwesomeIcon icon={faFileInvoiceDollar} className="h-4 w-4" />
-        </button>,
-      );
-    }
-
-    // 2. View - Middle
-    if (!isModal && !isCard) {
-      buttons.push(
-        <button
-          key="ver"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleAction(order, "VER");
-          }}
-          className="text-blue-600 hover:text-blue-800 p-1.5 transition-colors"
-          title="Ver Detalle"
-        >
-          <FontAwesomeIcon icon={faEye} className="h-4 w-4" />
-        </button>,
+        <Button key="nc" onClick={() => handleAction(order, "GENERAR_NC")} variant="blue" size="sm" className="flex items-center gap-2">
+          <FontAwesomeIcon icon={faFileInvoiceDollar} />
+          Generar NC
+        </Button>,
       );
     }
 
     // 3. Destructive/Cancel - Right (Last)
     if (order.salesStatus === "pendiente_facturacion") {
       buttons.push(
-        <button key="cancel" onClick={() => handleAction(order, "CANCELAR")} className="text-blue-600 hover:text-blue-800 p-1.5 transition-colors" title="Cancelar">
-          <FontAwesomeIcon icon={faBan} className="h-4 w-4" />
-        </button>,
+        <Button key="cancel" onClick={() => handleAction(order, "CANCELAR")} variant="danger" size="sm" className="flex items-center gap-2">
+          <FontAwesomeIcon icon={faBan} />
+          Cancelar
+        </Button>,
       );
     }
 
     return (
-      <div className="flex gap-2 flex-nowrap items-center justify-end" onClick={(e) => e.stopPropagation()}>
+      <div className="flex gap-2 flex-nowrap items-center justify-center w-full" onClick={(e) => e.stopPropagation()}>
         {buttons}
       </div>
     );
@@ -343,12 +349,26 @@ export const VentasPage: React.FC = () => {
           {/* Bulk Actions Toolbar */}
           <div className="bg-blue-50 dark:bg-blue-900/20 px-6 py-2 flex items-center justify-between border-b border-blue-100 dark:border-blue-800 h-14">
             <div className="flex gap-2">
-              <Button onClick={() => handleAction(selectedOrderIds, "FACTURAR_MANUAL")} variant="blue" size="sm" disabled={selectedOrderIds.length === 0}>
-                Facturar
-              </Button>
-              <Button onClick={() => handleAction(selectedOrderIds, "CANCELAR")} variant="danger" size="sm" disabled={selectedOrderIds.length === 0}>
-                Cancelar
-              </Button>
+              {/* Dynamic Bulk Actions */}
+              {(activeTab === "PENDIENTE_FACTURACION" || activeTab === "TODAS") && (
+                <>
+                  <Button onClick={() => handleAction(selectedOrderIds, "FACTURAR_MANUAL")} variant="blue" size="sm" disabled={selectedOrderIds.length === 0} className="flex items-center gap-2">
+                    <FontAwesomeIcon icon={faFile} />
+                    Facturar
+                  </Button>
+                  <Button onClick={() => handleAction(selectedOrderIds, "CANCELAR")} variant="danger" size="sm" disabled={selectedOrderIds.length === 0} className="flex items-center gap-2">
+                    <FontAwesomeIcon icon={faBan} />
+                    Cancelar
+                  </Button>
+                </>
+              )}
+
+              {activeTab === "FACTURADAS" && (
+                <Button onClick={() => handleAction(selectedOrderIds, "GENERAR_NC")} variant="blue" size="sm" disabled={selectedOrderIds.length === 0} className="flex items-center gap-2">
+                  <FontAwesomeIcon icon={faFileInvoiceDollar} />
+                  Generar NC
+                </Button>
+              )}
             </div>
             {selectedOrderIds.length > 0 && <span className="text-sm font-medium text-blue-800 dark:text-blue-300">{selectedOrderIds.length} seleccionados</span>}
           </div>
@@ -372,19 +392,7 @@ export const VentasPage: React.FC = () => {
                     Id venta RTSS
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
-                    Pack Id ML
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
                     Id ML
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
-                    Estado pedido ML
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
-                    Gestión Interna Pedido
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
-                    Estado Factura
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
                     Publicación
@@ -392,30 +400,28 @@ export const VentasPage: React.FC = () => {
                   <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
                     Total pagado
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
-                    Comprador
-                  </th>
                   <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
-                    Tipo Doc
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
-                    Nro Doc
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
-                    Última modificación
+                    Detalle
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={14} className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                    <td colSpan={9} className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
                       No se encontraron pedidos
                     </td>
                   </tr>
                 ) : (
                   filteredOrders.map((order) => (
-                    <tr key={order.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${selectedOrderIds.includes(order.id) ? "bg-blue-50/50 dark:bg-blue-900/10" : ""}`}>
+                    <tr
+                      key={order.id}
+                      className={`
+                        hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-500 ease-in-out
+                        ${selectedOrderIds.includes(order.id) ? "bg-blue-50/50 dark:bg-blue-900/10" : ""}
+                        ${exitingOrderIds.includes(order.id) ? "transform -translate-x-full opacity-0" : "transform translate-x-0 opacity-100"}
+                      `}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <Checkbox checked={selectedOrderIds.includes(order.id)} onChange={() => toggleSelect(order.id)} />
                       </td>
@@ -423,19 +429,7 @@ export const VentasPage: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">{new Date(order.date).toLocaleDateString()}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-medium">{order.clientName}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{order.id}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">{order.packId || "-"}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-mono">{order.meliOrderId}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <Badge>{order.meliStatus}</Badge>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <Badge>{order.salesStatus.replace(/_/g, " ")}</Badge>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <Badge>{order.invoiceStatus === "invoiced" ? "Facturada" : order.invoiceStatus === "cancelled" ? "Cancelada" : "Pendiente"}</Badge>
-                      </td>
                       <td className="px-6 py-4">
                         <div className="text-xs text-gray-900 dark:text-white line-clamp-2" title={order.items.length > 0 ? order.items[0].title : ""}>
                           {order.items.length > 0 ? order.items[0].title : "-"}
@@ -445,12 +439,20 @@ export const VentasPage: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">${order.total.toLocaleString()}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-white">{order.buyerName}</div>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAction(order, "VER");
+                          }}
+                          variant="blue"
+                          size="sm"
+                          className="flex items-center gap-2 mx-auto"
+                        >
+                          <FontAwesomeIcon icon={faEye} />
+                          Ver detalle
+                        </Button>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-xs text-gray-500">{order.docType || "-"}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-mono">{order.docNumber || "-"}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">{new Date(order.lastUpdated).toLocaleString()}</td>
                     </tr>
                   ))
                 )}

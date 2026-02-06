@@ -237,9 +237,33 @@ export const LogisticaPage: React.FC = () => {
     }
   };
 
-  const renderActions = (order: Order, _isModal: boolean = false, _isCard: boolean = false) => {
+  const renderActions = (order: Order, isModal: boolean = false, _isCard: boolean = false) => {
     const buttons = [];
 
+    // Modal View: Only "Reimprimir Etiqueta" if applicable
+    if (isModal) {
+      // Allow reprinting in preparation, ready, and dispatched states
+      if (
+        order.logisticsStatus === "pendiente_preparacion" ||
+        order.logisticsStatus === "listo_para_entregar" ||
+        order.logisticsStatus === "despachado_meli"
+      ) {
+        // Show reprint button
+        buttons.push(
+          <Button key="reprint" onClick={() => handleAction(order, "IMPRIMIR_ETIQUETA")} variant="blue" size="sm" className="flex items-center gap-2">
+            <FontAwesomeIcon icon={faPrint} />
+            Reimprimir Etiqueta
+          </Button>,
+        );
+      }
+      return (
+        <div className="flex gap-2 flex-nowrap items-center justify-end w-full" onClick={(e) => e.stopPropagation()}>
+          {buttons}
+        </div>
+      );
+    }
+
+    // Normal View (Table/Card)
     if (order.logisticsStatus === "pendiente_preparacion") {
       const isPackaged = order.packaged;
       const isLabeled = order.tagStatus === "impresas";
@@ -247,7 +271,7 @@ export const LogisticaPage: React.FC = () => {
       // 1. Empaquetado
       buttons.push(
         <Button key="pack" onClick={() => handleAction(order, "EMPAQUETAR")} variant={isPackaged ? "grey" : "blue"} size="sm" disabled={isPackaged} className={`flex items-center gap-2`}>
-          <FontAwesomeIcon icon={faBoxOpen} />
+          <FontAwesomeIcon icon={isPackaged ? faCheck : faBoxOpen} />
           {isPackaged ? "Empaquetado" : "Empaquetar"}
         </Button>,
       );
@@ -255,7 +279,7 @@ export const LogisticaPage: React.FC = () => {
       // 2. Imprimir Etiqueta
       buttons.push(
         <Button key="print" onClick={() => handleAction(order, "IMPRIMIR_ETIQUETA")} variant={isLabeled ? "grey" : "blue"} size="sm" disabled={!isPackaged || isLabeled} className={`flex items-center gap-2`} title={!isPackaged ? "Primero debes empaquetar" : ""}>
-          <FontAwesomeIcon icon={faPrint} />
+          <FontAwesomeIcon icon={isLabeled ? faCheck : faPrint} />
           {isLabeled ? "Impresa" : "Imprimir Etiqueta"}
         </Button>,
       );
@@ -415,15 +439,30 @@ export const LogisticaPage: React.FC = () => {
           {/* Bulk Actions Toolbar */}
           <div className="bg-blue-50 dark:bg-blue-900/20 px-6 py-2 flex items-center justify-between border-b border-blue-100 dark:border-blue-800 h-14">
             <div className="flex gap-2">
-              <Button onClick={() => handleAction(selectedOrderIds, "PASAR_A_LISTO")} variant="blue" size="sm" disabled={selectedOrderIds.length === 0}>
-                Pasar a Listo
-              </Button>
-              <Button onClick={() => handleAction(selectedOrderIds, "MARCAR_ENTREGADO")} variant="blue" size="sm" disabled={selectedOrderIds.length === 0}>
-                Marcar Entregado
-              </Button>
-              <Button onClick={() => handleAction(selectedOrderIds, "ETIQUETA")} variant="blue" size="sm" disabled={selectedOrderIds.length === 0}>
-                Etiquetas
-              </Button>
+              {/* Dynamic Bulk Actions */}
+              {(activeTab === "PENDIENTE_PREPARACION" || activeTab === "TODAS") && (
+                <>
+                  <Button onClick={() => handleAction(selectedOrderIds, "EMPAQUETAR")} variant="blue" size="sm" disabled={selectedOrderIds.length === 0} className="flex items-center gap-2">
+                    <FontAwesomeIcon icon={faBoxOpen} />
+                    Empaquetar
+                  </Button>
+                  <Button onClick={() => handleAction(selectedOrderIds, "IMPRIMIR_ETIQUETA")} variant="blue" size="sm" disabled={selectedOrderIds.length === 0} className="flex items-center gap-2">
+                    <FontAwesomeIcon icon={faPrint} />
+                    Imprimir Etiqueta
+                  </Button>
+                  <Button onClick={() => handleAction(selectedOrderIds, "PASAR_A_LISTO")} variant="blue" size="sm" disabled={selectedOrderIds.length === 0} className="flex items-center gap-2">
+                    <FontAwesomeIcon icon={faTruck} />
+                    Listo para entregar
+                  </Button>
+                </>
+              )}
+
+              {activeTab === "RETIRO_EN_LOCAL" && (
+                <Button onClick={() => handleAction(selectedOrderIds, "MARCAR_ENTREGADO")} variant="blue" size="sm" disabled={selectedOrderIds.length === 0} className="flex items-center gap-2">
+                  <FontAwesomeIcon icon={faCheck} />
+                  Marcar Entregado
+                </Button>
+              )}
             </div>
             {selectedOrderIds.length > 0 && <span className="text-sm font-medium text-blue-800 dark:text-blue-300">{selectedOrderIds.length} seleccionados</span>}
           </div>

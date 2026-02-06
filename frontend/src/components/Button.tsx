@@ -27,7 +27,7 @@ export const ButtonLink: React.FC<ButtonLinkProps> = ({ text, to = "/nosotros", 
 };
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "danger" | "blue" | "success";
+  variant?: "primary" | "secondary" | "ghost" | "danger" | "blue" | "success" | "grey";
   size?: "sm" | "md" | "lg";
   isLoading?: boolean;
 }
