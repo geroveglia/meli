@@ -9,7 +9,7 @@ import { Card } from "../../components/Card";
 import { PageLayout } from "../../components/PageLayout";
 import { SearchAndFilters } from "../../components/SearchAndFilters";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBox, faCheck, faEye, faTable, faGrip, faTruck, faPrint, faBoxOpen, faDownload } from "@fortawesome/free-solid-svg-icons";
+import { faBox, faCheck, faEye, faTable, faGrip, faTruck, faPrint, faBoxOpen, faDownload, faBan } from "@fortawesome/free-solid-svg-icons";
 
 import { Checkbox } from "../../components/Checkbox";
 import { Button } from "../../components/Button";
@@ -88,12 +88,19 @@ export const LogisticaPage: React.FC = () => {
       ENTREGADOS: ["entregado"],
       CANCELADOS: ["cancelado_vuelto_stock"],
       DEVOLUCION: ["devolucion_vuelto_stock"],
+      DESEMPAQUETAR: ["cancelado_vuelto_stock", "devolucion_vuelto_stock"],
     };
 
     if (activeTab !== "TODAS") {
       const allowedStates = tabMap[activeTab];
       if (allowedStates) {
         result = result.filter((o) => allowedStates.includes(o.logisticsStatus));
+        // Specific filtering for the new tabs
+        if (activeTab === "DESEMPAQUETAR") {
+          result = result.filter((o) => o.packaged);
+        } else if (activeTab === "CANCELADOS" || activeTab === "DEVOLUCION") {
+          result = result.filter((o) => !o.packaged);
+        }
       }
     }
 
@@ -134,7 +141,19 @@ export const LogisticaPage: React.FC = () => {
         // For bulk, maybe just trigger download or show toast
         // toast.success(`Descargando etiqueta para orden ${orderId}`);
         // Now also marks as printed
+        // Now also marks as printed
         setOrderTagStatus(orderId, "impresas");
+        break;
+      case "CANCELAR":
+        const orderToCancel = orders.find(o => o.id === orderId);
+        if (orderToCancel?.logisticsStatus === "entregado") {
+          updateOrderLogisticsStatus(orderId, "devolucion_vuelto_stock");
+        } else {
+          updateOrderLogisticsStatus(orderId, "cancelado_vuelto_stock");
+        }
+        break;
+      case "DESEMPAQUETAR":
+        setOrderPackaged(orderId, false);
         break;
     }
   };
@@ -161,6 +180,18 @@ export const LogisticaPage: React.FC = () => {
       } else {
         executeAction((orderOrIds as Order).id, action);
         sweetAlert.success("Producto empaquetado", "");
+      }
+      return;
+    }
+
+
+    if (action === "DESEMPAQUETAR") {
+      if (isBulk) {
+        (orderOrIds as string[]).forEach((id) => executeAction(id, action));
+        sweetAlert.success("Acción completada", `Se desempaquetaron ${count} ordenes.`);
+      } else {
+        executeAction((orderOrIds as Order).id, action);
+        sweetAlert.success("Producto desempaquetado", "El producto ha vuelto al stock físico.");
       }
       return;
     }
@@ -212,6 +243,46 @@ export const LogisticaPage: React.FC = () => {
       return;
     }
 
+    if (action === "CANCELAR") {
+      let title = "¿Cancelar Orden?";
+      let text = "La orden pasará a la sección 'Cancelados' y se devolverá a stock.";
+      let confirmText = "Sí, Cancelar";
+
+      if (!isBulk) {
+        const order = orderOrIds as Order;
+        if (order.logisticsStatus === "entregado") {
+          title = "¿Generar Devolución?";
+          text = "La orden pasará a la sección 'Devolución' y se devolverá a stock.";
+          confirmText = "Sí, Devolver";
+        }
+      } else {
+        // For bulk, check if any are delivered to adjust message potentially, 
+        // or just keep generic. Let's make it generic-safe.
+        text = "Las ordenes se moverán a 'Cancelados' o 'Devolución' según su estado.";
+      }
+
+      const result = await sweetAlert.confirm(
+        title,
+        text,
+        "warning",
+        confirmText
+      );
+
+      if (result.isConfirmed) {
+        if (isBulk) {
+          (orderOrIds as string[]).forEach((id) => executeAction(id, action));
+          setSelectedOrderIds([]); // Clear selection
+          sweetAlert.success("Acción completada", `Se procesaron ${count} ordenes.`);
+        } else {
+          const order = orderOrIds as Order;
+          executeAction(order.id, action);
+          const successMsg = order.logisticsStatus === "entregado" ? "La orden ha sido movida a devoluciones." : "La orden ha sido movida a cancelados.";
+          sweetAlert.success("Operación exitosa", successMsg);
+        }
+      }
+      return;
+    }
+
     let title = "¿Estás seguro?";
     let confirmText = "Confirmar";
     let icon: "info" | "warning" | "success" | "error" | "question" = "info";
@@ -252,7 +323,7 @@ export const LogisticaPage: React.FC = () => {
         buttons.push(
           <Button key="reprint" onClick={() => handleAction(order, "IMPRIMIR_ETIQUETA")} variant="blue" size="sm" className="flex items-center gap-2" title={!isCard ? "Reimprimir Etiqueta" : ""}>
             <FontAwesomeIcon icon={faPrint} />
-            {isCard ? "Reimprimir" : null}
+            {isCard ? null : "Reimprimir Etiqueta"}
           </Button>,
         );
       }
@@ -270,17 +341,15 @@ export const LogisticaPage: React.FC = () => {
 
       // 1. Empaquetado
       buttons.push(
-        <Button key="pack" onClick={() => handleAction(order, "EMPAQUETAR")} variant={isPackaged ? "grey" : "blue"} size="sm" disabled={isPackaged} className={`flex items-center gap-2`} title={!isCard ? (isPackaged ? "Empaquetado" : "Empaquetar") : ""}>
-          <FontAwesomeIcon icon={isPackaged ? faCheck : faBoxOpen} />
-          {isCard ? (isPackaged ? "Empaquetado" : "Empaquetar") : null}
+        <Button key="pack" onClick={() => handleAction(order, "EMPAQUETAR")} variant={isPackaged ? "grey" : "blue"} size="sm" disabled={isPackaged} className={`flex items-center gap-2`} title={isPackaged ? "Empaquetado" : "Empaquetar"}>
+          <FontAwesomeIcon icon={isPackaged ? faCheck : faBox} />
         </Button>,
       );
 
       // 2. Imprimir Etiqueta
       buttons.push(
-        <Button key="print" onClick={() => handleAction(order, "IMPRIMIR_ETIQUETA")} variant={isLabeled ? "grey" : "blue"} size="sm" disabled={!isPackaged || isLabeled} className={`flex items-center gap-2`} title={(!isPackaged ? "Primero debes empaquetar" : "") || (!isCard ? (isLabeled ? "Impresa" : "Imprimir Etiqueta") : "")}>
+        <Button key="print" onClick={() => handleAction(order, "IMPRIMIR_ETIQUETA")} variant={isLabeled ? "grey" : "blue"} size="sm" disabled={!isPackaged || isLabeled} className={`flex items-center gap-2`} title={!isPackaged ? "Primero debes empaquetar" : (isLabeled ? "Impresa" : "Imprimir Etiqueta")}>
           <FontAwesomeIcon icon={isLabeled ? faCheck : faPrint} />
-          {isCard ? (isLabeled ? "Impresa" : "Imprimir") : null}
         </Button>,
       );
 
@@ -294,11 +363,59 @@ export const LogisticaPage: React.FC = () => {
           size="sm"
           disabled={!isLabeled || !isPackaged} // Strict dependency
           className={`flex items-center gap-2 ${!isLabeled || !isPackaged ? "opacity-50 cursor-not-allowed" : ""}`}
-          title={(!isLabeled ? "Falta imprimir etiqueta" : "") || (!isCard ? "Listo para entregar" : "")}
+          title={!isLabeled ? "Falta imprimir etiqueta" : "Listo para entregar"}
         >
           <FontAwesomeIcon icon={faTruck} />
-          {isCard ? "Listo" : null}
         </Button>,
+      );
+
+      // 4. Cancelar
+      buttons.push(
+        <Button
+          key="cancel"
+          onClick={() => handleAction(order, "CANCELAR")}
+          variant="danger"
+          size="sm"
+          className="flex items-center gap-2"
+          title="Cancelar Orden"
+        >
+          <FontAwesomeIcon icon={faBan} />
+        </Button>
+      );
+    } else if (
+      order.logisticsStatus === "listo_para_entregar" ||
+      order.logisticsStatus === "despachado_meli" ||
+      order.logisticsStatus === "retiro_local" ||
+      order.logisticsStatus === "entregado"
+    ) {
+       // Allow cancel for these statuses as well
+       const isDelivered = order.logisticsStatus === "entregado";
+       buttons.push(
+        <Button
+          key="cancel"
+          onClick={() => handleAction(order, "CANCELAR")}
+          variant="danger"
+          size="sm"
+          className="flex items-center gap-2"
+          title={isDelivered ? "Devolver Orden" : "Cancelar Orden"}
+        >
+          <FontAwesomeIcon icon={faBan} />
+        </Button>
+      );
+    }
+
+    if ((order.logisticsStatus === "cancelado_vuelto_stock" || order.logisticsStatus === "devolucion_vuelto_stock") && order.packaged) {
+      buttons.push(
+        <Button
+          key="unpack"
+          onClick={() => handleAction(order, "DESEMPAQUETAR")}
+          variant="blue"
+          size="sm"
+          className="flex items-center gap-2"
+          title="Desempaquetar y devolver a stock físico"
+        >
+          <FontAwesomeIcon icon={faBoxOpen} />
+        </Button>
       );
     }
 
@@ -398,9 +515,24 @@ export const LogisticaPage: React.FC = () => {
     </div>
   );
 
+  // --- Title Mapping ---
+  const tabTitles: Record<string, string> = {
+    TODAS: "Logística",
+    PENDIENTE_PREPARACION: "En preparación",
+    LISTO_PARA_ENTREGAR: "Listo para entregar",
+    DESPACHADO_MELI: "Despachado ML",
+    RETIRO_EN_LOCAL: "Retiro en Local",
+    ENTREGADOS: "Entregados",
+    CANCELADOS: "Cancelados",
+    DEVOLUCION: "Devoluciones",
+    DESEMPAQUETAR: "Desempaquetar",
+  };
+
+  const pageTitle = tabTitles[activeTab] || "Logística";
+
   return (
     <PageLayout
-      title="Logística"
+      title={pageTitle}
       subtitle="Gestión de envíos y etiquetas"
       faIcon={{ icon: faTruck }}
       headerActions={null}
@@ -417,7 +549,7 @@ export const LogisticaPage: React.FC = () => {
           searchPlaceholder="Buscar por ID, comprador..."
           searchTerm={searchQuery}
           onSearchChange={setSearchQuery}
-          searchPlaceholder="Buscar por ID, comprador..."
+
           filters={[
             {
               value: selectedAccount,

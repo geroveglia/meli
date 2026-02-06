@@ -495,8 +495,9 @@ export const MobileNavbar: React.FC = () => {
                             { label: "Despachado ML", status: "DESPACHADO_MELI", count: getCount("logistics", "despachado_meli") },
                             { label: "Retiro en Local", status: "RETIRO_EN_LOCAL", count: getCount("logistics", "retiro_local") },
                             { label: "Entregados", status: "ENTREGADOS", count: getCount("logistics", "entregado") },
-                            { label: "Devolucion", status: "DEVOLUCION", count: getCount("logistics", "devolucion_vuelto_stock") },
-                            { label: "Cancelados", status: "CANCELADOS", count: getCount("logistics", "cancelado_vuelto_stock") },
+                            { label: "Desempaquetar", status: "DESEMPAQUETAR", count: orders.filter((o) => (selectedCuenta ? o.clientName === selectedCuenta.name : true) && o.packaged && (o.logisticsStatus === "cancelado_vuelto_stock" || o.logisticsStatus === "devolucion_vuelto_stock")).length },
+                            { label: "Devolucion", status: "DEVOLUCION", count: orders.filter((o) => (selectedCuenta ? o.clientName === selectedCuenta.name : true) && !o.packaged && o.logisticsStatus === "devolucion_vuelto_stock").length },
+                            { label: "Cancelados", status: "CANCELADOS", count: orders.filter((o) => (selectedCuenta ? o.clientName === selectedCuenta.name : true) && !o.packaged && o.logisticsStatus === "cancelado_vuelto_stock").length },
                           ].map((sub) => {
                             const hasNotification = notifications?.[sub.status];
                             return (

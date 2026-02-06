@@ -1,6 +1,7 @@
 import React, { Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { Order } from '../../stores/lumbaStore';
+import { Button } from '../Button';
 
 interface OrderDetailModalProps {
     isOpen: boolean;
@@ -191,13 +192,13 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ isOpen, onCl
 
                                 <div className="flex flex-row justify-end space-x-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                                     {renderActions(order)}
-                                    <button
-                                        type="button"
-                                        className="inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+                                    <Button
                                         onClick={onClose}
+                                        variant="secondary"
+                                        size="sm"
                                     >
                                         Cerrar
-                                    </button>
+                                    </Button>
                                 </div>
                             </Dialog.Panel>
                         </Transition.Child>

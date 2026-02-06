@@ -317,5 +317,71 @@
       "return": null
     },
     "related_orders": null
+  },
+  {
+    "id": 300001,
+    "date_created": "2026-02-03T10:00:00.000-04:00",
+    "total_amount": 25000,
+    "paid_amount": 25000,
+    "order_items": [{ "item": { "id": "TEST003", "title": "Producto Test 3", "variation_attributes": [], "title": "Producto Test 3" }, "quantity": 1, "unit_price": 25000 }],
+    "currency_id": "ARS",
+    "status": "paid",
+    "buyer": { "first_name": "Test", "last_name": "Buyer 3", "nickname": "TEST3" },
+    "shipping": { "id": 999003 }
+  },
+  {
+    "id": 300002,
+    "date_created": "2026-02-03T11:00:00.000-04:00",
+    "total_amount": 15000,
+    "paid_amount": 15000,
+    "order_items": [{ "item": { "id": "TEST004", "title": "Producto Test 4", "variation_attributes": [] }, "quantity": 2, "unit_price": 7500 }],
+    "currency_id": "ARS",
+    "status": "paid",
+    "buyer": { "first_name": "Test", "last_name": "Buyer 4", "nickname": "TEST4" },
+    "shipping": { "id": 999004 }
+  },
+  {
+    "id": 300003,
+    "date_created": "2026-02-03T12:00:00.000-04:00",
+    "total_amount": 45000,
+    "paid_amount": 45000,
+    "order_items": [{ "item": { "id": "TEST005", "title": "Producto Test 5", "variation_attributes": [] }, "quantity": 1, "unit_price": 45000 }],
+    "currency_id": "ARS",
+    "status": "paid",
+    "buyer": { "first_name": "Test", "last_name": "Buyer 5", "nickname": "TEST5" },
+    "shipping": { "id": 999005 }
+  },
+  {
+    "id": 300004,
+    "date_created": "2026-02-03T13:00:00.000-04:00",
+    "total_amount": 12000,
+    "paid_amount": 12000,
+    "order_items": [{ "item": { "id": "TEST006", "title": "Producto Test 6", "variation_attributes": [] }, "quantity": 1, "unit_price": 12000 }],
+    "currency_id": "ARS",
+    "status": "paid",
+    "buyer": { "first_name": "Test", "last_name": "Buyer 6", "nickname": "TEST6" },
+    "shipping": { "id": 999006 }
+  },
+  {
+    "id": 300005,
+    "date_created": "2026-02-03T14:00:00.000-04:00",
+    "total_amount": 8500,
+    "paid_amount": 8500,
+    "order_items": [{ "item": { "id": "TEST007", "title": "Producto Test 7", "variation_attributes": [] }, "quantity": 1, "unit_price": 8500 }],
+    "currency_id": "ARS",
+    "status": "paid",
+    "buyer": { "first_name": "Test", "last_name": "Buyer 7", "nickname": "TEST7" },
+    "shipping": { "id": 999007 }
+  },
+  {
+    "id": 300006,
+    "date_created": "2026-02-03T15:00:00.000-04:00",
+    "total_amount": 60000,
+    "paid_amount": 60000,
+    "order_items": [{ "item": { "id": "TEST008", "title": "Producto Test 8", "variation_attributes": [] }, "quantity": 1, "unit_price": 60000 }],
+    "currency_id": "ARS",
+    "status": "paid",
+    "buyer": { "first_name": "Test", "last_name": "Buyer 8", "nickname": "TEST8" },
+    "shipping": { "id": 999008 }
   }
 ]

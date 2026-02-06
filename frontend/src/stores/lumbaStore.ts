@@ -95,6 +95,16 @@ const DEMO_CLIENTS = ["Cliente", "Cliente 2"];
 // --- Mock Data Generator ---
 
 const generateMockOrders = (): Order[] => {
+  const allLogisticsStates: LogisticsState[] = [
+    "pendiente_preparacion",
+    "listo_para_entregar",
+    "despachado_meli",
+    "retiro_local",
+    "entregado",
+    "cancelado_vuelto_stock",
+    "devolucion_vuelto_stock",
+  ];
+
   const mappedOrders: Order[] = mockOrders.map((meliOrder: any, index: number) => {
     // Find corresponding shipment
     const shipment = mockShipments.find((s: any) => s.order_id === meliOrder.id || (meliOrder.shipping && s.id === meliOrder.shipping.id));
@@ -150,6 +160,41 @@ const generateMockOrders = (): Order[] => {
       invoiceStatus = "cancelled";
     }
 
+    // --- FORCE STATES FOR DEMO ---
+    // Ensure we have at least one order in each state
+    if (index < allLogisticsStates.length) {
+      logisticsStatus = allLogisticsStates[index];
+    }
+
+    // Consistency Adjustments for Forced States
+    let tagStatus: "impresas" | "pendientes" | "error" = "pendientes";
+    let packaged = false;
+
+    if (logisticsStatus === "listo_para_entregar") {
+      packaged = true;
+      tagStatus = "impresas";
+    } else if (logisticsStatus === "despachado_meli") {
+       packaged = true;
+       tagStatus = "impresas";
+       meliStatus = "shipped"; // Sync meli status
+    } else if (logisticsStatus === "entregado") {
+       packaged = true;
+       tagStatus = "impresas";
+       meliStatus = "delivered";
+    } else if (logisticsStatus === "retiro_local") {
+       // Optional: configure specific fields for local pickup
+       packaged = true; // Assumed packaged for pickup
+    }
+
+    if (logisticsStatus === "pendiente_preparacion") {
+        // Leave defaults
+    } else {
+        // For other states (cancelado, devolucion), ensure reasonable defaults
+         if(logisticsStatus === "cancelado_vuelto_stock") {
+             meliStatus = "cancelled";
+         }
+    }
+
     return {
       id: `INT-${meliOrder.id.toString().slice(-6)}`, // Fake internal ID
       meliOrderId: meliOrder.id.toString(),
@@ -166,7 +211,7 @@ const generateMockOrders = (): Order[] => {
       logisticsStatus,
       meliStatus,
 
-      tagStatus: logisticsStatus === "pendiente_preparacion" ? "pendientes" : "impresas", // Force flow for demo
+      tagStatus,
       shippingStatus: meliStatus === "delivered" ? "delivered" : "not_delivered",
       shippingSubStatus: shipment?.substatus || "-",
       lastUpdated: meliOrder.last_updated,
@@ -177,7 +222,7 @@ const generateMockOrders = (): Order[] => {
       docNumber: null, // Not explicit in provided JSON
 
       billingType: null,
-      packaged: false,
+      packaged,
     };
   });
 
@@ -240,14 +285,37 @@ export const useLumbaStore = create<LumbaState>()(
 
           return {
             orders: state.orders.map((o) => (o.id === orderId ? { ...o, logisticsStatus: status } : o)),
-            notifications: { ...state.notifications, [statusKey]: true },
+            notifications: (() => {
+               const order = state.orders.find((o) => o.id === orderId);
+               let key = statusKey;
+               // Override key if packaged and going to cancel/return
+               if (order?.packaged && (status === "cancelado_vuelto_stock" || status === "devolucion_vuelto_stock")) {
+                 key = "DESEMPAQUETAR";
+               }
+               return { ...state.notifications, [key]: true };
+            })(),
           };
         }),
 
       setOrderPackaged: (orderId, isPackaged) =>
-        set((state) => ({
-          orders: state.orders.map((o) => (o.id === orderId ? { ...o, packaged: isPackaged } : o)),
-        })),
+        set((state) => {
+           let newNotifications = { ...state.notifications };
+           const order = state.orders.find((o) => o.id === orderId);
+
+           if (order && !isPackaged) {
+             // If unpacking, notify the destination tab
+             if (order.logisticsStatus === "cancelado_vuelto_stock") {
+               newNotifications["CANCELADOS"] = true;
+             } else if (order.logisticsStatus === "devolucion_vuelto_stock") {
+               newNotifications["DEVOLUCION"] = true;
+             }
+           }
+
+           return {
+            orders: state.orders.map((o) => (o.id === orderId ? { ...o, packaged: isPackaged } : o)),
+            notifications: newNotifications,
+           };
+        }),
 
       setOrderTagStatus: (orderId, status) =>
         set((state) => ({
