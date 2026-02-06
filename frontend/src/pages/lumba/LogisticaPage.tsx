@@ -10,7 +10,7 @@ import { PageLayout } from "../../components/PageLayout";
 import { SearchAndFilters } from "../../components/SearchAndFilters";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBox, faCheck, faEye, faTable, faGrip, faTruck, faPrint, faBoxOpen, faDownload } from "@fortawesome/free-solid-svg-icons";
-import { Badge } from "../../components/Badge";
+
 import { Checkbox } from "../../components/Checkbox";
 import { Button } from "../../components/Button";
 
@@ -334,7 +334,7 @@ export const LogisticaPage: React.FC = () => {
           <Card
             key={order.id}
             header={{
-              title: order.id,
+              title: order.meliOrderId,
               subtitle: new Date(order.date).toLocaleDateString(),
               icon: faTruck,
               badges: [
@@ -354,10 +354,7 @@ export const LogisticaPage: React.FC = () => {
                 <span className="text-gray-500 dark:text-gray-400">Cuenta:</span>
                 <span className="font-semibold text-gray-900 dark:text-gray-100">{order.clientName}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">Id ML:</span>
-                <span className="font-mono text-gray-900 dark:text-gray-100">{order.meliOrderId}</span>
-              </div>
+              {/* Id ML is now the title */}
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500 dark:text-gray-400">Publicación:</span>
                 <span className="text-gray-900 dark:text-gray-100 truncate max-w-[150px]" title={order.items.length > 0 ? order.items[0].title : "-"}>
@@ -367,27 +364,6 @@ export const LogisticaPage: React.FC = () => {
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500 dark:text-gray-400">Cantidad:</span>
                 <span className="text-gray-900 dark:text-gray-100">{order.items.length > 0 ? order.items[0].quantity : 0}</span>
-              </div>
-              {order.items.length > 0 && order.items[0].variant && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">Variante:</span>
-                  <span className="text-gray-900 dark:text-gray-100">{order.items[0].variant}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">Estado ML:</span>
-                <span className="text-gray-900 dark:text-gray-100">{order.meliStatus}</span>
-              </div>
-
-              <div className="pt-2 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-2">
-                <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-750 p-2 rounded">
-                  <span className="text-xs text-gray-500">Etiqueta:</span>
-                  <Badge>{order.tagStatus}</Badge>
-                </div>
-                <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-750 p-2 rounded">
-                  <span className="text-xs text-gray-500">Entrega ML:</span>
-                  <Badge>{order.shippingStatus === "delivered" ? "Entregado" : "No Entregado"}</Badge>
-                </div>
               </div>
             </div>
           </Card>

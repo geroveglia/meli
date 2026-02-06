@@ -142,7 +142,7 @@ router.get("/", requireTenant, authenticateToken, requirePermission("users:view"
         pages: Math.ceil(total / Number(limit)),
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Get users error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
