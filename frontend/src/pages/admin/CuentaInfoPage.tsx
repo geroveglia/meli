@@ -1,22 +1,23 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBuilding, faEdit, faTrash, faArrowLeft, faEnvelope, faPhone, faMapMarkerAlt } from "@fortawesome/free-solid-svg-icons";
-import { useClientContextStore, useClientActions } from "../../stores/clientContextStore";
+import { faBuilding, faEdit, faTrash, faArrowLeft, faEnvelope, faMapMarkerAlt } from "@fortawesome/free-solid-svg-icons";
+import { useCuentaContextStore, useCuentaActions } from "../../stores/cuentaContextStore";
 import { useAuthStore } from "../../stores/authStore";
 import { PageLayout } from "../../components/PageLayout";
 import { Card } from "../../components/Card";
-import { clientsAPI, Client, ClientStatus, UpdateClientData } from "../../api/clients";
+import { cuentasAPI, Cuenta, CuentaStatus, UpdateCuentaData } from "../../api/cuentas";
 import { sweetAlert } from "../../utils/sweetAlert";
+import { emitCuentasChanged } from "../../utils/navbarEvents";
 
-import { ClientForm, ClientFormData } from "../../components/clients/ClientForm";
-import { ClientDetails } from "../../components/clients/ClientDetails";
+import { CuentaForm, CuentaFormData } from "../../components/cuentas/CuentaForm";
+import { CuentaDetails } from "../../components/cuentas/CuentaDetails";
 
 /* ---------- Types ---------- */
 
 
 
-const initialFormData: ClientFormData = {
+const initialFormData: CuentaFormData = {
   name: "",
   company: "",
   email: "",
@@ -27,7 +28,7 @@ const initialFormData: ClientFormData = {
 
 /* ---------- Status Badge Helper ---------- */
 
-const getStatusBadge = (status: ClientStatus) => {
+const getStatusBadge = (status: CuentaStatus) => {
   const config = {
     active: {
       text: "Activo",
@@ -45,38 +46,38 @@ const getStatusBadge = (status: ClientStatus) => {
   return config[status] || config["active"];
 };
 
-export const ClientInfoPage = () => {
-  const selectedClient = useClientContextStore((state) => state.selectedClient);
-  const { setClient } = useClientActions();
+export const CuentaInfoPage = () => {
+  const selectedCuenta = useCuentaContextStore((state) => state.selectedCuenta);
+  const { setCuenta } = useCuentaActions();
   const { hasPermission } = useAuthStore();
   const navigate = useNavigate();
 
-  const canManage = hasPermission("clients:view"); // Using same permission as ClientsPage for consistency
+  const canManage = hasPermission("cuentas:view"); // Using same permission as CuentasPage for consistency
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
-  const [editingClient, setEditingClient] = useState<Client | null>(null);
-  const [formData, setFormData] = useState<ClientFormData>(initialFormData);
+  const [editingCuenta, setEditingCuenta] = useState<Cuenta | null>(null);
+  const [formData, setFormData] = useState<CuentaFormData>(initialFormData);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   // View Modal State
   const [viewOpen, setViewOpen] = useState(false);
-  const [viewClient, setViewClient] = useState<Client | null>(null);
+  const [viewCuenta, setViewCuenta] = useState<Cuenta | null>(null);
 
   // Help Modal State
   const [openInfo, setOpenInfo] = useState(false);
 
   /* ---------- Handlers ---------- */
 
-  const openEdit = (client: Client) => {
-    setEditingClient(client);
+  const openEdit = (cuenta: Cuenta) => {
+    setEditingCuenta(cuenta);
     setFormData({
-      name: client.name,
-      company: client.company || "",
-      email: client.email,
-      phone: client.phone || "",
-      address: client.address || "",
-      status: client.status,
+      name: cuenta.name,
+      company: cuenta.company || "",
+      email: cuenta.email,
+      phone: cuenta.phone || "",
+      address: cuenta.address || "",
+      status: cuenta.status,
     });
     setFormErrors({});
     setShowModal(true);
@@ -84,19 +85,19 @@ export const ClientInfoPage = () => {
 
   const closeModal = () => {
     setShowModal(false);
-    setEditingClient(null);
+    setEditingCuenta(null);
     setFormData(initialFormData);
     setFormErrors({});
   };
 
-  const openView = (client: Client) => {
-    setViewClient(client);
+  const openView = (cuenta: Cuenta) => {
+    setViewCuenta(cuenta);
     setViewOpen(true);
   };
 
   const closeView = () => {
     setViewOpen(false);
-    setViewClient(null);
+    setViewCuenta(null);
   };
 
   /* ---------- Form Validation ---------- */
@@ -125,8 +126,8 @@ export const ClientInfoPage = () => {
     if (!validateForm()) return;
 
     try {
-      if (editingClient) {
-        const updateData: UpdateClientData = {
+      if (editingCuenta) {
+        const updateData: UpdateCuentaData = {
           name: formData.name.trim(),
           company: formData.company.trim() || null,
           email: formData.email.trim().toLowerCase(),
@@ -134,23 +135,24 @@ export const ClientInfoPage = () => {
           address: formData.address.trim() || null,
           status: formData.status,
         };
-        const updatedClient = await clientsAPI.update(editingClient._id, updateData);
-        setClient(updatedClient); // Update global store
+        const updatedCuenta = await cuentasAPI.update(editingCuenta._id, updateData);
+        setCuenta(updatedCuenta); // Update global store
 
-        // Update local view client if open
-        if (viewClient && viewClient._id === updatedClient._id) {
-          setViewClient(updatedClient);
+        // Update local view cuenta if open
+        if (viewCuenta && viewCuenta._id === updatedCuenta._id) {
+          setViewCuenta(updatedCuenta);
         }
 
-        sweetAlert.success("Cliente actualizado", "Los cambios se han guardado correctamente");
+        sweetAlert.success("Cuenta actualizada", "Los cambios se han guardado correctamente");
+        emitCuentasChanged();
       }
       closeModal();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string; error?: string } } };
-      const message = err.response?.data?.message || err.response?.data?.error || "Error al guardar el cliente";
+      const message = err.response?.data?.message || err.response?.data?.error || "Error al guardar la cuenta";
 
       if (message.includes("email") || message.includes("duplicate")) {
-        setFormErrors({ email: "Ya existe un cliente con este email" });
+        setFormErrors({ email: "Ya existe una cuenta con este email" });
       } else {
         sweetAlert.error("Error", message);
       }
@@ -159,34 +161,35 @@ export const ClientInfoPage = () => {
 
   /* ---------- Delete ---------- */
 
-  const handleDelete = async (client: Client) => {
-    const result = await sweetAlert.confirm("¿Eliminar cliente?", `¿Estás seguro de que quieres eliminar a "${client.name}"?`);
+  const handleDelete = async (cuenta: Cuenta) => {
+    const result = await sweetAlert.confirm("¿Eliminar cuenta?", `¿Estás seguro de que quieres eliminar a "${cuenta.name}"?`);
     if (result.isConfirmed) {
       try {
-        await clientsAPI.remove(client._id);
-        sweetAlert.success("Cliente eliminado", "El cliente ha sido eliminado correctamente");
-        // Redirect to clients list after deletion since the context is gone
-        window.location.href = "#/clients";
+        await cuentasAPI.remove(cuenta._id);
+        sweetAlert.success("Cuenta eliminada", "La cuenta ha sido eliminada correctamente");
+        emitCuentasChanged();
+        // Redirect to cuentas list after deletion since the context is gone
+        window.location.href = "#/cuentas";
       } catch (error: unknown) {
         const err = error as { response?: { data?: { message?: string; error?: string } } };
-        const message = err.response?.data?.message || err.response?.data?.error || "Error al eliminar el cliente";
+        const message = err.response?.data?.message || err.response?.data?.error || "Error al eliminar la cuenta";
         sweetAlert.error("Error", message);
       }
     }
   };
 
-  if (!selectedClient) {
+  if (!selectedCuenta) {
     return (
-      <PageLayout title="Información del Cliente" faIcon={{ icon: faBuilding }}>
+      <PageLayout title="Información de la Cuenta" faIcon={{ icon: faBuilding }}>
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
           <div className="w-20 h-20 rounded-full bg-accent-2 flex items-center justify-center mb-6 border border-accent-4">
             <FontAwesomeIcon icon={faBuilding} className="h-10 w-10 text-accent-7" />
           </div>
-          <h2 className="text-xl font-semibold text-accent-1 mb-2">No hay cliente seleccionado</h2>
-          <p className="text-accent-7 mb-6 max-w-md">Selecciona un cliente desde el menú superior para ver su información detallada.</p>
-          <Link to="/clients" className="inline-flex items-center gap-2 px-4 py-2 bg-accent-9 hover:bg-accent-8 text-accent-1 rounded-lg transition-colors">
+          <h2 className="text-xl font-semibold text-accent-1 mb-2">No hay cuenta seleccionada</h2>
+          <p className="text-accent-7 mb-6 max-w-md">Selecciona una cuenta desde el menú superior para ver su información detallada.</p>
+          <Link to="/cuentas" className="inline-flex items-center gap-2 px-4 py-2 bg-accent-9 hover:bg-accent-8 text-accent-1 rounded-lg transition-colors">
             <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
-            Ir a Clientes
+            Ir a Cuentas
           </Link>
         </div>
       </PageLayout>
@@ -195,8 +198,8 @@ export const ClientInfoPage = () => {
 
   return (
     <PageLayout
-      title={selectedClient.name || "Cliente"}
-      subtitle={selectedClient.company || undefined}
+      title={selectedCuenta.name || "Cuenta"}
+      subtitle={selectedCuenta.company || undefined}
       faIcon={{ icon: faBuilding }}
       onBack={() => navigate(-1)}
       shouldShowInfo={true}
@@ -204,16 +207,16 @@ export const ClientInfoPage = () => {
         isOpen: openInfo,
         onOpen: () => setOpenInfo(true),
         onClose: () => setOpenInfo(false),
-        title: "Ayuda: Información del Cliente",
+        title: "Ayuda: Información de la Cuenta",
         content: (
-            <p>Visualiza y gestiona la información detallada del cliente seleccionado. Puedes editar sus datos de contacto y estado.</p>
+            <p>Visualiza y gestiona la información detallada de la cuenta seleccionada. Puedes editar sus datos de contacto y estado.</p>
         ),
       }}
       viewModal={{
         isOpen: viewOpen,
         onClose: closeView,
-        title: viewClient?.name || "Cliente",
-        subtitle: viewClient?.company,
+        title: viewCuenta?.name || "Cuenta",
+        subtitle: viewCuenta?.company,
         size: "md",
         actions: [
           ...(canManage
@@ -221,7 +224,7 @@ export const ClientInfoPage = () => {
                 {
                   label: "Editar",
                   onClick: () => {
-                    if (viewClient) openEdit(viewClient);
+                    if (viewCuenta) openEdit(viewCuenta);
                     closeView();
                   },
                   variant: "secondary" as const,
@@ -234,19 +237,19 @@ export const ClientInfoPage = () => {
             variant: "ghost" as const,
           },
         ],
-        content: viewClient ? <ClientDetails client={viewClient} /> : null,
+        content: viewCuenta ? <CuentaDetails cuenta={viewCuenta} /> : null,
       }}
       modal={{
         isOpen: showModal,
         onClose: closeModal,
-        title: editingClient ? "Editar Cliente" : "Nuevo Cliente",
-        subtitle: "Completa la información del cliente",
+        title: editingCuenta ? "Editar Cuenta" : "Nueva Cuenta",
+        subtitle: "Completa la información de la cuenta",
         size: "md",
         actions: [
           {
-            label: editingClient ? "Actualizar" : "Crear",
+            label: editingCuenta ? "Actualizar" : "Crear",
             onClick: () => {
-              const form = document.querySelector<HTMLFormElement>("#client-form");
+              const form = document.querySelector<HTMLFormElement>("#cuenta-form");
               form?.requestSubmit();
             },
             variant: "primary",
@@ -257,21 +260,21 @@ export const ClientInfoPage = () => {
             variant: "ghost",
           },
         ],
-        content: <ClientForm id="client-form" formData={formData} setFormData={setFormData} formErrors={formErrors} onSubmit={handleSubmit} />,
+        content: <CuentaForm id="cuenta-form" formData={formData} setFormData={setFormData} formErrors={formErrors} onSubmit={handleSubmit} />,
       }}
     >
       <div className="grid  grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mx-0.5 lg:mx-0">
         <Card
-          onClick={() => openView(selectedClient)}
+          onClick={() => openView(selectedCuenta)}
           className="hover:scale-105 hover:shadow-lg transition-all duration-200 cursor-pointer"
           header={{
-            title: selectedClient.name,
-            subtitle: selectedClient.company || selectedClient.email,
+            title: selectedCuenta.name,
+            subtitle: selectedCuenta.company || selectedCuenta.email,
             icon: faBuilding,
             badges: [
               {
-                text: getStatusBadge(selectedClient.status).text,
-                variant: selectedClient.status === "active" ? "success" : selectedClient.status === "lead" ? "warning" : "default",
+                text: getStatusBadge(selectedCuenta.status).text,
+                variant: selectedCuenta.status === "active" ? "success" : selectedCuenta.status === "lead" ? "warning" : "default",
               },
             ],
           }}
@@ -284,7 +287,7 @@ export const ClientInfoPage = () => {
                       icon: faEdit,
                       onClick: (e) => {
                         e.stopPropagation();
-                        openEdit(selectedClient);
+                        openEdit(selectedCuenta);
                       },
                       variant: "default",
                       title: "Editar",
@@ -293,7 +296,7 @@ export const ClientInfoPage = () => {
                       icon: faTrash,
                       onClick: (e) => {
                         e.stopPropagation();
-                        handleDelete(selectedClient);
+                        handleDelete(selectedCuenta);
                       },
                       variant: "default",
                       title: "Eliminar",
@@ -306,12 +309,12 @@ export const ClientInfoPage = () => {
           <div className="text-sm text-accent-7 space-y-1">
             <div className="flex items-center gap-2">
               <FontAwesomeIcon icon={faEnvelope} className="h-3 w-3" />
-              <span className="truncate">{selectedClient.email}</span>
+              <span className="truncate">{selectedCuenta.email}</span>
             </div>
-            {selectedClient.address && (
+            {selectedCuenta.address && (
               <div className="flex items-center gap-2">
                 <FontAwesomeIcon icon={faMapMarkerAlt} className="h-3 w-3" />
-                <span className="truncate">{selectedClient.address}</span>
+                <span className="truncate">{selectedCuenta.address}</span>
               </div>
             )}
           </div>

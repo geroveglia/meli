@@ -1,12 +1,13 @@
 import mongoose, { Document, Schema, Types } from "mongoose";
 
 /**
- * Client Interface - Lightweight CRM Model
+ * Cuenta Interface - Lightweight CRM Model
  * Focused on basic contact management
  */
-export interface IClient extends Document {
+export interface ICuenta extends Document {
   tenantId: Types.ObjectId;
   name: string;
+  slug?: string;
   company?: string;
   email: string;
   phone?: string;
@@ -15,9 +16,11 @@ export interface IClient extends Document {
   isFavorite: boolean;
   createdAt: Date;
   updatedAt: Date;
+  usuarios?: { userId: Types.ObjectId; permiso: "ver" | "editar" }[];
+  ownerUserId?: Types.ObjectId;
 }
 
-const clientSchema = new Schema<IClient>(
+const cuentaSchema = new Schema<ICuenta>(
   {
     tenantId: {
       type: Schema.Types.ObjectId,
@@ -30,6 +33,10 @@ const clientSchema = new Schema<IClient>(
       required: true,
       trim: true,
       minlength: 2,
+    },
+    slug: {
+      type: String,
+      trim: true,
     },
     company: {
       type: String,
@@ -60,14 +67,21 @@ const clientSchema = new Schema<IClient>(
       default: false,
       index: true,
     },
+    usuarios: [
+      {
+        userId: { type: Schema.Types.ObjectId, ref: "User" },
+        permiso: { type: String, enum: ["ver", "editar"], default: "ver" },
+      },
+    ],
+    ownerUserId: { type: Schema.Types.ObjectId, ref: "User" },
   },
-  { timestamps: true }
+  { timestamps: true, collection: "clients" }
 );
 
 // Compound unique index: email unique per tenant
-clientSchema.index({ tenantId: 1, email: 1 }, { unique: true });
+cuentaSchema.index({ tenantId: 1, email: 1 }, { unique: true });
 
 // Text index for search
-clientSchema.index({ name: "text", company: "text", email: "text" });
+cuentaSchema.index({ name: "text", company: "text", email: "text" });
 
-export const Client = mongoose.model<IClient>("Client", clientSchema);
+export const Cuenta = mongoose.model<ICuenta>("Cuenta", cuentaSchema);

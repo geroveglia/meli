@@ -12,11 +12,11 @@ import { Button } from "../../components/Button";
 import { sweetAlert } from "../../utils/sweetAlert";
 import { Card } from "../../components/Card";
 
-import { useClientContextStore } from "../../stores/clientContextStore";
+import { useCuentaContextStore } from "../../stores/cuentaContextStore";
 
 export const VentasPage: React.FC = () => {
   const { orders, selectedAccount, searchQuery, dateFrom, dateTo, setAccount, setSearchQuery, setDateRange, updateOrderSalesStatus } = useLumbaStore();
-  const { selectedClient } = useClientContextStore();
+  const { selectedCuenta } = useCuentaContextStore();
 
   const [searchParams] = useSearchParams();
   const activeTab = searchParams.get("status") || "TODAS";
@@ -70,8 +70,8 @@ export const VentasPage: React.FC = () => {
     let result = orders;
 
     // 0. Filter by Client Context
-    if (selectedClient) {
-      result = result.filter((o) => o.clientName === selectedClient.name);
+    if (selectedCuenta) {
+      result = result.filter((o) => o.clientName === selectedCuenta.name);
     }
 
     // 1. Filter by Account
@@ -109,7 +109,7 @@ export const VentasPage: React.FC = () => {
     }
 
     return result;
-  }, [orders, selectedClient, selectedAccount, searchQuery, dateFrom, dateTo, activeTab]);
+  }, [orders, selectedCuenta, selectedAccount, searchQuery, dateFrom, dateTo, activeTab]);
 
   // --- Selection Logic ---
 
@@ -212,18 +212,18 @@ export const VentasPage: React.FC = () => {
     // 1. Primary Actions (Invoice, NC) - Left
     if (order.salesStatus === "pendiente_facturacion") {
       buttons.push(
-        <Button key="manual" onClick={() => handleAction(order, "FACTURAR_MANUAL")} variant="blue" size="sm" className="flex items-center gap-2">
+        <Button key="manual" onClick={() => handleAction(order, "FACTURAR_MANUAL")} variant="blue" size="sm" className={`flex items-center gap-2`} title={!isCard ? "Facturar" : ""}>
           <FontAwesomeIcon icon={faFile} />
-          Facturar
+          {isCard ? "Facturar" : null}
         </Button>,
       );
     }
 
     if (order.salesStatus === "facturada") {
       buttons.push(
-        <Button key="nc" onClick={() => handleAction(order, "GENERAR_NC")} variant="blue" size="sm" className="flex items-center gap-2">
+        <Button key="nc" onClick={() => handleAction(order, "GENERAR_NC")} variant="blue" size="sm" className={`flex items-center gap-2`} title={!isCard ? "Generar NC" : ""}>
           <FontAwesomeIcon icon={faFileInvoiceDollar} />
-          Generar NC
+          {isCard ? "NC" : null}
         </Button>,
       );
     }
@@ -231,29 +231,21 @@ export const VentasPage: React.FC = () => {
     // 3. Destructive/Cancel - Right (Last)
     if (order.salesStatus === "pendiente_facturacion") {
       buttons.push(
-        <Button key="cancel" onClick={() => handleAction(order, "CANCELAR")} variant="danger" size="sm" className="flex items-center gap-2">
+        <Button key="cancel" onClick={() => handleAction(order, "CANCELAR")} variant="danger" size="sm" className={`flex items-center gap-2`} title={!isCard ? "Cancelar" : ""}>
           <FontAwesomeIcon icon={faBan} />
-          Cancelar
+          {isCard ? "Cancelar" : null}
         </Button>,
       );
     }
 
     return (
-      <div className="flex gap-2 flex-nowrap items-center justify-center w-full" onClick={(e) => e.stopPropagation()}>
+      <div className={`flex gap-2 flex-nowrap w-full items-center ${isCard ? "justify-end" : "justify-center"}`} onClick={(e) => e.stopPropagation()}>
         {buttons}
       </div>
     );
   };
 
-  const titleMap: Record<string, string> = {
-    TODAS: "Ventas: Todos los pedidos",
-    PENDIENTE_FACTURACION: "Pendiente Facturación",
-    FACTURADAS: "Facturadas",
-    VENTAS_CANCELADAS: "Ventas Canceladas",
-    NOTAS_DE_CREDITO: "Notas de Crédito",
-  };
 
-  const currentTitle = titleMap[activeTab] || activeTab.replace(/_/g, " ");
 
   const renderCards = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -265,7 +257,7 @@ export const VentasPage: React.FC = () => {
             key={order.id}
             header={{
               title: order.id,
-              subtitle: order.meliOrderId,
+              subtitle: new Date(order.date).toLocaleDateString(),
               icon: faUsersGear,
               badges: [
                 {
@@ -280,6 +272,20 @@ export const VentasPage: React.FC = () => {
             onClick={() => handleAction(order, "VER")}
           >
             <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400">Cuenta:</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100">{order.clientName}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400">Id ML:</span>
+                <span className="font-mono text-gray-900 dark:text-gray-100">{order.meliOrderId}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400">Publicación:</span>
+                <span className="text-gray-900 dark:text-gray-100 truncate max-w-[150px]" title={order.items.length > 0 ? order.items[0].title : "-"}>
+                  {order.items.length > 0 ? order.items[0].title : "-"}
+                </span>
+              </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500 dark:text-gray-400">Total:</span>
                 <span className="font-semibold text-gray-900 dark:text-gray-100">${order.total.toLocaleString()}</span>
@@ -312,16 +318,46 @@ export const VentasPage: React.FC = () => {
     </div>
   );
 
+  // --- Info Modal State ---
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+
+  const infoContent = (
+    <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
+      <p>Acciones disponibles para gestionar la facturación de tus ventas:</p>
+      <ul className="list-disc pl-5 space-y-2">
+        <li>
+          <strong>Facturar:</strong> Inicia el proceso de facturación manual para la orden.
+        </li>
+        <li>
+          <strong>NC:</strong> Genera una Nota de Crédito para la orden facturada.
+        </li>
+        <li>
+          <strong>Cancelar:</strong> Cancela la orden de venta (Solo si no está facturada).
+        </li>
+        <li>
+          <strong>Ver detalle:</strong> Muestra toda la información detallada de la orden.
+        </li>
+      </ul>
+    </div>
+  );
+
   return (
     <PageLayout
-      title={currentTitle}
-      subtitle="Gestión de ventas y facturación"
-      faIcon={{ icon: faUsersGear }}
+      title="Ventas"
+      subtitle="Facturación y notas de crédito"
+      showInfoIcon={true}
+      infoModal={{
+        isOpen: isInfoOpen,
+        onOpen: () => setIsInfoOpen(true),
+        onClose: () => setIsInfoOpen(false),
+        title: "Ayuda Ventas",
+        content: infoContent,
+      }}
       searchAndFilters={
         <SearchAndFilters
+          searchPlaceholder="Buscar por ID, comprador..."
           searchTerm={searchQuery}
           onSearchChange={setSearchQuery}
-          searchPlaceholder="Buscar por ID, nombre..."
           filters={filters}
           dateFilter={{
             startDate: dateFrom,
@@ -386,7 +422,7 @@ export const VentasPage: React.FC = () => {
                     Fecha ML
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
-                    Cliente
+                    Cuenta
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
                     Id venta RTSS
@@ -394,7 +430,7 @@ export const VentasPage: React.FC = () => {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
                     Id ML
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider w-[30%]">
                     Publicación
                   </th>
                   <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
@@ -448,9 +484,9 @@ export const VentasPage: React.FC = () => {
                           variant="blue"
                           size="sm"
                           className="flex items-center gap-2 mx-auto"
+                          title="Ver detalle"
                         >
                           <FontAwesomeIcon icon={faEye} />
-                          Ver detalle
                         </Button>
                       </td>
                     </tr>

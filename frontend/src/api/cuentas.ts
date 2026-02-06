@@ -2,9 +2,9 @@ import axios from "./axiosConfig";
 
 /* ---------- Types ---------- */
 
-export type ClientStatus = "active" | "inactive" | "lead";
+export type CuentaStatus = "active" | "inactive" | "lead";
 
-export interface Client {
+export interface Cuenta {
   _id: string;
   tenantId: string;
   name: string;
@@ -13,15 +13,15 @@ export interface Client {
   phone?: string;
   address?: string;
   avatar?: string;
-  status: ClientStatus;
+  status: CuentaStatus;
   isFavorite?: boolean;
 
   createdAt: string;
   updatedAt: string;
 }
 
-export interface ClientsListResponse {
-  clients: Client[];
+export interface CuentasListResponse {
+  cuentas: Cuenta[];
   pagination: {
     page: number;
     limit: number;
@@ -30,37 +30,37 @@ export interface ClientsListResponse {
   };
 }
 
-export interface CreateClientData {
+export interface CreateCuentaData {
   name: string;
   company?: string;
   email: string;
   phone?: string;
   address?: string;
-  status?: ClientStatus;
+  status?: CuentaStatus;
 
 }
 
-export interface UpdateClientData {
+export interface UpdateCuentaData {
   name?: string;
   company?: string | null;
   email?: string;
   phone?: string | null;
   address?: string | null;
-  status?: ClientStatus;
+  status?: CuentaStatus;
 
 }
 
-export interface ClientListParams {
+export interface CuentaListParams {
   page?: number;
   limit?: number;
   search?: string;
-  status?: ClientStatus;
+  status?: CuentaStatus;
 
 }
 
 /* ---------- Normalizer ---------- */
 
-function normalizeClient(raw: unknown): Client {
+function normalizeCuenta(raw: unknown): Cuenta {
   const data = raw as Record<string, unknown>;
   return {
     _id: String(data?._id ?? ""),
@@ -71,7 +71,7 @@ function normalizeClient(raw: unknown): Client {
     phone: data?.phone ? String(data.phone) : undefined,
     address: data?.address ? String(data.address) : undefined,
     avatar: data?.avatar ? String(data.avatar) : undefined,
-    status: (data?.status as ClientStatus) ?? "active",
+    status: (data?.status as CuentaStatus) ?? "active",
     isFavorite: Boolean(data?.isFavorite ?? false),
 
     createdAt: String(data?.createdAt ?? ""),
@@ -81,7 +81,7 @@ function normalizeClient(raw: unknown): Client {
 
 /* ---------- API Class ---------- */
 
-class ClientsAPI {
+class CuentasAPI {
   private getHeaders() {
     const token = localStorage.getItem("token");
     const tenantSlug = localStorage.getItem("tenantSlug");
@@ -95,19 +95,19 @@ class ClientsAPI {
   }
 
   /**
-   * Get clients count for navbar badge
+   * Get cuentas count for navbar badge
    */
   async count(): Promise<number> {
-    const { data } = await axios.get("/clients/count", {
+    const { data } = await axios.get("/cuentas/count", {
       headers: this.getHeaders(),
     });
     return data?.count ?? 0;
   }
 
   /**
-   * List clients with search, filters and pagination
+   * List cuentas with search, filters and pagination
    */
-  async list(params: ClientListParams = {}): Promise<ClientsListResponse> {
+  async list(params: CuentaListParams = {}): Promise<CuentasListResponse> {
     const searchParams = new URLSearchParams();
 
     if (params.page) searchParams.append("page", params.page.toString());
@@ -115,68 +115,68 @@ class ClientsAPI {
     if (params.search) searchParams.append("search", params.search);
     if (params.status) searchParams.append("status", params.status);
 
-    const { data } = await axios.get(`/clients?${searchParams.toString()}`, {
+    const { data } = await axios.get(`/cuentas?${searchParams.toString()}`, {
       headers: this.getHeaders(),
     });
 
-    const rows: unknown[] = Array.isArray(data?.clients)
-      ? data.clients
+    const rows: unknown[] = Array.isArray(data?.cuentas)
+      ? data.cuentas
       : Array.isArray(data)
       ? data
       : [];
 
-    const clients = rows.map(normalizeClient);
+    const cuentas = rows.map(normalizeCuenta);
 
     const pagination = data?.pagination ?? {
       page: Number(params.page ?? 1),
-      limit: Number(params.limit ?? clients.length),
-      total: Number(data?.total ?? clients.length),
+      limit: Number(params.limit ?? cuentas.length),
+      total: Number(data?.total ?? cuentas.length),
       pages: Number(data?.pages ?? 1),
     };
 
-    return { clients, pagination };
+    return { cuentas, pagination };
   }
 
   /**
-   * Get a single client by ID
+   * Get a single cuenta by ID
    */
-  async get(id: string): Promise<Client> {
-    const { data } = await axios.get(`/clients/${id}`, {
+  async get(id: string): Promise<Cuenta> {
+    const { data } = await axios.get(`/cuentas/${id}`, {
       headers: this.getHeaders(),
     });
-    return normalizeClient(data);
+    return normalizeCuenta(data);
   }
 
   /**
-   * Create a new client
+   * Create a new cuenta
    */
-  async create(clientData: CreateClientData): Promise<Client> {
-    const { data } = await axios.post("/clients", clientData, {
+  async create(cuentaData: CreateCuentaData): Promise<Cuenta> {
+    const { data } = await axios.post("/cuentas", cuentaData, {
       headers: this.getHeaders(),
     });
-    return normalizeClient(data);
+    return normalizeCuenta(data);
   }
 
   /**
-   * Update an existing client
+   * Update an existing cuenta
    */
-  async update(id: string, clientData: UpdateClientData): Promise<Client> {
-    const { data } = await axios.put(`/clients/${id}`, clientData, {
+  async update(id: string, cuentaData: UpdateCuentaData): Promise<Cuenta> {
+    const { data } = await axios.put(`/cuentas/${id}`, cuentaData, {
       headers: this.getHeaders(),
     });
-    return normalizeClient(data);
+    return normalizeCuenta(data);
   }
 
 
 
   /**
-   * Delete a client (hard delete)
+   * Delete a cuenta (hard delete)
    */
   async remove(id: string): Promise<void> {
-    await axios.delete(`/clients/${id}`, {
+    await axios.delete(`/cuentas/${id}`, {
       headers: this.getHeaders(),
     });
   }
 }
 
-export const clientsAPI = new ClientsAPI();
+export const cuentasAPI = new CuentasAPI();

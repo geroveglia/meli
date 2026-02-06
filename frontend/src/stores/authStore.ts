@@ -7,8 +7,8 @@ interface User {
   lastName?: string;
   roles: string[];
   primaryRole?: string | null; // Nombre del rol principal (primer rol del array)
-  clientIds?: string[];
-  clientId?: string;
+  cuentaIds?: string[];
+  cuentaId?: string;
   permissions?: string[];
   tenantId: string;
   tenantSlug?: string;
@@ -35,7 +35,7 @@ interface AuthState {
     phone?: string;
     password: string;
   }) => Promise<{ token: string; user: User; tenant: Tenant }>;
-  login: (email: string, password: string, tenantSlug?: string, clientId?: string) => Promise<{ requiresTenantSelection?: boolean; tenants?: Tenant[]; redirectTo?: string; user?: User }>;
+  login: (email: string, password: string, tenantSlug?: string, cuentaId?: string) => Promise<{ requiresTenantSelection?: boolean; tenants?: Tenant[]; redirectTo?: string; user?: User }>;
   checkTenants: (email: string) => Promise<Tenant[]>;
   logout: () => void;
   setTenantId: (tenantId: string) => void;
@@ -169,7 +169,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  async login(email, password, tenantSlug, clientId) {
+  async login(email, password, tenantSlug, cuentaId) {
     const base = normalizeBaseUrl(import.meta.env.VITE_API_URL);
     const url = `${base}/auth/login`;
 
@@ -186,7 +186,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           email,
           password,
           ...(tenantSlug ? { tenantSlug } : {}),
-          ...(clientId ? { clientId } : {}),
+          ...(cuentaId ? { clientId: cuentaId } : {}),
         }),
       });
 

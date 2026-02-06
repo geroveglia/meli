@@ -1,13 +1,13 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEnvelope, faPhone, faMapMarkerAlt } from "@fortawesome/free-solid-svg-icons";
-import { Client, ClientStatus } from "../../api/clients";
+import { Cuenta, CuentaStatus } from "../../api/cuentas";
 
-interface ClientDetailsProps {
-  client: Client;
+interface CuentaDetailsProps {
+  cuenta: Cuenta;
 }
 
-const getStatusBadge = (status: ClientStatus) => {
+const getStatusBadge = (status: CuentaStatus) => {
   const config = {
     active: {
       text: "Activo",
@@ -25,13 +25,13 @@ const getStatusBadge = (status: ClientStatus) => {
   return config[status] || config["active"];
 };
 
-export const ClientDetails: React.FC<ClientDetailsProps> = ({ client }) => {
+export const CuentaDetails: React.FC<CuentaDetailsProps> = ({ cuenta }) => {
   return (
     <div className="space-y-4">
       {/* Status & Favorite */}
       <div className="flex items-center gap-2">
-        <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${getStatusBadge(client.status).classes}`}>
-          {getStatusBadge(client.status).text}
+        <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${getStatusBadge(cuenta.status).classes}`}>
+          {getStatusBadge(cuenta.status).text}
         </span>
       </div>
 
@@ -39,24 +39,24 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client }) => {
       <div className="space-y-3">
         <div className="flex items-center gap-2 text-sm text-accent-7">
           <FontAwesomeIcon icon={faEnvelope} className="h-4 w-4 text-accent-6" />
-          <a href={`mailto:${client.email}`} className="hover:text-accent-9">
-            {client.email}
+          <a href={`mailto:${cuenta.email}`} className="hover:text-accent-9">
+            {cuenta.email}
           </a>
         </div>
 
-        {client.phone && (
+        {cuenta.phone && (
           <div className="flex items-center gap-2 text-sm text-accent-7">
             <FontAwesomeIcon icon={faPhone} className="h-4 w-4 text-accent-6" />
-            <a href={`tel:${client.phone}`} className="hover:text-accent-9">
-              {client.phone}
+            <a href={`tel:${cuenta.phone}`} className="hover:text-accent-9">
+              {cuenta.phone}
             </a>
           </div>
         )}
 
-        {client.address && (
+        {cuenta.address && (
           <div className="flex items-start gap-2 text-sm text-accent-7">
             <FontAwesomeIcon icon={faMapMarkerAlt} className="h-4 w-4 text-accent-6 mt-0.5" />
-            <span>{client.address}</span>
+            <span>{cuenta.address}</span>
           </div>
         )}
       </div>
@@ -67,12 +67,12 @@ export const ClientDetails: React.FC<ClientDetailsProps> = ({ client }) => {
           <div>
             <span className="font-medium">Creado:</span>
             <br />
-            {new Date(client.createdAt).toLocaleDateString()}
+            {new Date(cuenta.createdAt).toLocaleDateString()}
           </div>
           <div>
             <span className="font-medium">Actualizado:</span>
             <br />
-            {new Date(client.updatedAt).toLocaleDateString()}
+            {new Date(cuenta.updatedAt).toLocaleDateString()}
           </div>
         </div>
       </div>

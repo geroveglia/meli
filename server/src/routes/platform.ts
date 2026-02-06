@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { Tenant } from "../models/Tenant.js";
 import { User } from "../models/User.js";
-import { Client } from "../models/Client.js";
+import { Cuenta } from "../models/Cuenta.js";
 import { authenticateToken, AuthenticatedRequest } from "../middleware/auth.js";
 import { requirePlatform } from "../middleware/requirePlatform.js";
 
@@ -31,7 +31,7 @@ router.get("/metrics",
         Tenant.countDocuments({ isSystem: false, isActive: false }),
         Tenant.countDocuments({ isSystem: false, createdAt: { $gte: thirtyDaysAgo } }),
         User.countDocuments(),
-        Client.countDocuments(),
+        Cuenta.countDocuments(),
         Campaign.countDocuments(),
         Tenant.aggregate([
           { $match: { isSystem: false } },
@@ -63,7 +63,7 @@ router.get("/metrics",
         storageUsedMB: t.usage?.storage?.usedMB || 0,
         storageLimitMB: t.usage?.storage?.limitMB || 0,
         users: t.usage?.users?.current || 0,
-        clients: t.usage?.clients?.current || 0,
+        cuentas: t.usage?.clients?.current || 0,
         plan: t.subscription?.plan || "free",
         isActive: t.isActive
       }));
@@ -109,7 +109,7 @@ router.get("/metrics",
         },
         resources: {
           totalUsers,
-          totalClients,
+          totalCuentas,
           totalCampaigns,
           storageUsedMB: Math.round(totalStorage),
           storageLimitMB: Math.round(totalStorageLimit),
@@ -146,7 +146,7 @@ router.get("/activity",
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - daysNum);
 
-      const [tenantsCreated, usersCreated, clientsCreated, campaignsCreated] = await Promise.all([
+      const [tenantsCreated, usersCreated, cuentasCreated, campaignsCreated] = await Promise.all([
         Tenant.aggregate([
           {
             $match: {
@@ -176,7 +176,7 @@ router.get("/activity",
           },
           { $sort: { _id: 1 } }
         ]),
-        Client.aggregate([
+        Cuenta.aggregate([
           {
             $match: {
               createdAt: { $gte: startDate }
@@ -209,7 +209,7 @@ router.get("/activity",
       res.json({
         tenants: tenantsCreated,
         users: usersCreated,
-        clients: clientsCreated,
+        cuentas: cuentasCreated,
         campaigns: campaignsCreated
       });
     } catch (error: any) {

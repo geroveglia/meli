@@ -4,38 +4,38 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Search, User, Check } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faPlus } from "@fortawesome/free-solid-svg-icons";
-import { useClientContextStore, Client } from "../stores/clientContextStore";
+import { useCuentaContextStore, Cuenta } from "../stores/cuentaContextStore";
 import { createNavbarEventListener, NavbarEventDetail } from "../utils/navbarEvents";
-import { clientsAPI } from "../api/clients";
+import { cuentasAPI } from "../api/cuentas";
 
-interface ClientSelectorProps {
+interface CuentaSelectorProps {
   className?: string;
-  onClientChange?: (client: Client | null) => void;
+  onCuentaChange?: (cuenta: Cuenta | null) => void;
 }
 
-const ClientSelector = ({ className = "", onClientChange }: ClientSelectorProps) => {
+const CuentaSelector = ({ className = "", onCuentaChange }: CuentaSelectorProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Store
-  const selectedClient = useClientContextStore((state) => state.selectedClient);
-  const setClient = useClientContextStore((state) => state.setClient);
-  const clearClient = useClientContextStore((state) => state.clearClient);
+  const selectedCuenta = useCuentaContextStore((state) => state.selectedCuenta);
+  const setCuenta = useCuentaContextStore((state) => state.setCuenta);
+  const clearCuenta = useCuentaContextStore((state) => state.clearCuenta);
 
   // Local state
   const [isOpen, setIsOpen] = useState(false);
-  const [clients, setClients] = useState<Client[]>([]);
+  const [cuentas, setCuentas] = useState<Cuenta[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch clients
-  const fetchClients = useCallback(async () => {
+  // Fetch cuentas
+  const fetchCuentas = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await clientsAPI.list({ limit: 100 });
-      setClients(response.clients || []);
+      const response = await cuentasAPI.list({ limit: 100 });
+      setCuentas(response.cuentas || []);
     } catch (error) {
-      console.error("Error fetching clients:", error);
-      setClients([]);
+      console.error("Error fetching cuentas:", error);
+      setCuentas([]);
     } finally {
       setIsLoading(false);
     }
@@ -43,17 +43,17 @@ const ClientSelector = ({ className = "", onClientChange }: ClientSelectorProps)
 
   // Initial fetch
   useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
+    fetchCuentas();
+  }, [fetchCuentas]);
 
-  // Listen for clients-changed events
+  // Listen for cuentas-changed events
   useEffect(() => {
-    const unsubscribe = createNavbarEventListener("clientsChanged", (detail: NavbarEventDetail) => {
-      console.log("Clients changed event received:", detail);
-      fetchClients();
+    const unsubscribe = createNavbarEventListener("cuentasChanged", (detail: NavbarEventDetail) => {
+      console.log("Cuentas changed event received:", detail);
+      fetchCuentas();
     });
     return unsubscribe;
-  }, [fetchClients]);
+  }, [fetchCuentas]);
 
   // Click outside handler
   useEffect(() => {
@@ -73,36 +73,36 @@ const ClientSelector = ({ className = "", onClientChange }: ClientSelectorProps)
     };
   }, [isOpen]);
 
-  // Filter clients by search query
-  const filteredClients = clients.filter((client) => {
+  // Filter cuentas by search query
+  const filteredCuentas = cuentas.filter((cuenta) => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
-    return client.name?.toLowerCase().includes(query) || client.email?.toLowerCase().includes(query);
+    return cuenta.name?.toLowerCase().includes(query) || cuenta.email?.toLowerCase().includes(query);
   });
 
-  // Handle client selection
-  const handleSelectClient = (client: Client) => {
-    setClient(client);
+  // Handle cuenta selection
+  const handleSelectCuenta = (cuenta: Cuenta) => {
+    setCuenta(cuenta);
     setIsOpen(false);
     setSearchQuery("");
-    onClientChange?.(client);
+    onCuentaChange?.(cuenta);
     // No navegamos - solo cambiamos el contexto para que la página actual filtre los datos
   };
 
   // Handle "Todos" selection
   const handleSelectAll = () => {
-    clearClient();
+    clearCuenta();
     setIsOpen(false);
     setSearchQuery("");
-    onClientChange?.(null);
+    onCuentaChange?.(null);
     // No navegamos - solo limpiamos el contexto para mostrar todos los datos
   };
 
-  // Handle clear client
-  const handleClearClient = (e: React.MouseEvent) => {
+  // Handle clear cuenta
+  const handleClearCuenta = (e: React.MouseEvent) => {
     e.stopPropagation();
-    clearClient();
-    onClientChange?.(null);
+    clearCuenta();
+    onCuentaChange?.(null);
   };
 
   // Toggle dropdown
@@ -115,8 +115,8 @@ const ClientSelector = ({ className = "", onClientChange }: ClientSelectorProps)
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
-      {/* Label "CLIENTE" */}
-      <div className="text-accent-7 text-xs font-semibold mb-2 uppercase tracking-wide">Cliente</div>
+      {/* Label "CUENTA" */}
+      <div className="text-accent-7 text-xs font-semibold mb-2 uppercase tracking-wide">Cuenta</div>
 
       {/* Trigger Button */}
       <div onClick={toggleDropdown} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all cursor-pointer ${isOpen ? "ring-2 ring-accent-5" : ""} bg-accent-2 hover:bg-accent-3 border border-accent-4 shadow-sm`} role="button" tabIndex={0}>
@@ -126,12 +126,12 @@ const ClientSelector = ({ className = "", onClientChange }: ClientSelectorProps)
             <User size={20} />
           </div>
 
-          <span className="text-accent-1 font-semibold truncate text-sm">{selectedClient ? selectedClient.name : "Todos"}</span>
+          <span className="text-accent-1 font-semibold truncate text-sm">{selectedCuenta ? selectedCuenta.name : "Todos"}</span>
         </span>
 
         <div className="flex items-center ml-2">
-          {selectedClient && (
-            <button onClick={handleClearClient} className="mr-2 p-1 rounded-md hover:bg-accent-4 text-accent-7 hover:text-accent-9 transition-colors duration-150" title="Deseleccionar cliente">
+          {selectedCuenta && (
+            <button onClick={handleClearCuenta} className="mr-2 p-1 rounded-md hover:bg-accent-4 text-accent-7 hover:text-accent-9 transition-colors duration-150" title="Deseleccionar cuenta">
               <X size={14} />
             </button>
           )}
@@ -173,7 +173,7 @@ const ClientSelector = ({ className = "", onClientChange }: ClientSelectorProps)
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Buscar cliente..."
+                  placeholder="Buscar cuenta..."
                   className="
                     flex-1 bg-transparent border-none outline-none
                     text-xs text-accent-9
@@ -184,7 +184,7 @@ const ClientSelector = ({ className = "", onClientChange }: ClientSelectorProps)
               </div>
             </div>
 
-            {/* Client List */}
+            {/* Cuenta List */}
             <div className="max-h-56 overflow-y-auto">
               {/* "Todos" option - Always visible */}
               <button
@@ -192,24 +192,24 @@ const ClientSelector = ({ className = "", onClientChange }: ClientSelectorProps)
                 className={`
                   w-full flex items-center gap-2 px-2 py-2
                   text-left transition-colors duration-150 border-b border-accent-3
-                  ${!selectedClient ? "bg-accent-3" : "hover:bg-accent-2"}
+                  ${!selectedCuenta ? "bg-accent-3" : "hover:bg-accent-2"}
                 `}
               >
                 <div
                   className={`
                     flex items-center justify-center
                     w-7 h-7 rounded-md shrink-0
-                    ${!selectedClient ? "bg-accent-9 text-accent-2" : "bg-accent-3 text-accent-7"}
+                    ${!selectedCuenta ? "bg-accent-9 text-accent-2" : "bg-accent-3 text-accent-7"}
                     text-xs font-bold
                   `}
                 >
                   <User size={14} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium truncate ${!selectedClient ? "text-accent-9" : "text-accent-8"}`}>Todos</p>
-                  <p className="text-[10px] text-accent-7 truncate">Ver todos los clientes</p>
+                  <p className={`text-sm font-medium truncate ${!selectedCuenta ? "text-accent-9" : "text-accent-8"}`}>Todos</p>
+                  <p className="text-[10px] text-accent-7 truncate">Ver todas las cuentas</p>
                 </div>
-                {!selectedClient && <Check size={14} className="text-accent-9 shrink-0" />}
+                {!selectedCuenta && <Check size={14} className="text-accent-9 shrink-0" />}
               </button>
 
               {isLoading ? (
@@ -217,13 +217,13 @@ const ClientSelector = ({ className = "", onClientChange }: ClientSelectorProps)
                   <div className="animate-spin w-5 h-5 border-2 border-accent-9 border-t-transparent rounded-full mx-auto mb-2" />
                   Cargando...
                 </div>
-              ) : filteredClients.length === 0 ? (
+              ) : filteredCuentas.length === 0 ? (
                 <div className="p-4 flex flex-col items-center justify-center text-center">
-                  <p className="text-sm text-accent-7 mb-3">No hay clientes disponibles</p>
+                  <p className="text-sm text-accent-7 mb-3">No hay cuentas disponibles</p>
                   <button
                     onClick={() => {
                       setIsOpen(false);
-                      navigate("/admin/clients");
+                      // navigate("/admin/cuentas"); // TODO: Reactivate when route is confirmed
                     }}
                     className="
                       flex items-center gap-2 px-4 py-2
@@ -233,16 +233,16 @@ const ClientSelector = ({ className = "", onClientChange }: ClientSelectorProps)
                     "
                   >
                     <FontAwesomeIcon icon={faPlus} className="h-3 w-3" />
-                    Nuevo Cliente
+                    Nueva Cuenta
                   </button>
                 </div>
               ) : (
-                filteredClients.map((client) => {
-                  const isSelected = selectedClient?._id === client._id;
+                filteredCuentas.map((cuenta) => {
+                  const isSelected = selectedCuenta?._id === cuenta._id;
                   return (
                     <button
-                      key={client._id}
-                      onClick={() => handleSelectClient(client)}
+                      key={cuenta._id}
+                      onClick={() => handleSelectCuenta(cuenta)}
                       className={`
                         w-full flex items-center gap-2 px-2 py-2
                         text-left transition-colors duration-150
@@ -258,7 +258,7 @@ const ClientSelector = ({ className = "", onClientChange }: ClientSelectorProps)
                         text-xs font-bold
                       `}
                       >
-                        {client.avatar ? <img src={client.avatar} alt={client.name} className="w-full h-full rounded-md object-cover" /> : client.name?.charAt(0).toUpperCase() || <User size={14} />}
+                        {cuenta.avatar ? <img src={cuenta.avatar} alt={cuenta.name} className="w-full h-full rounded-md object-cover" /> : cuenta.name?.charAt(0).toUpperCase() || <User size={14} />}
                       </div>
 
                       {/* Info */}
@@ -269,9 +269,9 @@ const ClientSelector = ({ className = "", onClientChange }: ClientSelectorProps)
                           ${isSelected ? "text-accent-9" : "text-accent-8"}
                         `}
                         >
-                          {client.name}
+                          {cuenta.name}
                         </p>
-                        <p className="text-[10px] text-accent-7 truncate">{client.email}</p>
+                        <p className="text-[10px] text-accent-7 truncate">{cuenta.email}</p>
                       </div>
 
                       {/* Selected indicator */}
@@ -288,4 +288,4 @@ const ClientSelector = ({ className = "", onClientChange }: ClientSelectorProps)
   );
 };
 
-export default ClientSelector;
+export default CuentaSelector;

@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { Client } from "../models/Client.js";
+import { Cuenta } from "../models/Cuenta.js";
 
 interface AddUserToClientParams {
   tenantId: Types.ObjectId;
@@ -14,26 +14,26 @@ export async function addUserToClientUsuarios({
   userId,
   permiso = "ver",
 }: AddUserToClientParams): Promise<void> {
-  const client = await Client.findOne({ _id: clientId, tenantId });
+  const cuenta = await Cuenta.findOne({ _id: clientId, tenantId });
 
-  if (!client) {
-    throw new Error("Client not found");
+  if (!cuenta) {
+    throw new Error("Cuenta not found");
   }
 
-  const existingUser = client.usuarios?.find(
+  const existingUser = cuenta.usuarios?.find(
     (u) => u.userId.toString() === userId.toString()
   );
 
   if (existingUser) {
     existingUser.permiso = permiso;
   } else {
-    if (!client.usuarios) {
-      client.usuarios = [];
+    if (!cuenta.usuarios) {
+      cuenta.usuarios = [];
     }
-    client.usuarios.push({ userId, permiso });
+    cuenta.usuarios.push({ userId, permiso });
   }
 
-  await client.save();
+  await cuenta.save();
 }
 
 export async function removeUserFromClientUsuarios(
@@ -41,16 +41,16 @@ export async function removeUserFromClientUsuarios(
   clientId: Types.ObjectId,
   userId: Types.ObjectId
 ): Promise<void> {
-  const client = await Client.findOne({ _id: clientId, tenantId });
+  const cuenta = await Cuenta.findOne({ _id: clientId, tenantId });
 
-  if (!client) {
-    throw new Error("Client not found");
+  if (!cuenta) {
+    throw new Error("Cuenta not found");
   }
 
-  if (client.usuarios) {
-    client.usuarios = client.usuarios.filter(
+  if (cuenta.usuarios) {
+    cuenta.usuarios = cuenta.usuarios.filter(
       (u) => u.userId.toString() !== userId.toString()
     );
-    await client.save();
+    await cuenta.save();
   }
 }

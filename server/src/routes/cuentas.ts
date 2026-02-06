@@ -1,7 +1,7 @@
 import { Router, Response } from "express";
 import { z } from "zod";
 import { Types } from "mongoose";
-import { Client, IClient } from "../models/Client.js";
+import { Cuenta, ICuenta } from "../models/Cuenta.js";
 import { authenticateToken, AuthenticatedRequest } from "../middleware/auth.js";
 import { requireTenant, TenantRequest } from "../middleware/tenant.js";
 import { requirePermission } from "../middleware/permissions.js";
@@ -12,7 +12,7 @@ const router = Router();
 // VALIDATION SCHEMAS
 // ─────────────────────────────────────────────────────────────────────────────
 
-const createClientSchema = z.object({
+const createCuentaSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres").trim(),
   company: z.string().trim().optional(),
   email: z.string().email("Email inválido").toLowerCase().trim(),
@@ -22,7 +22,7 @@ const createClientSchema = z.object({
   isFavorite: z.boolean().optional().default(false),
 });
 
-const updateClientSchema = z.object({
+const updateCuentaSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres").trim().optional(),
   company: z.string().trim().nullable().optional(),
   email: z.string().email("Email inválido").toLowerCase().trim().optional(),
@@ -50,10 +50,10 @@ router.get(
   authenticateToken,
   async (req: AuthenticatedRequest & TenantRequest, res: Response) => {
     try {
-      const count = await Client.countDocuments({ tenantId: req.tenantObjectId });
+      const count = await Cuenta.countDocuments({ tenantId: req.tenantObjectId });
       res.json({ count });
     } catch (error) {
-      console.error("Count clients error:", error);
+      console.error("Count cuentas error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   }
@@ -67,7 +67,7 @@ router.get(
   "/",
   requireTenant,
   authenticateToken,
-  requirePermission("clients:view"),
+  requirePermission("cuentas:view"),
   async (req: AuthenticatedRequest & TenantRequest, res: Response) => {
     try {
       const { page = 1, limit = 20, search, status, isFavorite } = req.query;
@@ -96,17 +96,17 @@ router.get(
 
       const skip = (Number(page) - 1) * Number(limit);
 
-      const [clients, total] = await Promise.all([
-        Client.find(filter)
+      const [cuentas, total] = await Promise.all([
+        Cuenta.find(filter)
           .sort({ isFavorite: -1, createdAt: -1 })
           .skip(skip)
           .limit(Number(limit))
           .lean(),
-        Client.countDocuments(filter),
+        Cuenta.countDocuments(filter),
       ]);
 
       res.json({
-        clients,
+        cuentas,
         pagination: {
           page: Number(page),
           limit: Number(limit),
@@ -129,33 +129,34 @@ router.post(
   "/",
   requireTenant,
   authenticateToken,
-  requirePermission("clients:view"),
+  authenticateToken,
+  requirePermission("cuentas:view"),
   async (req: AuthenticatedRequest & TenantRequest, res: Response) => {
     try {
-      const data = createClientSchema.parse(req.body);
+      const data = createCuentaSchema.parse(req.body);
 
       // Check for duplicate email in the same tenant
-      const existingClient = await Client.findOne({
+      const existingCuenta = await Cuenta.findOne({
         tenantId: req.tenantObjectId,
         email: data.email,
       });
 
-      if (existingClient) {
+      if (existingCuenta) {
         res.status(409).json({
           error: "Duplicate email",
-          message: "Ya existe un cliente con este email en tu organización",
+          message: "Ya existe una cuenta con este email en tu organización",
         });
         return;
       }
 
-      const client = new Client({
+      const cuenta = new Cuenta({
         ...data,
         tenantId: req.tenantObjectId,
       });
 
-      await client.save();
+      await cuenta.save();
 
-      res.status(201).json(client.toObject());
+      res.status(201).json(cuenta.toObject());
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({
@@ -164,7 +165,7 @@ router.post(
         });
         return;
       }
-      console.error("Create client error:", error);
+      console.error("Create cuenta error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   }
@@ -178,29 +179,29 @@ router.get(
   "/:id",
   requireTenant,
   authenticateToken,
-  requirePermission("clients:view"),
+  requirePermission("cuentas:view"),
   async (req: AuthenticatedRequest & TenantRequest, res: Response) => {
     try {
       const { id } = req.params;
 
       if (!isValidObjectId(id)) {
-        res.status(400).json({ error: "Invalid client ID" });
+        res.status(400).json({ error: "Invalid cuenta ID" });
         return;
       }
 
-      const client = await Client.findOne({
+      const cuenta = await Cuenta.findOne({
         _id: id,
         tenantId: req.tenantObjectId,
       }).lean();
 
-      if (!client) {
-        res.status(404).json({ error: "Client not found" });
+      if (!cuenta) {
+        res.status(404).json({ error: "Cuenta not found" });
         return;
       }
 
-      res.json(client);
+      res.json(cuenta);
     } catch (error) {
-      console.error("Get client error:", error);
+      console.error("Get cuenta error:", error);
       res.status(500).json({ error: "Internal server area" });
     }
   }
@@ -214,32 +215,32 @@ router.put(
   "/:id",
   requireTenant,
   authenticateToken,
-  requirePermission("clients:view"),
+  requirePermission("cuentas:view"),
   async (req: AuthenticatedRequest & TenantRequest, res: Response) => {
     try {
       const { id } = req.params;
 
       if (!isValidObjectId(id)) {
-        res.status(400).json({ error: "Invalid client ID" });
+        res.status(400).json({ error: "Invalid cuenta ID" });
         return;
       }
 
-      const data = updateClientSchema.parse(req.body);
+      const data = updateCuentaSchema.parse(req.body);
 
-      // Check if client exists and belongs to tenant
-      const existingClient = await Client.findOne({
+      // Check if cuenta exists and belongs to tenant
+      const existingCuenta = await Cuenta.findOne({
         _id: id,
         tenantId: req.tenantObjectId,
       });
 
-      if (!existingClient) {
-        res.status(404).json({ error: "Client not found" });
+      if (!existingCuenta) {
+        res.status(404).json({ error: "Cuenta not found" });
         return;
       }
 
       // If email is being changed, check for duplicates
-      if (data.email && data.email !== existingClient.email) {
-        const duplicateEmail = await Client.findOne({
+      if (data.email && data.email !== existingCuenta.email) {
+        const duplicateEmail = await Cuenta.findOne({
           tenantId: req.tenantObjectId,
           email: data.email,
           _id: { $ne: id },
@@ -248,7 +249,7 @@ router.put(
         if (duplicateEmail) {
           res.status(409).json({
             error: "Duplicate email",
-            message: "Ya existe otro cliente con este email en tu organización",
+            message: "Ya existe otra cuenta con este email en tu organización",
           });
           return;
         }
@@ -274,12 +275,12 @@ router.put(
         updateQuery.$unset = unsetData;
       }
 
-      const updatedClient = await Client.findByIdAndUpdate(id, updateQuery, {
+      const updatedCuenta = await Cuenta.findByIdAndUpdate(id, updateQuery, {
         new: true,
         runValidators: true,
       }).lean();
 
-      res.json(updatedClient);
+      res.json(updatedCuenta);
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({
@@ -288,7 +289,7 @@ router.put(
         });
         return;
       }
-      console.error("Update client error:", error);
+      console.error("Update cuenta error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   }
@@ -302,30 +303,30 @@ router.patch(
   "/:id/favorite",
   requireTenant,
   authenticateToken,
-  requirePermission("clients:view"),
+  requirePermission("cuentas:view"),
   async (req: AuthenticatedRequest & TenantRequest, res: Response) => {
     try {
       const { id } = req.params;
 
       if (!isValidObjectId(id)) {
-        res.status(400).json({ error: "Invalid client ID" });
+        res.status(400).json({ error: "Invalid cuenta ID" });
         return;
       }
 
-      const client = await Client.findOne({
+      const cuenta = await Cuenta.findOne({
         _id: id,
         tenantId: req.tenantObjectId,
       });
 
-      if (!client) {
-        res.status(404).json({ error: "Client not found" });
+      if (!cuenta) {
+        res.status(404).json({ error: "Cuenta not found" });
         return;
       }
 
-      client.isFavorite = !client.isFavorite;
-      await client.save();
+      cuenta.isFavorite = !cuenta.isFavorite;
+      await cuenta.save();
 
-      res.json({ isFavorite: client.isFavorite });
+      res.json({ isFavorite: cuenta.isFavorite });
     } catch (error) {
       console.error("Toggle favorite error:", error);
       res.status(500).json({ error: "Internal server error" });
@@ -341,32 +342,32 @@ router.delete(
   "/:id",
   requireTenant,
   authenticateToken,
-  requirePermission("clients:view"),
+  requirePermission("cuentas:view"),
   async (req: AuthenticatedRequest & TenantRequest, res: Response) => {
     try {
       const { id } = req.params;
 
       if (!isValidObjectId(id)) {
-        res.status(400).json({ error: "Invalid client ID" });
+        res.status(400).json({ error: "Invalid cuenta ID" });
         return;
       }
 
-      const result = await Client.findOneAndDelete({
+      const result = await Cuenta.findOneAndDelete({
         _id: id,
         tenantId: req.tenantObjectId,
       });
 
       if (!result) {
-        res.status(404).json({ error: "Client not found" });
+        res.status(404).json({ error: "Cuenta not found" });
         return;
       }
 
       res.status(204).send();
     } catch (error) {
-      console.error("Delete client error:", error);
+      console.error("Delete cuenta error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   }
 );
 
-export const clientRoutes = router;
+export const cuentaRoutes = router;

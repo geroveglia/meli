@@ -2,7 +2,7 @@ export type NavbarEventType =
   | "tenantsChanged"
   | "rolesChanged"
   | "usersChanged"
-  | "clientsChanged";
+  | "cuentasChanged";
 
 export type ChangeAction = "create" | "update" | "delete";
 
@@ -39,8 +39,8 @@ export const emitUsersChanged = (action: ChangeAction = "update", resourceId?: s
   emitNavbarEvent("usersChanged", { action, resourceId });
 };
 
-export const emitClientsChanged = (action: ChangeAction = "update", resourceId?: string) => {
-  emitNavbarEvent("clientsChanged", { action, resourceId });
+export const emitCuentasChanged = (action: ChangeAction = "update", resourceId?: string) => {
+  emitNavbarEvent("cuentasChanged", { action, resourceId });
 };
 
 

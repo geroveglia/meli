@@ -14,11 +14,11 @@ import { Badge } from "../../components/Badge";
 import { Checkbox } from "../../components/Checkbox";
 import { Button } from "../../components/Button";
 
-import { useClientContextStore } from "../../stores/clientContextStore";
+import { useCuentaContextStore } from "../../stores/cuentaContextStore";
 
 export const LogisticaPage: React.FC = () => {
   const { orders, selectedAccount, setAccount, searchQuery, setSearchQuery, dateFrom, dateTo, setDateRange, updateOrderLogisticsStatus, setOrderPackaged, setOrderTagStatus } = useLumbaStore();
-  const { selectedClient } = useClientContextStore();
+  const { selectedCuenta } = useCuentaContextStore();
 
   const [searchParams] = useSearchParams();
   const activeTab = searchParams.get("status") || "TODAS";
@@ -56,8 +56,8 @@ export const LogisticaPage: React.FC = () => {
     let result = orders;
 
     // 0. Filter by Client Context
-    if (selectedClient) {
-      result = result.filter((o) => o.clientName === selectedClient.name);
+    if (selectedCuenta) {
+      result = result.filter((o) => o.clientName === selectedCuenta.name);
     }
 
     // 1. Filter by Account
@@ -98,7 +98,7 @@ export const LogisticaPage: React.FC = () => {
     }
 
     return result;
-  }, [orders, selectedClient, selectedAccount, searchQuery, dateFrom, dateTo, activeTab]);
+  }, [orders, selectedCuenta, selectedAccount, searchQuery, dateFrom, dateTo, activeTab]);
 
   // --- Selection Logic ---
 
@@ -237,7 +237,7 @@ export const LogisticaPage: React.FC = () => {
     }
   };
 
-  const renderActions = (order: Order, isModal: boolean = false, _isCard: boolean = false) => {
+  const renderActions = (order: Order, isModal: boolean = false, isCard: boolean = false) => {
     const buttons = [];
 
     // Modal View: Only "Reimprimir Etiqueta" if applicable
@@ -250,9 +250,9 @@ export const LogisticaPage: React.FC = () => {
       ) {
         // Show reprint button
         buttons.push(
-          <Button key="reprint" onClick={() => handleAction(order, "IMPRIMIR_ETIQUETA")} variant="blue" size="sm" className="flex items-center gap-2">
+          <Button key="reprint" onClick={() => handleAction(order, "IMPRIMIR_ETIQUETA")} variant="blue" size="sm" className="flex items-center gap-2" title={!isCard ? "Reimprimir Etiqueta" : ""}>
             <FontAwesomeIcon icon={faPrint} />
-            Reimprimir Etiqueta
+            {isCard ? "Reimprimir" : null}
           </Button>,
         );
       }
@@ -270,17 +270,17 @@ export const LogisticaPage: React.FC = () => {
 
       // 1. Empaquetado
       buttons.push(
-        <Button key="pack" onClick={() => handleAction(order, "EMPAQUETAR")} variant={isPackaged ? "grey" : "blue"} size="sm" disabled={isPackaged} className={`flex items-center gap-2`}>
+        <Button key="pack" onClick={() => handleAction(order, "EMPAQUETAR")} variant={isPackaged ? "grey" : "blue"} size="sm" disabled={isPackaged} className={`flex items-center gap-2`} title={!isCard ? (isPackaged ? "Empaquetado" : "Empaquetar") : ""}>
           <FontAwesomeIcon icon={isPackaged ? faCheck : faBoxOpen} />
-          {isPackaged ? "Empaquetado" : "Empaquetar"}
+          {isCard ? (isPackaged ? "Empaquetado" : "Empaquetar") : null}
         </Button>,
       );
 
       // 2. Imprimir Etiqueta
       buttons.push(
-        <Button key="print" onClick={() => handleAction(order, "IMPRIMIR_ETIQUETA")} variant={isLabeled ? "grey" : "blue"} size="sm" disabled={!isPackaged || isLabeled} className={`flex items-center gap-2`} title={!isPackaged ? "Primero debes empaquetar" : ""}>
+        <Button key="print" onClick={() => handleAction(order, "IMPRIMIR_ETIQUETA")} variant={isLabeled ? "grey" : "blue"} size="sm" disabled={!isPackaged || isLabeled} className={`flex items-center gap-2`} title={(!isPackaged ? "Primero debes empaquetar" : "") || (!isCard ? (isLabeled ? "Impresa" : "Imprimir Etiqueta") : "")}>
           <FontAwesomeIcon icon={isLabeled ? faCheck : faPrint} />
-          {isLabeled ? "Impresa" : "Imprimir Etiqueta"}
+          {isCard ? (isLabeled ? "Impresa" : "Imprimir") : null}
         </Button>,
       );
 
@@ -294,10 +294,10 @@ export const LogisticaPage: React.FC = () => {
           size="sm"
           disabled={!isLabeled || !isPackaged} // Strict dependency
           className={`flex items-center gap-2 ${!isLabeled || !isPackaged ? "opacity-50 cursor-not-allowed" : ""}`}
-          title={!isLabeled ? "Falta imprimir etiqueta" : ""}
+          title={(!isLabeled ? "Falta imprimir etiqueta" : "") || (!isCard ? "Listo para entregar" : "")}
         >
           <FontAwesomeIcon icon={faTruck} />
-          Listo para entregar
+          {isCard ? "Listo" : null}
         </Button>,
       );
     }
@@ -311,7 +311,7 @@ export const LogisticaPage: React.FC = () => {
     }
 
     return (
-      <div className="flex gap-2 flex-nowrap items-center justify-start w-full" onClick={(e) => e.stopPropagation()}>
+      <div className={`flex gap-2 flex-nowrap w-full items-center ${isCard ? "justify-end" : "justify-start"}`} onClick={(e) => e.stopPropagation()}>
         {buttons}
       </div>
     );
@@ -324,19 +324,6 @@ export const LogisticaPage: React.FC = () => {
     { value: "Cuenta 2", label: "Cuenta 2" },
     { value: "Cuenta 3", label: "Cuenta 3" },
   ];
-
-  const titleMap: Record<string, string> = {
-    TODAS: "Logística: Todos los pedidos",
-    PENDIENTE_PREPARACION: "En preparación",
-    LISTO_PARA_ENTREGAR: "Listo para entregar",
-    DESPACHADO_MELI: "Despachado M.L.",
-    RETIRO_EN_LOCAL: "Retiro en local",
-    ENTREGADOS: "Entregados",
-    CANCELADOS: "Cancelados",
-    DEVOLUCION: "Devolución",
-  };
-
-  const currentTitle = titleMap[activeTab] || activeTab.replace(/_/g, " ");
 
   const renderCards = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -364,8 +351,22 @@ export const LogisticaPage: React.FC = () => {
           >
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">Items:</span>
-                <span className="font-semibold text-gray-900 dark:text-gray-100">{order.items.length > 0 ? order.items[0].title : "-"}</span>
+                <span className="text-gray-500 dark:text-gray-400">Cuenta:</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100">{order.clientName}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400">Id ML:</span>
+                <span className="font-mono text-gray-900 dark:text-gray-100">{order.meliOrderId}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400">Publicación:</span>
+                <span className="text-gray-900 dark:text-gray-100 truncate max-w-[150px]" title={order.items.length > 0 ? order.items[0].title : "-"}>
+                  {order.items.length > 0 ? order.items[0].title : "-"}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400">Cantidad:</span>
+                <span className="text-gray-900 dark:text-gray-100">{order.items.length > 0 ? order.items[0].quantity : 0}</span>
               </div>
               {order.items.length > 0 && order.items[0].variant && (
                 <div className="flex justify-between text-sm">
@@ -395,14 +396,49 @@ export const LogisticaPage: React.FC = () => {
     </div>
   );
 
+  // --- Info Modal State ---
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+
+  const infoContent = (
+    <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
+      <p>Acciones disponibles para gestionar la logística de tus envíos:</p>
+      <ul className="list-disc pl-5 space-y-2">
+        <li>
+          <strong>Empaquetar:</strong> Marca la orden como empaquetada, habilitando la impresión de etiqueta.
+        </li>
+        <li>
+          <strong>Imprimir:</strong> Descarga la etiqueta de envío y marca la orden como etiquetada.
+        </li>
+        <li>
+          <strong>Listo:</strong> Marca la orden como lista para entregar al correo o colecta.
+        </li>
+        <li>
+          <strong>Reimprimir:</strong> Permite volver a imprimir la etiqueta si es necesario.
+        </li>
+        <li>
+          <strong>Ver detalle:</strong> Muestra toda la información detallada de la orden.
+        </li>
+      </ul>
+    </div>
+  );
+
   return (
     <PageLayout
-      title={currentTitle}
-      subtitle="Gestión de envíos y logística"
+      title="Logística"
+      subtitle="Gestión de envíos y etiquetas"
       faIcon={{ icon: faTruck }}
       headerActions={null}
+      showInfoIcon={true}
+      infoModal={{
+        isOpen: isInfoOpen,
+        onOpen: () => setIsInfoOpen(true),
+        onClose: () => setIsInfoOpen(false),
+        title: "Ayuda Logística",
+        content: infoContent,
+      }}
       searchAndFilters={
         <SearchAndFilters
+          searchPlaceholder="Buscar por ID, comprador..."
           searchTerm={searchQuery}
           onSearchChange={setSearchQuery}
           searchPlaceholder="Buscar por ID, comprador..."
@@ -446,10 +482,6 @@ export const LogisticaPage: React.FC = () => {
                     <FontAwesomeIcon icon={faBoxOpen} />
                     Empaquetar
                   </Button>
-                  <Button onClick={() => handleAction(selectedOrderIds, "IMPRIMIR_ETIQUETA")} variant="blue" size="sm" disabled={selectedOrderIds.length === 0} className="flex items-center gap-2">
-                    <FontAwesomeIcon icon={faPrint} />
-                    Imprimir Etiqueta
-                  </Button>
                   <Button onClick={() => handleAction(selectedOrderIds, "PASAR_A_LISTO")} variant="blue" size="sm" disabled={selectedOrderIds.length === 0} className="flex items-center gap-2">
                     <FontAwesomeIcon icon={faTruck} />
                     Listo para entregar
@@ -480,12 +512,12 @@ export const LogisticaPage: React.FC = () => {
                     Fecha ML
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
-                    Cliente
+                    Cuenta
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
                     Id ML
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider w-[30%]">
                     Publicación
                   </th>
                   <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
@@ -521,7 +553,7 @@ export const LogisticaPage: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-medium">{order.clientName}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-mono">{order.meliOrderId}</td>
                       <td className="px-6 py-4">
-                        <div className="text-xs text-gray-900 dark:text-white truncate max-w-[200px]" title={order.items.length > 0 ? order.items[0].title : ""}>
+                        <div className="text-xs text-gray-900 dark:text-white line-clamp-2" title={order.items.length > 0 ? order.items[0].title : ""}>
                           {order.items.length > 0 ? order.items[0].title : "-"}
                         </div>
                       </td>
@@ -535,9 +567,9 @@ export const LogisticaPage: React.FC = () => {
                           variant="blue"
                           size="sm"
                           className="flex items-center gap-2"
+                          title="Ver detalle"
                         >
                           <FontAwesomeIcon icon={faEye} />
-                          Ver detalle
                         </Button>
                       </td>
                     </tr>

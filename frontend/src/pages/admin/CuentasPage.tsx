@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "../../stores/authStore";
-import { clientsAPI, Client, ClientStatus, CreateClientData, UpdateClientData } from "../../api/clients";
+import { cuentasAPI, Cuenta, CuentaStatus, CreateCuentaData, UpdateCuentaData } from "../../api/cuentas";
 
 import { PageLayout } from "../../components/PageLayout";
 import { SearchAndFilters } from "../../components/SearchAndFilters";
@@ -8,16 +8,17 @@ import { EmptyState } from "../../components/EmptyState";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Card } from "../../components/Card";
 import { sweetAlert } from "../../utils/sweetAlert";
+import { emitCuentasChanged } from "../../utils/navbarEvents";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBuilding, faEdit, faTrash, faPlus, faEnvelope, faMapMarkerAlt } from "@fortawesome/free-solid-svg-icons";
-import { ClientForm, ClientFormData } from "../../components/clients/ClientForm";
-import { ClientDetails } from "../../components/clients/ClientDetails";
+import { CuentaForm, CuentaFormData } from "../../components/cuentas/CuentaForm";
+import { CuentaDetails } from "../../components/cuentas/CuentaDetails";
 
 /* ---------- Types ---------- */
 
 
 
-const initialFormData: ClientFormData = {
+const initialFormData: CuentaFormData = {
   name: "",
   company: "",
   email: "",
@@ -28,7 +29,7 @@ const initialFormData: ClientFormData = {
 
 /* ---------- Status Badge Helper ---------- */
 
-const getStatusBadge = (status: ClientStatus) => {
+const getStatusBadge = (status: CuentaStatus) => {
   const config = {
     active: {
       text: "Activo",
@@ -45,31 +46,31 @@ const getStatusBadge = (status: ClientStatus) => {
 
 /* ---------- Component ---------- */
 
-export const ClientsPage: React.FC = () => {
+export const CuentasPage: React.FC = () => {
   const { hasPermission } = useAuthStore();
 
   // Data
-  const [clients, setClients] = useState<Client[]>([]);
+  const [cuentas, setCuentas] = useState<Cuenta[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
 
   // Search & Filters
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"all" | ClientStatus>("all");
+  const [filterStatus, setFilterStatus] = useState<"all" | CuentaStatus>("all");
 
   // Modal
   const [showModal, setShowModal] = useState(false);
-  const [editingClient, setEditingClient] = useState<Client | null>(null);
-  const [formData, setFormData] = useState<ClientFormData>(initialFormData);
+  const [editingCuenta, setEditingCuenta] = useState<Cuenta | null>(null);
+  const [formData, setFormData] = useState<CuentaFormData>(initialFormData);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   // View Modal
   const [viewOpen, setViewOpen] = useState(false);
-  const [viewClient, setViewClient] = useState<Client | null>(null);
+  const [viewCuenta, setViewCuenta] = useState<Cuenta | null>(null);
 
   const [openInfo, setOpenInfo] = useState(false);
 
-  const canManage = hasPermission("clients:view");
+  const canManage = hasPermission("cuentas:view");
 
   // For debouncing
   const requestIdRef = useRef(0);
@@ -80,7 +81,7 @@ export const ClientsPage: React.FC = () => {
     const init = async () => {
       try {
         setInitialLoading(true);
-        await fetchClients({ silent: true });
+        await fetchCuentas({ silent: true });
       } finally {
         setInitialLoading(false);
       }
@@ -91,7 +92,7 @@ export const ClientsPage: React.FC = () => {
 
   useEffect(() => {
     const h = setTimeout(() => {
-      fetchClients({ silent: true });
+      fetchCuentas({ silent: true });
     }, 300);
     return () => clearTimeout(h);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -99,23 +100,23 @@ export const ClientsPage: React.FC = () => {
 
   /* ---------- Fetch ---------- */
 
-  const fetchClients = async ({ silent = false }: { silent?: boolean } = {}) => {
+  const fetchCuentas = async ({ silent = false }: { silent?: boolean } = {}) => {
     try {
       if (!silent) setIsFetching(true);
       const currentId = ++requestIdRef.current;
 
-      const params: { search?: string; status?: ClientStatus } = {};
+      const params: { search?: string; status?: CuentaStatus } = {};
       if (searchTerm) params.search = searchTerm;
       if (filterStatus !== "all") params.status = filterStatus;
 
-      const response = await clientsAPI.list(params);
+      const response = await cuentasAPI.list(params);
 
       if (currentId === requestIdRef.current) {
-        setClients(response.clients);
+        setCuentas(response.cuentas);
       }
     } catch (error) {
-      console.error("Error fetching clients:", error);
-      sweetAlert.error("Error", "No se pudieron cargar los clientes");
+      console.error("Error fetching cuentas:", error);
+      sweetAlert.error("Error", "No se pudieron cargar las cuentas");
     } finally {
       if (!silent) setIsFetching(false);
     }
@@ -124,21 +125,21 @@ export const ClientsPage: React.FC = () => {
   /* ---------- Modal Handlers ---------- */
 
   const openCreate = () => {
-    setEditingClient(null);
+    setEditingCuenta(null);
     setFormData(initialFormData);
     setFormErrors({});
     setShowModal(true);
   };
 
-  const openEdit = (client: Client) => {
-    setEditingClient(client);
+  const openEdit = (cuenta: Cuenta) => {
+    setEditingCuenta(cuenta);
     setFormData({
-      name: client.name,
-      company: client.company || "",
-      email: client.email,
-      phone: client.phone || "",
-      address: client.address || "",
-      status: client.status,
+      name: cuenta.name,
+      company: cuenta.company || "",
+      email: cuenta.email,
+      phone: cuenta.phone || "",
+      address: cuenta.address || "",
+      status: cuenta.status,
     });
     setFormErrors({});
     setShowModal(true);
@@ -146,19 +147,19 @@ export const ClientsPage: React.FC = () => {
 
   const closeModal = () => {
     setShowModal(false);
-    setEditingClient(null);
+    setEditingCuenta(null);
     setFormData(initialFormData);
     setFormErrors({});
   };
 
-  const openView = (client: Client) => {
-    setViewClient(client);
+  const openView = (cuenta: Cuenta) => {
+    setViewCuenta(cuenta);
     setViewOpen(true);
   };
 
   const closeView = () => {
     setViewOpen(false);
-    setViewClient(null);
+    setViewCuenta(null);
   };
 
   /* ---------- Form Validation ---------- */
@@ -187,8 +188,8 @@ export const ClientsPage: React.FC = () => {
     if (!validateForm()) return;
 
     try {
-      if (editingClient) {
-        const updateData: UpdateClientData = {
+      if (editingCuenta) {
+        const updateData: UpdateCuentaData = {
           name: formData.name.trim(),
           company: formData.company.trim() || null,
           email: formData.email.trim().toLowerCase(),
@@ -196,10 +197,10 @@ export const ClientsPage: React.FC = () => {
           address: formData.address.trim() || null,
           status: formData.status,
         };
-        await clientsAPI.update(editingClient._id, updateData);
-        sweetAlert.success("Cliente actualizado", "Los cambios se han guardado correctamente");
+        await cuentasAPI.update(editingCuenta._id, updateData);
+        sweetAlert.success("Cuenta actualizada", "Los cambios se han guardado correctamente");
       } else {
-        const createData: CreateClientData = {
+        const createData: CreateCuentaData = {
           name: formData.name.trim(),
           company: formData.company.trim() || undefined,
           email: formData.email.trim().toLowerCase(),
@@ -207,17 +208,18 @@ export const ClientsPage: React.FC = () => {
           address: formData.address.trim() || undefined,
           status: formData.status,
         };
-        await clientsAPI.create(createData);
-        sweetAlert.success("Cliente creado", "El cliente se ha creado correctamente");
+        await cuentasAPI.create(createData);
+        sweetAlert.success("Cuenta creada", "La cuenta se ha creado correctamente");
       }
       closeModal();
-      fetchClients({ silent: true });
+      fetchCuentas({ silent: true });
+      emitCuentasChanged();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string; error?: string } } };
-      const message = err.response?.data?.message || err.response?.data?.error || "Error al guardar el cliente";
+      const message = err.response?.data?.message || err.response?.data?.error || "Error al guardar la cuenta";
 
       if (message.includes("email") || message.includes("duplicate")) {
-        setFormErrors({ email: "Ya existe un cliente con este email" });
+        setFormErrors({ email: "Ya existe una cuenta con este email" });
       } else {
         sweetAlert.error("Error", message);
       }
@@ -226,19 +228,20 @@ export const ClientsPage: React.FC = () => {
 
   /* ---------- Delete ---------- */
 
-  const handleDelete = async (client: Client) => {
-    const result = await sweetAlert.confirm("¿Eliminar cliente?", `¿Estás seguro de que quieres eliminar a "${client.name}"?`);
+  const handleDelete = async (cuenta: Cuenta) => {
+    const result = await sweetAlert.confirm("¿Eliminar cuenta?", `¿Estás seguro de que quieres eliminar a "${cuenta.name}"?`);
     if (result.isConfirmed) {
       try {
-        await clientsAPI.remove(client._id);
-        sweetAlert.success("Cliente eliminado", "El cliente ha sido eliminado correctamente");
-        fetchClients({ silent: true });
-        if (viewClient?._id === client._id) {
+        await cuentasAPI.remove(cuenta._id);
+        sweetAlert.success("Cuenta eliminada", "La cuenta ha sido eliminada correctamente");
+        fetchCuentas({ silent: true });
+        emitCuentasChanged();
+        if (viewCuenta?._id === cuenta._id) {
           closeView();
         }
       } catch (error: unknown) {
         const err = error as { response?: { data?: { message?: string; error?: string } } };
-        const message = err.response?.data?.message || err.response?.data?.error || "Error al eliminar el cliente";
+        const message = err.response?.data?.message || err.response?.data?.error || "Error al eliminar la cuenta";
         sweetAlert.error("Error", message);
       }
     }
@@ -248,21 +251,21 @@ export const ClientsPage: React.FC = () => {
 
   /* ---------- Render ---------- */
 
-  if (initialLoading) return <LoadingSpinner message="Cargando clientes..." />;
+  if (initialLoading) return <LoadingSpinner message="Cargando cuentas..." />;
 
   return (
     <PageLayout
-      title="Clientes"
-      subtitle="Gestiona tus clientes y contactos"
+      title="Cuentas"
+      subtitle="Gestiona tus cuentas y contactos"
       faIcon={{ icon: faBuilding }}
       shouldShowInfo={true}
       infoModal={{
         isOpen: openInfo,
         onOpen: () => setOpenInfo(true),
         onClose: () => setOpenInfo(false),
-        title: "Ayuda: Clientes",
+        title: "Ayuda: Cuentas",
         content: (
-            <p>Gestione la cartera de clientes. Puede agregar nuevos clientes, actualizar su información de contacto y asociarlos a proyectos.</p>
+            <p>Gestione la cartera de cuentas. Puede agregar nuevas cuentas, actualizar su información de contacto y asociarlas a proyectos.</p>
         ),
       }}
       actionCount={canManage ? 1 : 0}
@@ -283,7 +286,7 @@ export const ClientsPage: React.FC = () => {
           filters={[
             {
               value: filterStatus,
-              onChange: (v) => setFilterStatus(v as "all" | ClientStatus),
+              onChange: (v) => setFilterStatus(v as "all" | CuentaStatus),
               options: [
                 { value: "all", label: "Todos" },
                 { value: "active", label: "Activos" },
@@ -297,8 +300,8 @@ export const ClientsPage: React.FC = () => {
       viewModal={{
         isOpen: viewOpen,
         onClose: closeView,
-        title: viewClient?.name || "Cliente",
-        subtitle: viewClient?.company,
+        title: viewCuenta?.name || "Cuenta",
+        subtitle: viewCuenta?.company,
         size: "md",
         actions: [
           ...(canManage
@@ -306,7 +309,7 @@ export const ClientsPage: React.FC = () => {
                 {
                   label: "Editar",
                   onClick: () => {
-                    if (viewClient) openEdit(viewClient);
+                    if (viewCuenta) openEdit(viewCuenta);
                     closeView();
                   },
                   variant: "secondary" as const,
@@ -319,19 +322,19 @@ export const ClientsPage: React.FC = () => {
             variant: "ghost" as const,
           },
         ],
-        content: viewClient ? <ClientDetails client={viewClient} /> : null,
+        content: viewCuenta ? <CuentaDetails cuenta={viewCuenta} /> : null,
       }}
       modal={{
         isOpen: showModal,
         onClose: closeModal,
-        title: editingClient ? "Editar Cliente" : "Nuevo Cliente",
-        subtitle: "Completa la información del cliente",
+        title: editingCuenta ? "Editar Cuenta" : "Nueva Cuenta",
+        subtitle: "Completa la información de la cuenta",
         size: "md",
         actions: [
           {
-            label: editingClient ? "Actualizar" : "Crear",
+            label: editingCuenta ? "Actualizar" : "Crear",
             onClick: () => {
-              const form = document.querySelector<HTMLFormElement>("#client-form");
+              const form = document.querySelector<HTMLFormElement>("#cuenta-form");
               form?.requestSubmit();
             },
             variant: "primary",
@@ -342,22 +345,22 @@ export const ClientsPage: React.FC = () => {
             variant: "ghost",
           },
         ],
-        content: <ClientForm id="client-form" formData={formData} setFormData={setFormData} formErrors={formErrors} onSubmit={handleSubmit} />,
+        content: <CuentaForm id="cuenta-form" formData={formData} setFormData={setFormData} formErrors={formErrors} onSubmit={handleSubmit} />,
       }}
     >
-      {/* Grid de clients */}
+      {/* Grid de cuentas */}
       <div className="relative">
         {isFetching && <div className="absolute -top-6 right-0 text-xs text-accent-5">Buscando…</div>}
 
-        {clients.length === 0 ? (
+        {cuentas.length === 0 ? (
           <EmptyState
             icon={faBuilding}
-            title="No hay clientes"
-            description={searchTerm || filterStatus !== "all" ? "No se encontraron clientes con estos filtros" : "Comienza agregando tu primer cliente"}
+            title="No hay cuentas"
+            description={searchTerm || filterStatus !== "all" ? "No se encontraron cuentas con estos filtros" : "Comienza agregando tu primera cuenta"}
             action={
               canManage && !searchTerm && filterStatus === "all"
                 ? {
-                    label: "Agregar nuevo cliente",
+                    label: "Agregar nueva cuenta",
                     onClick: openCreate,
                   }
                 : undefined
@@ -365,19 +368,19 @@ export const ClientsPage: React.FC = () => {
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mx-0.5 lg:mx-0">
-            {clients.map((client) => (
+            {cuentas.map((cuenta) => (
               <Card
-                key={client._id}
-                onClick={() => openView(client)}
+                key={cuenta._id}
+                onClick={() => openView(cuenta)}
                 className="hover:scale-105 hover:shadow-lg transition-all duration-200"
                 header={{
-                  title: client.name,
-                  subtitle: client.company || client.email,
+                  title: cuenta.name,
+                  subtitle: cuenta.company || cuenta.email,
                   icon: faBuilding,
                   badges: [
                     {
-                      text: getStatusBadge(client.status).text,
-                      variant: client.status === "active" ? "success" : client.status === "lead" ? "warning" : "default",
+                      text: getStatusBadge(cuenta.status).text,
+                      variant: cuenta.status === "active" ? "success" : cuenta.status === "lead" ? "warning" : "default",
                     },
                   ],
                 }}
@@ -394,7 +397,7 @@ export const ClientsPage: React.FC = () => {
                             icon: faEdit,
                             onClick: (e) => {
                               e.stopPropagation();
-                              openEdit(client);
+                              openEdit(cuenta);
                             },
                             variant: "default",
                             title: "Editar",
@@ -403,7 +406,7 @@ export const ClientsPage: React.FC = () => {
                             icon: faTrash,
                             onClick: (e) => {
                               e.stopPropagation();
-                              handleDelete(client);
+                              handleDelete(cuenta);
                             },
                             variant: "default",
                             title: "Eliminar",
@@ -416,12 +419,12 @@ export const ClientsPage: React.FC = () => {
                 <div className="text-sm text-accent-6 space-y-1">
                   <div className="flex items-center gap-2">
                     <FontAwesomeIcon icon={faEnvelope} className="h-3 w-3" />
-                    <span className="truncate">{client.email}</span>
+                    <span className="truncate">{cuenta.email}</span>
                   </div>
-                  {client.address && (
+                  {cuenta.address && (
                     <div className="flex items-center gap-2">
                       <FontAwesomeIcon icon={faMapMarkerAlt} className="h-3 w-3" />
-                      <span className="truncate">{client.address}</span>
+                      <span className="truncate">{cuenta.address}</span>
                     </div>
                   )}
                 </div>

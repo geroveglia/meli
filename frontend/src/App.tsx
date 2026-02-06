@@ -17,8 +17,8 @@ import { LevelsPage } from "./pages/admin/LevelsPage";
 import { AreasPage } from "./pages/admin/AreasPage";
 import { UsersPage } from "./pages/admin/UsersPage";
 import { DashboardPage } from "./pages/admin/DashboardPage";
-import { ClientsPage } from "./pages/admin/ClientsPage";
-import { ClientInfoPage } from "./pages/admin/ClientInfoPage";
+import { CuentasPage } from "./pages/admin/CuentasPage";
+import { CuentaInfoPage } from "./pages/admin/CuentaInfoPage";
 import { CarouselImagesPage } from "./pages/admin/CarouselImagesPage";
 import { TenantsPage } from "./pages/admin/TenantsPage";
 import { GeneralSettingsPage } from "./pages/admin/GeneralSettingsPage";
@@ -233,10 +233,10 @@ function App() {
                 }
               />
               <Route
-                path="clients"
+                path="cuentas"
                 element={
                   <ProtectedRoute>
-                    <ClientsPage />
+                    <CuentasPage />
                   </ProtectedRoute>
                 }
               />
@@ -312,13 +312,13 @@ function App() {
               }
             />
 
-            {/* Client Routes (Root Level) */}
+            {/* Cuenta Routes (Root Level) */}
             <Route element={<AppLayout />}>
               <Route
-                path="/client-info"
+                path="/cuenta-info"
                 element={
                   <ProtectedRoute>
-                    <ClientInfoPage />
+                    <CuentaInfoPage />
                   </ProtectedRoute>
                 }
               />

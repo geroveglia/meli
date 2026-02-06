@@ -2,7 +2,7 @@ import { Router } from "express";
 import { User } from "../models/User.js";
 import { userRepository } from "../repository/index.js";
 import { Role } from "../models/Role.js";
-import { Client } from "../models/Client.js";
+import { Cuenta } from "../models/Cuenta.js";
 import { Tenant } from "../models/Tenant.js";
 import { requireTenant, TenantRequest } from "../middleware/tenant.js";
 import { validate } from "../middleware/validate.js";
@@ -28,7 +28,7 @@ const loginWithClientSchema = z.object({
   email: z.string().email("Invalid email format"),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
   tenantSlug: z.string().optional(),
-  clientId: z.string().optional(),
+  cuentaId: z.string().optional(),
 });
 const router = Router();
 
@@ -67,7 +67,7 @@ router.post("/check-tenants", async (req, res) => {
 
 router.post("/login", validate(loginWithClientSchema), async (req, res) => {
   try {
-    const { email, password, tenantSlug, clientId } = req.body;
+    const { email, password, tenantSlug, cuentaId } = req.body;
 
     // Buscar usuarios con este email usando Repository
     const users = await userRepository.findActiveByEmail(email);
@@ -152,7 +152,7 @@ router.post("/login", validate(loginWithClientSchema), async (req, res) => {
       // Logic for client validation (assuming clientIds is populated or array of IDs)
       // MySQL Client handling might need implementation in findActiveByEmail or here.
       // skipping strict client checks for verify step for now if complex, but lets try best effort.
-      if (!clientId) {
+      if (!cuentaId) {
            if (user.clientIds && user.clientIds.length > 0) {
                // OK
            } else {
@@ -200,7 +200,7 @@ router.post("/login", validate(loginWithClientSchema), async (req, res) => {
         permissions,
         tenantId,
         tenantSlug: tenantObj.slug,
-        ...(clientId ? { clientId } : {}),
+        ...(cuentaId ? { clientId: cuentaId } : {}),
       },
     });
     return;
@@ -339,8 +339,8 @@ router.post("/register-client", requireTenant, validate(registerClientSchema), a
       return;
     }
 
-    // Crear cliente
-    const client = await Client.create({
+    // Crear cuenta
+    const cuenta = await Cuenta.create({
       tenantId,
       name: company,
       slug: company.toLowerCase().replace(/[^a-z0-9]/g, "-"),
@@ -365,7 +365,7 @@ router.post("/register-client", requireTenant, validate(registerClientSchema), a
       password,
       role: "client",
       roles: clientRole ? [clientRole._id] : [],
-      clientIds: [client._id],
+      clientIds: [cuenta._id],
       firstName: name.split(" ")[0],
       lastName: name.split(" ").slice(1).join(" ") || undefined,
       isActive: true,
@@ -374,14 +374,14 @@ router.post("/register-client", requireTenant, validate(registerClientSchema), a
     // Vincular usuario con cliente en Client.usuarios
     await addUserToClientUsuarios({
       tenantId,
-      clientId: client._id as any,
+      clientId: cuenta._id as any,
       userId: user._id as any,
       permiso: "editar",
     });
 
     // Actualizar cliente con owner
-    client.ownerUserId = user._id as any;
-    await client.save();
+    cuenta.ownerUserId = user._id as any;
+    await cuenta.save();
 
     // Obtener nombre del rol para JWT
     const roleNames = clientRole ? [clientRole.name] : ["client"];
@@ -393,7 +393,7 @@ router.post("/register-client", requireTenant, validate(registerClientSchema), a
       email: user.email,
       primaryRole,
       roles: roleNames,
-      clientIds: [client._id.toString()],
+      clientIds: [cuenta._id.toString()],
       tenantId: String(tenantId),
     };
 
@@ -406,14 +406,14 @@ router.post("/register-client", requireTenant, validate(registerClientSchema), a
         email: user.email,
         primaryRole,
         roles: roleNames,
-        clientIds: [client._id.toString()],
+        clientIds: [cuenta._id.toString()],
         tenantId,
-        clientId: client._id.toString(),
+        clientId: cuenta._id.toString(),
       },
       client: {
-        _id: client._id,
-        name: client.name,
-        slug: client.slug,
+        _id: cuenta._id,
+        name: cuenta.name,
+        slug: cuenta.slug,
       },
     });
   } catch (error: any) {

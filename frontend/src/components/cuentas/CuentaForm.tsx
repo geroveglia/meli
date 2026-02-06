@@ -1,25 +1,25 @@
 import React from "react";
-import { ClientStatus } from "../../api/clients";
+import { CuentaStatus } from "../../api/cuentas";
 import { Switch } from "../Switch";
 
-export interface ClientFormData {
+export interface CuentaFormData {
   name: string;
   company: string;
   email: string;
   phone: string;
   address: string;
-  status: ClientStatus;
+  status: CuentaStatus;
 }
 
-interface ClientFormProps {
+interface CuentaFormProps {
   id: string;
-  formData: ClientFormData;
-  setFormData: React.Dispatch<React.SetStateAction<ClientFormData>>;
+  formData: CuentaFormData;
+  setFormData: React.Dispatch<React.SetStateAction<CuentaFormData>>;
   formErrors: Record<string, string>;
   onSubmit: (e: React.FormEvent) => void;
 }
 
-export const ClientForm: React.FC<ClientFormProps> = ({ id, formData, setFormData, formErrors, onSubmit }) => {
+export const CuentaForm: React.FC<CuentaFormProps> = ({ id, formData, setFormData, formErrors, onSubmit }) => {
   return (
     <form id={id} onSubmit={onSubmit}>
       <div className="space-y-4">
@@ -32,7 +32,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({ id, formData, setFormDat
             value={formData.name}
             onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
             className={`input-base ${formErrors.name ? "border-danger-500 dark:border-danger-500" : ""}`}
-            placeholder="Nombre del cliente"
+            placeholder="Nombre de la cuenta"
           />
           {formErrors.name && <p className="text-danger-500 text-xs mt-1">{formErrors.name}</p>}
         </div>

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { Role } from "../models/Role.js";
-import { Client } from "../models/Client.js";
+import { Cuenta } from "../models/Cuenta.js";
 
 import { AuthenticatedRequest } from "./auth.js";
 
@@ -123,8 +123,8 @@ function getModelByCollection(collection: string) {
       return Brief;
     case "campaigns":
       return Campaign;
-    case "clients":
-      return Client;
+    case "cuentas":
+      return Cuenta;
     case "posts":
       return Post;
     case "projects":

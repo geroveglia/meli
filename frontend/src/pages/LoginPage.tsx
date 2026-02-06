@@ -17,11 +17,11 @@ const loginWithClientSchema = z.object({
   email: z.string().email("Invalid email format"),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
   tenantSlug: z.string().optional(),
-  clientId: z.string().optional(),
+  cuentaId: z.string().optional(),
 });
 type LoginForm = z.infer<typeof loginWithClientSchema>;
 
-interface ClientOption {
+interface CuentaOption {
   _id: string;
   name: string;
   slug?: string;
@@ -67,8 +67,8 @@ export const LoginPage: React.FC = () => {
   const [demoUsers, setDemoUsers] = useState<DemoUser[]>([]);
 
   const [showPassword, setShowPassword] = useState(false);
-  const [availableClients, setAvailableClients] = useState<ClientOption[]>([]);
-  const [showClientSelector, setShowClientSelector] = useState(false);
+  const [availableCuentas, setAvailableCuentas] = useState<CuentaOption[]>([]);
+  const [showCuentaSelector, setShowCuentaSelector] = useState(false);
   const [availableTenants, setAvailableTenants] = useState<TenantOption[]>([]);
   const [showTenantSelector, setShowTenantSelector] = useState(false);
 
@@ -85,7 +85,7 @@ export const LoginPage: React.FC = () => {
       email: "",
       password: "",
       tenantSlug: "",
-      clientId: "",
+      cuentaId: "",
     },
   });
 
@@ -99,10 +99,10 @@ export const LoginPage: React.FC = () => {
   // Verificar clientes disponibles cuando cambia el email
   useEffect(() => {
     if (watchedEmail && watchedEmail.includes("@")) {
-      checkClientsForEmail(watchedEmail);
+      checkCuentasForEmail(watchedEmail);
     } else {
-      setAvailableClients([]);
-      setShowClientSelector(false);
+      setAvailableCuentas([]);
+      setShowCuentaSelector(false);
     }
   }, [watchedEmail]);
 
@@ -189,7 +189,7 @@ export const LoginPage: React.FC = () => {
     setError("");
     setLastErrorObj(null);
     try {
-      const result = await login(data.email, data.password, data.tenantSlug, data.clientId);
+      const result = await login(data.email, data.password, data.tenantSlug, data.cuentaId);
 
       if (result?.requiresTenantSelection && result.tenants) {
         setAvailableTenants(result.tenants);
@@ -274,7 +274,7 @@ export const LoginPage: React.FC = () => {
     setValue("password", password, { shouldValidate: true });
   };
 
-  const checkClientsForEmail = async (_email: string) => {
+  const checkCuentasForEmail = async (_email: string) => {
     // Esta función ahora no se usa, se maneja en el login
   };
 
@@ -362,18 +362,18 @@ export const LoginPage: React.FC = () => {
               </div>
             )}
 
-            {/* Client Selector */}
-            {showClientSelector && availableClients.length > 0 && (
+            {/* Cuenta Selector */}
+            {showCuentaSelector && availableCuentas.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-accent-1 mb-2">
                   <FontAwesomeIcon icon={faBuilding} className="h-4 w-4 mr-2" />
-                  Cliente
+                  Cuenta
                 </label>
-                <select {...register("clientId")} className="input-base" required={availableClients.length > 1}>
-                  {availableClients.length > 1 && <option value="">Seleccionar cliente...</option>}
-                  {availableClients.map((client) => (
-                    <option key={client._id} value={client._id}>
-                      {client.name}
+                <select {...register("cuentaId")} className="input-base" required={availableCuentas.length > 1}>
+                  {availableCuentas.length > 1 && <option value="">Seleccionar cuenta...</option>}
+                  {availableCuentas.map((cuenta) => (
+                    <option key={cuenta._id} value={cuenta._id}>
+                      {cuenta.name}
                     </option>
                   ))}
                 </select>

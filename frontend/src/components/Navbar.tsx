@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthStore } from "../stores/authStore";
 
-import { useClientContextStore } from "../stores/clientContextStore";
+import { useCuentaContextStore } from "../stores/cuentaContextStore";
 import { useLumbaStore } from "../stores/lumbaStore";
 import { Link, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -10,11 +10,11 @@ import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { Logo } from "./Logo";
 import axios from "../api/axiosConfig";
 import { SettingsModal } from "./SettingsModal";
-import ClientSelector from "./ClientSelector";
+import CuentaSelector from "./CuentaSelector";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface AdminCounts {
-  clients: number;
+  cuentas: number;
   tenants: number;
   roles: number;
   users: number;
@@ -46,7 +46,7 @@ export const MobileNavbar: React.FC = () => {
     else localStorage.removeItem("adminOpenSection");
   };
   const [adminCounts, setAdminCounts] = useState<AdminCounts>({
-    clients: 0,
+    cuentas: 0,
     tenants: 0,
     roles: 0,
     users: 0,
@@ -74,7 +74,7 @@ export const MobileNavbar: React.FC = () => {
         const [tenantsRes, rolesRes, usersRes] = await Promise.all(promises);
 
         setAdminCounts({
-          clients: 0,
+          cuentas: 0,
           tenants: tenantsRes?.data?.count || 0,
           roles: rolesRes?.data?.count || 0,
           users: usersRes?.data?.count || 0,
@@ -91,7 +91,7 @@ export const MobileNavbar: React.FC = () => {
   }, [user?.tenantSlug]);
 
   useEffect(() => {
-    if (["/admin/dashboard", "/admin/tenants", "/admin/clients", "/perfil"].includes(location.pathname)) {
+    if (["/admin/dashboard", "/admin/tenants", "/admin/cuentas", "/perfil"].includes(location.pathname)) {
       setOpenAdminSection("general");
     } else if (["/logistica"].includes(location.pathname)) {
       setOpenAdminSection("logistica");
@@ -123,7 +123,7 @@ export const MobileNavbar: React.FC = () => {
       icon: any;
       label: string;
       external?: boolean;
-      scope?: "global" | "client";
+      scope?: "global" | "cuenta";
       count?: number;
       dividerTop?: boolean;
       isCreativeSuite?: boolean;
@@ -232,11 +232,11 @@ export const MobileNavbar: React.FC = () => {
           badge: "",
           badgeColor: "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100",
         });
-      if (hasPermission("clients:view"))
+      if (hasPermission("cuentas:view"))
         base.push({
-          path: "/admin/clients",
+          path: "/admin/cuentas",
           icon: faBuilding,
-          label: "Clientes",
+          label: "Cuentas",
           scope: "global",
           badge: "",
           badgeColor: "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100",
@@ -325,7 +325,7 @@ export const MobileNavbar: React.FC = () => {
 
   const NavMenu: React.FC<NavMenuProps> = ({ menuItems, openAdminSection, toggleAdminSection, onItemClick, handleMenuClick, setIsSettingsOpen }) => {
     const location = useLocation();
-    const selectedClient = useClientContextStore((state) => state.selectedClient);
+    const selectedCuenta = useCuentaContextStore((state) => state.selectedCuenta);
     const { orders, notifications, setNotification } = useLumbaStore();
     const SHOW_MENU_COUNTS = true;
 
@@ -336,8 +336,8 @@ export const MobileNavbar: React.FC = () => {
       let filteredOrders = orders;
 
       // Filter by client if one is selected (use clientName to match LogisticaPage logic)
-      if (selectedClient) {
-        filteredOrders = orders.filter((o) => o.clientName === selectedClient.name);
+      if (selectedCuenta) {
+        filteredOrders = orders.filter((o) => o.clientName === selectedCuenta.name);
       }
 
       if (type === "logistics") {
@@ -354,7 +354,7 @@ export const MobileNavbar: React.FC = () => {
 
     // Items de Admin General (Dashboard + Clientes + Tenants para superadmin + SEO)
     const dashboardItem = menuItems.find((item) => item.path === "/admin/dashboard");
-    const clientItem = menuItems.find((item) => item.path === "/admin/clients");
+    const cuentaItem = menuItems.find((item) => item.path === "/admin/cuentas");
     const tenantsItem = menuItems.find((item) => item.path === "/admin/tenants");
     const carouselItem = menuItems.find((item) => item.path === "/admin/carousel-images");
 
@@ -367,7 +367,7 @@ export const MobileNavbar: React.FC = () => {
     const logisticaItem = menuItems.find((item) => item.path === "/logistica");
 
     // Otros items que no pertenecen a ninguna sección
-    const otherAdminItems = menuItems.filter((item) => !userAdminItems.some((u) => u.path === item.path) && item.path !== "/admin/dashboard" && item.path !== "/admin/clients" && item.path !== "/admin/tenants" && item.path !== "/admin/carousel-images" && item.path !== "/admin/general" && item.path !== "/admin/seo" && item.path !== "/ventas" && item.path !== "/logistica");
+    const otherAdminItems = menuItems.filter((item) => !userAdminItems.some((u) => u.path === item.path) && item.path !== "/admin/dashboard" && item.path !== "/admin/cuentas" && item.path !== "/admin/tenants" && item.path !== "/admin/carousel-images" && item.path !== "/admin/general" && item.path !== "/admin/seo" && item.path !== "/ventas" && item.path !== "/logistica");
 
     const renderMenuItem = (item: any) => {
       // Debug log to verify HMR
@@ -443,17 +443,17 @@ export const MobileNavbar: React.FC = () => {
     return (
       <div>
         {/* CLIENT SELECTOR - Arriba de todo */}
-        {clientItem && (
+        {cuentaItem && (
           <div className="px-2 mb-4">
-            <ClientSelector className="w-full" />
+            <CuentaSelector className="w-full" />
 
-            {/* Menú del contexto del cliente */}
+            {/* Menú del contexto del cuenta */}
             <div className="mt-3 space-y-1">
-              {/* Información - solo cuando hay cliente específico */}
-              {selectedClient && (
-                <Link to="/client-info" onClick={onItemClick} aria-current={isActive("/client-info") ? "page" : undefined} className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${isActive("/client-info") ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}>
+              {/* Información - solo cuando hay cuenta específico */}
+              {selectedCuenta && (
+                <Link to="/cuenta-info" onClick={onItemClick} aria-current={isActive("/cuenta-info") ? "page" : undefined} className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${isActive("/cuenta-info") ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}>
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
-                    <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${isActive("/client-info") ? "bg-white text-blue-600" : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"}`}>
+                    <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${isActive("/cuenta-info") ? "bg-white text-blue-600" : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"}`}>
                       <FontAwesomeIcon icon={faInfoCircle} className="h-4 w-4" />
                     </div>
                     <span className="font-medium truncate">Información</span>
@@ -586,10 +586,10 @@ export const MobileNavbar: React.FC = () => {
         )}
 
         {/* DIVIDER - Línea divisoria */}
-        {clientItem && (dashboardItem || tenantsItem || userAdminItems.length > 0) && <div className="border-t border-gray-200 dark:border-gray-700 mx-4 my-3" />}
+        {cuentaItem && (dashboardItem || tenantsItem || userAdminItems.length > 0) && <div className="border-t border-gray-200 dark:border-gray-700 mx-4 my-3" />}
 
-        {/* ADMIN GENERAL - Dashboard, Tenants y Clientes */}
-        {(dashboardItem || clientItem || tenantsItem) && (
+        {/* ADMIN GENERAL - Dashboard, Tenants y Cuentas */}
+        {(dashboardItem || cuentaItem || tenantsItem) && (
           <div className="px-2 mb-2">
             <button onClick={() => toggleAdminSection("general")} className="w-full flex items-center justify-between text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider transition-colors pb-2 pt-2">
               <span>
@@ -620,8 +620,8 @@ export const MobileNavbar: React.FC = () => {
                     {/* Tenants (solo superadmin) */}
                     {tenantsItem && renderMenuItem(tenantsItem)}
 
-                    {/* Clientes */}
-                    {clientItem && renderMenuItem(clientItem)}
+                    {/* Cuentas */}
+                    {cuentaItem && renderMenuItem(cuentaItem)}
                   </div>
                 </motion.nav>
               )}
