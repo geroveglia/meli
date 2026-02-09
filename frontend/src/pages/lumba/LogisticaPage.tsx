@@ -323,7 +323,6 @@ export const LogisticaPage: React.FC = () => {
         buttons.push(
           <Button key="reprint" onClick={() => handleAction(order, "IMPRIMIR_ETIQUETA")} variant="blue" size="sm" className="flex items-center gap-2" title={!isCard ? "Reimprimir Etiqueta" : ""}>
             <FontAwesomeIcon icon={faPrint} />
-            {isCard ? null : "Reimprimir Etiqueta"}
           </Button>,
         );
       }

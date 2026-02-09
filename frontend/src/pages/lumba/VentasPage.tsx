@@ -214,7 +214,6 @@ export const VentasPage: React.FC = () => {
       buttons.push(
         <Button key="manual" onClick={() => handleAction(order, "FACTURAR_MANUAL")} variant="blue" size="sm" className={`flex items-center gap-2`} title={!isCard ? "Facturar" : ""}>
           <FontAwesomeIcon icon={faFile} />
-          {isCard ? null : "Facturar"}
         </Button>,
       );
     }
@@ -223,7 +222,6 @@ export const VentasPage: React.FC = () => {
       buttons.push(
         <Button key="nc" onClick={() => handleAction(order, "GENERAR_NC")} variant="blue" size="sm" className={`flex items-center gap-2`} title={!isCard ? "Generar NC" : ""}>
           <FontAwesomeIcon icon={faFileInvoiceDollar} />
-          {isCard ? null : "NC"}
         </Button>,
       );
     }
@@ -233,7 +231,6 @@ export const VentasPage: React.FC = () => {
       buttons.push(
         <Button key="cancel" onClick={() => handleAction(order, "CANCELAR")} variant="danger" size="sm" className={`flex items-center gap-2`} title={!isCard ? "Cancelar" : ""}>
           <FontAwesomeIcon icon={faBan} />
-          {isCard ? null : "Cancelar"}
         </Button>,
       );
     }
