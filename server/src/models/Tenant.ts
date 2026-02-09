@@ -61,6 +61,10 @@ export interface ITenant extends Document {
     }[];
     nextBillingDate?: Date;
     autoRenew: boolean;
+    settings: {
+      autoBilling: boolean;
+      triggerStage: "order_created" | "order_paid" | "order_shipped" | "order_delivered";
+    };
   };
   branding: {
     logo: {
@@ -180,6 +184,14 @@ const tenantSchema = new Schema<ITenant>(
       ],
       nextBillingDate: Date,
       autoRenew: { type: Boolean, default: true },
+      settings: {
+        autoBilling: { type: Boolean, default: false },
+        triggerStage: { 
+          type: String, 
+          enum: ["order_created", "order_paid", "order_shipped", "order_delivered"],
+          default: "order_shipped" 
+        }
+      }
     },
     
     branding: {

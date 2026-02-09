@@ -476,7 +476,7 @@ export const TenantsPage: React.FC = () => {
                     if (viewTenant) openEdit(viewTenant);
                     closeView();
                   },
-                  variant: "secondary" as const,
+                  variant: "blue" as const,
                 },
               ]
             : []),

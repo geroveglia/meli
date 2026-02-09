@@ -9,10 +9,7 @@ import { Card } from "../../components/Card";
 import { sweetAlert } from "../../utils/sweetAlert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserTie, faUserGraduate, faEdit, faTrash, faPlus, faShieldHalved, faGlobe } from "@fortawesome/free-solid-svg-icons";
-import { getHelp, hasHelp } from "../../data/help/helpContent";
 import { useNavigate } from "react-router-dom";
-
-const HELP_KEY = "positions" as const;
 
 interface PositionFormData {
   name: string;
@@ -41,7 +38,6 @@ export const PositionsPage: React.FC = () => {
   const [viewPosition, setViewPosition] = useState<Position | null>(null);
 
   const [openInfo, setOpenInfo] = useState(false);
-  const helpEntry = getHelp(HELP_KEY);
 
   const canManage = hasPermission("positions:view");
 
@@ -209,7 +205,7 @@ export const PositionsPage: React.FC = () => {
                     if (viewPosition) openEdit(viewPosition);
                     closeView();
                   },
-                  variant: "secondary",
+                  variant: "blue",
                 } as const,
               ]
             : []),

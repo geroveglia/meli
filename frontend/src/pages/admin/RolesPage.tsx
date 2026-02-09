@@ -373,7 +373,7 @@ export const RolesPage: React.FC = () => {
                     if (viewRole) openEdit(viewRole);
                     closeView();
                   },
-                  variant: "secondary",
+                  variant: "blue",
                 } as const,
               ]
             : []),

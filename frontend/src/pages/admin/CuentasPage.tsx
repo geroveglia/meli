@@ -312,7 +312,7 @@ export const CuentasPage: React.FC = () => {
                     if (viewCuenta) openEdit(viewCuenta);
                     closeView();
                   },
-                  variant: "secondary" as const,
+                  variant: "blue" as const,
                 },
               ]
             : []),

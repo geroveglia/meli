@@ -4,7 +4,7 @@ import { Modal } from "./Modal";
 // import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"; // removed as handled by Button
 // import { faSpinner } from "@fortawesome/free-solid-svg-icons"; // removed as handled by Button
 
-export type InfoActionVariant = "primary" | "secondary" | "blue" | "ghost";
+export type InfoActionVariant = "primary" | "secondary" | "blue" | "ghost" | "danger";
 
 export interface InfoModalAction {
   label: string;
@@ -44,7 +44,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({ isOpen, onClose, title, su
             onClick={a.onClick}
             disabled={a.disabled || a.loading}
             isLoading={a.loading}
-            variant={a.variant === "blue" ? "danger" : (a.variant as any) || "secondary"} // Map 'blue' (which was red) to 'danger', others pass through or default
+            variant={a.variant || "secondary"}
           >
             {a.label}
           </Button>

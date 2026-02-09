@@ -38,7 +38,7 @@ export const Button: React.FC<ButtonProps> = ({ children, variant = "primary", s
   const variants = {
     primary: "bg-accent-9 text-white hover:bg-accent-8 focus:ring-accent-5 rounded-full font-semibold",
     secondary: "bg-accent-3 text-accent-1 hover:bg-accent-4 focus:ring-accent-4",
-    ghost: "bg-transparent text-accent-7 hover:bg-accent-3 focus:ring-accent-4",
+    ghost: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700",
     danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
     blue: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
     success: "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500",

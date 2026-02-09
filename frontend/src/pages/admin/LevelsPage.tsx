@@ -9,11 +9,8 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Card } from "../../components/Card";
 import { sweetAlert } from "../../utils/sweetAlert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUserTie, faUserGraduate, faEdit, faTrash, faPlus, faShieldHalved, faGlobe, faUserGear } from "@fortawesome/free-solid-svg-icons";
-import { getHelp, hasHelp } from "../../data/help/helpContent";
+import { faUserTie, faUserGraduate, faEdit, faTrash, faPlus, faShieldHalved, faGlobe } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
-
-const HELP_KEY = "levels" as const;
 
 interface LevelFormData {
   name: string;
@@ -47,7 +44,6 @@ export const LevelsPage: React.FC = () => {
   const [viewLevel, setViewLevel] = useState<Level | null>(null);
 
   const [openInfo, setOpenInfo] = useState(false);
-  const helpEntry = getHelp(HELP_KEY);
 
   const canManage = hasPermission("levels:view");
 
@@ -243,7 +239,7 @@ export const LevelsPage: React.FC = () => {
                     if (viewLevel) openEdit(viewLevel);
                     closeView();
                   },
-                  variant: "secondary",
+                  variant: "blue",
                 } as const,
               ]
             : []),

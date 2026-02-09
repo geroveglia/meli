@@ -413,7 +413,7 @@ export const UsersPage: React.FC = () => {
                     if (viewUser) openEdit(viewUser);
                     closeView();
                   },
-                  variant: "secondary",
+                  variant: "blue",
                 } as const,
               ]
             : []),

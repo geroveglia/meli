@@ -22,6 +22,7 @@ export const LogisticaPage: React.FC = () => {
 
   const [searchParams] = useSearchParams();
   const activeTab = searchParams.get("status") || "TODAS";
+  const showShippingCutoff = ["TODAS", "PENDIENTE_PREPARACION", "LISTO_PARA_ENTREGAR"].includes(activeTab);
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
@@ -186,13 +187,19 @@ export const LogisticaPage: React.FC = () => {
 
 
     if (action === "DESEMPAQUETAR") {
-      if (isBulk) {
-        (orderOrIds as string[]).forEach((id) => executeAction(id, action));
-        sweetAlert.success("Acción completada", `Se desempaquetaron ${count} ordenes.`);
-      } else {
-        executeAction((orderOrIds as Order).id, action);
-        sweetAlert.success("Producto desempaquetado", "El producto ha vuelto al stock físico.");
-      }
+      const idsToUpdate = isBulk ? (orderOrIds as string[]) : [(orderOrIds as Order).id];
+      setExitingOrderIds((prev) => [...prev, ...idsToUpdate]);
+
+      setTimeout(() => {
+        if (isBulk) {
+          (orderOrIds as string[]).forEach((id) => executeAction(id, action));
+          sweetAlert.success("Acción completada", `Se desempaquetaron ${count} ordenes.`);
+        } else {
+          executeAction((orderOrIds as Order).id, action);
+          sweetAlert.success("Producto desempaquetado", "El producto ha vuelto al stock físico.");
+        }
+        setExitingOrderIds((prev) => prev.filter((id) => !idsToUpdate.includes(id)));
+      }, 500);
       return;
     }
 
@@ -269,16 +276,22 @@ export const LogisticaPage: React.FC = () => {
       );
 
       if (result.isConfirmed) {
-        if (isBulk) {
-          (orderOrIds as string[]).forEach((id) => executeAction(id, action));
-          setSelectedOrderIds([]); // Clear selection
-          sweetAlert.success("Acción completada", `Se procesaron ${count} ordenes.`);
-        } else {
-          const order = orderOrIds as Order;
-          executeAction(order.id, action);
-          const successMsg = order.logisticsStatus === "entregado" ? "La orden ha sido movida a devoluciones." : "La orden ha sido movida a cancelados.";
-          sweetAlert.success("Operación exitosa", successMsg);
-        }
+        const idsToUpdate = isBulk ? (orderOrIds as string[]) : [(orderOrIds as Order).id];
+        setExitingOrderIds((prev) => [...prev, ...idsToUpdate]);
+
+        setTimeout(() => {
+          if (isBulk) {
+            (orderOrIds as string[]).forEach((id) => executeAction(id, action));
+            setSelectedOrderIds([]); // Clear selection
+            sweetAlert.success("Acción completada", `Se procesaron ${count} ordenes.`);
+          } else {
+            const order = orderOrIds as Order;
+            executeAction(order.id, action);
+            const successMsg = order.logisticsStatus === "entregado" ? "La orden ha sido movida a devoluciones." : "La orden ha sido movida a cancelados.";
+            sweetAlert.success("Operación exitosa", successMsg);
+          }
+          setExitingOrderIds((prev) => prev.filter((id) => !idsToUpdate.includes(id)));
+        }, 500);
       }
       return;
     }
@@ -297,14 +310,20 @@ export const LogisticaPage: React.FC = () => {
     const result = await sweetAlert.confirm(title, `Vas a aplicar la acción a ${count} orden(es).`, icon, confirmText);
 
     if (result.isConfirmed) {
-      if (isBulk) {
-        (orderOrIds as string[]).forEach((id) => executeAction(id, action));
-        setSelectedOrderIds([]); // Clear selection handling
-        sweetAlert.success("Acción completada", `Se actualizaron ${count} ordenes.`);
-      } else {
-        executeAction((orderOrIds as Order).id, action);
-        sweetAlert.success("Acción completada", "La orden ha sido actualizada.");
-      }
+      const idsToUpdate = isBulk ? (orderOrIds as string[]) : [(orderOrIds as Order).id];
+      setExitingOrderIds((prev) => [...prev, ...idsToUpdate]);
+
+      setTimeout(() => {
+        if (isBulk) {
+          (orderOrIds as string[]).forEach((id) => executeAction(id, action));
+          setSelectedOrderIds([]); // Clear selection handling
+          sweetAlert.success("Acción completada", `Se actualizaron ${count} ordenes.`);
+        } else {
+          executeAction((orderOrIds as Order).id, action);
+          sweetAlert.success("Acción completada", "La orden ha sido actualizada.");
+        }
+        setExitingOrderIds((prev) => prev.filter((id) => !idsToUpdate.includes(id)));
+      }, 500);
     }
   };
 
@@ -618,6 +637,11 @@ export const LogisticaPage: React.FC = () => {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
                     Fecha ML
                   </th>
+                  {showShippingCutoff && (
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
+                      Antes de...
+                    </th>
+                  )}
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
                     Cuenta
                   </th>
@@ -643,7 +667,7 @@ export const LogisticaPage: React.FC = () => {
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                    <td colSpan={9} className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
                       No se encontraron pedidos
                     </td>
                   </tr>
@@ -662,6 +686,11 @@ export const LogisticaPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">{renderActions(order)}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">{new Date(order.date).toLocaleDateString()}</td>
+                      {showShippingCutoff && (
+                        <td className="px-6 py-4 whitespace-nowrap text-xs font-semibold text-red-600 dark:text-red-400">
+                          {(order.logisticsStatus === "pendiente_preparacion" || order.logisticsStatus === "listo_para_entregar") && order.shippingCutoff !== "-" ? order.shippingCutoff : ""}
+                        </td>
+                      )}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-medium">{order.clientName}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-mono">{order.meliOrderId}</td>
                       <td className="px-6 py-4">

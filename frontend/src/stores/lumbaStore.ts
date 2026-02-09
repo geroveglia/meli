@@ -215,7 +215,7 @@ const generateMockOrders = (): Order[] => {
       shippingStatus: meliStatus === "delivered" ? "delivered" : "not_delivered",
       shippingSubStatus: shipment?.substatus || "-",
       lastUpdated: meliOrder.last_updated,
-      shippingCutoff: "-", // Not in JSON
+      shippingCutoff: items.length % 2 === 0 ? "15:00 hs" : "12:00 hs", // Mock data logic
 
       invoiceStatus,
       docType: null, // Not explicit in provided JSON
@@ -319,7 +319,28 @@ export const useLumbaStore = create<LumbaState>()(
 
       setOrderTagStatus: (orderId, status) =>
         set((state) => ({
-          orders: state.orders.map((o) => (o.id === orderId ? { ...o, tagStatus: status } : o)),
+          orders: state.orders.map((o) => {
+            if (o.id !== orderId) return o;
+            
+            // Side effect: If printing label (via API in real life), ML status updates to ready_to_ship
+            let newMeliStatus = o.meliStatus;
+            let newLogisticsStatus = o.logisticsStatus;
+            
+            if (status === "impresas" && o.meliStatus !== "shipped" && o.meliStatus !== "delivered") {
+               newMeliStatus = "ready_to_ship";
+               // Also visually ensure it's "Listo para entregar" if everything else is ready
+               if(o.packaged) {
+                   newLogisticsStatus = "listo_para_entregar";
+               }
+            }
+
+            return { 
+                ...o, 
+                tagStatus: status,
+                meliStatus: newMeliStatus,
+                logisticsStatus: newLogisticsStatus
+            };
+          }),
         })),
 
       simulateMeliUpdates: () =>
@@ -340,10 +361,15 @@ export const useLumbaStore = create<LumbaState>()(
             } else if (order.meliStatus === "shipped") {
               // Simulate moving to delivered
               newMeliStatus = "delivered";
+            } 
+            
+            // Randomly simulate cancellation for testing automation
+            if (Math.random() > 0.95 && newMeliStatus !== "shipped" && newMeliStatus !== "delivered") {
+               newMeliStatus = "cancelled";
             }
 
             // Apply side effects
-            if (newMeliStatus === "shipped") {
+            if (newMeliStatus === "shipped" && newLogisticsStatus !== "despachado_meli") {
               newLogisticsStatus = "despachado_meli";
               // Sales automation: if shipped, ensure it is billed (if not already)
               if (newSalesStatus === "pendiente_facturacion") {
@@ -353,6 +379,23 @@ export const useLumbaStore = create<LumbaState>()(
             }
             if (newMeliStatus === "delivered") {
               newLogisticsStatus = "entregado";
+            }
+            
+            // Cancellation Automation
+            if (newMeliStatus === "cancelled") {
+                // Logistics update
+                if (newLogisticsStatus !== "cancelado_vuelto_stock" && newLogisticsStatus !== "devolucion_vuelto_stock") {
+                    newLogisticsStatus = "cancelado_vuelto_stock";
+                }
+                
+                // Billing update
+                if (newSalesStatus === "facturada") {
+                    // Logic: If already billed, move to Credit Note
+                    newSalesStatus = "nota_credito"; 
+                } else if (newSalesStatus === "pendiente_facturacion") {
+                    // Logic: If not billed, just cancel
+                    newSalesStatus = "venta_cancelada";
+                }
             }
 
             return {

@@ -17,10 +17,13 @@ type LogoProps = {
   imgClassName?: string;
 };
 
-export const Logo: React.FC<LogoProps> = ({ wrapperClassName = "flex items-center cursor-pointer hover:opacity-80 transition-opacity", to = "/admin/dashboard", imgClassName = "" }) => {
+export const Logo: React.FC<LogoProps & { forceTheme?: "light" | "dark" }> = ({ wrapperClassName = "flex items-center cursor-pointer hover:opacity-80 transition-opacity", to = "/admin/dashboard", imgClassName = "", forceTheme }) => {
   // Use global store
   const { branding, fetchBranding } = useBrandingStore();
-  const { theme } = useThemeStore();
+  const { theme: globalTheme } = useThemeStore();
+  
+  // Effective theme: valid overrides global
+  const activeTheme = forceTheme || globalTheme;
 
   useEffect(() => {
     // Only fetch if not already loaded (or can fetch on every mount if we prefer freshness)
@@ -31,7 +34,7 @@ export const Logo: React.FC<LogoProps> = ({ wrapperClassName = "flex items-cente
 
   const getLogoUrl = () => {
     if (!branding?.logo?.header) return null;
-    const mode = theme === "dark" ? "dark" : "light";
+    const mode = activeTheme === "dark" ? "dark" : "light";
     return branding.logo.header[mode];
   };
 
@@ -49,14 +52,14 @@ export const Logo: React.FC<LogoProps> = ({ wrapperClassName = "flex items-cente
       ) : (
         <div className="flex items-center gap-3 group">
           {/* Logo Icon - FontAwesome Cube */}
-          <div className="relative w-8 h-8 flex items-center justify-center text-accent-1 dark:text-accent-1">
+          <div className={`relative w-8 h-8 flex items-center justify-center ${activeTheme === "dark" ? "text-white" : "text-black"}`}>
             <FontAwesomeIcon icon={faCube} className="w-8 h-8 group-hover:animate-pulse transition-all" />
           </div>
 
           {/* Logo Text - TEMPLATE using provided style */}
           <div className="flex flex-col">
             <span
-              className="text-2xl font-black tracking-widest text-accent-1 dark:text-accent-1 uppercase select-none"
+              className={`text-2xl font-black tracking-widest uppercase select-none ${activeTheme === "dark" ? "text-white" : "text-black"}`}
               style={{
                 fontFamily: "'Inter', sans-serif",
               }}

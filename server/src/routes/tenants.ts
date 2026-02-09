@@ -287,6 +287,99 @@ router.put(
   }
 );
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /tenants/current/billing-settings - Get billing settings
+// ─────────────────────────────────────────────────────────────────────────────
+router.get(
+  "/current/billing-settings",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const tenantId = req.tenantObjectId;
+      if (!tenantId) {
+        res.status(400).json({ error: "Tenant ID required" });
+        return;
+      }
+
+      const tenant = await Tenant.findById(tenantId).select("billing.settings");
+      if (!tenant) {
+        res.status(404).json({ error: "Tenant not found" });
+        return;
+      }
+
+      // Return default if not exists
+      res.json(tenant.billing?.settings || { 
+        autoBilling: false, 
+        triggerStage: "order_shipped" 
+      });
+    } catch (error) {
+      console.error("Get billing settings error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PUT /tenants/current/billing-settings - Update billing settings
+// ─────────────────────────────────────────────────────────────────────────────
+router.put(
+  "/current/billing-settings", 
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const tenantId = req.tenantObjectId;
+      if (!tenantId) {
+        res.status(400).json({ error: "Tenant ID required" });
+        return;
+      }
+
+      const { autoBilling, triggerStage } = req.body;
+      
+      const tenant = await Tenant.findById(tenantId);
+      if (!tenant) {
+        res.status(404).json({ error: "Tenant not found" });
+        return;
+      }
+
+      if (!tenant.billing) {
+        // Initialize billing if missing (should not happen usually)
+        tenant.billing = {
+            currentPeriod: {
+                startDate: new Date(),
+                endDate: new Date(),
+                amount: 0,
+                currency: "ARS"
+            },
+            invoices: [],
+            autoRenew: true,
+            settings: { autoBilling: false, triggerStage: "order_shipped" }
+        } as any;
+      }
+      
+      // Initialize settings if missing
+      if(!tenant.billing.settings) {
+          tenant.billing.settings = { autoBilling: false, triggerStage: "order_shipped" };
+      }
+
+      if (typeof autoBilling === 'boolean') {
+        tenant.billing.settings.autoBilling = autoBilling;
+      }
+      
+      if (triggerStage && ["order_created", "order_paid", "order_shipped", "order_delivered"].includes(triggerStage)) {
+         tenant.billing.settings.triggerStage = triggerStage;
+      }
+
+      await tenant.save();
+
+      res.json(tenant.billing.settings);
+    } catch (error) {
+       console.error("Update billing settings error:", error);
+       res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /tenants - Listar todos los tenants
 // ─────────────────────────────────────────────────────────────────────────────

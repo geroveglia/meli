@@ -176,31 +176,20 @@ export const VentasPage: React.FC = () => {
     const result = await sweetAlert.confirm(title, `Vas a aplicar la acción a ${count} orden(es).`, icon, confirmText);
 
     if (result.isConfirmed) {
-      if (action === "FACTURAR_MANUAL") {
-        const idsToUpdate = isBulk ? (orderOrIds as string[]) : [(orderOrIds as Order).id];
-        setExitingOrderIds((prev) => [...prev, ...idsToUpdate]);
+      const idsToUpdate = isBulk ? (orderOrIds as string[]) : [(orderOrIds as Order).id];
+      setExitingOrderIds((prev) => [...prev, ...idsToUpdate]);
 
-        setTimeout(() => {
-          if (isBulk) {
-            (orderOrIds as string[]).forEach((id) => executeAction(id, action));
-            setSelectedOrderIds([]);
-            sweetAlert.success("Acción completada", `Se actualizaron ${count} ordenes.`);
-          } else {
-            executeAction((orderOrIds as Order).id, action);
-            sweetAlert.success("Acción completada", "La orden ha sido actualizada.");
-          }
-          setExitingOrderIds((prev) => prev.filter((id) => !idsToUpdate.includes(id)));
-        }, 500);
-      } else {
+      setTimeout(() => {
         if (isBulk) {
           (orderOrIds as string[]).forEach((id) => executeAction(id, action));
-          setSelectedOrderIds([]); // Clear selection after action
+          setSelectedOrderIds([]);
           sweetAlert.success("Acción completada", `Se actualizaron ${count} ordenes.`);
         } else {
           executeAction((orderOrIds as Order).id, action);
           sweetAlert.success("Acción completada", "La orden ha sido actualizada.");
         }
-      }
+        setExitingOrderIds((prev) => prev.filter((id) => !idsToUpdate.includes(id)));
+      }, 500);
     }
   };
 

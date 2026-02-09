@@ -22,6 +22,7 @@ import { CuentaInfoPage } from "./pages/admin/CuentaInfoPage";
 import { CarouselImagesPage } from "./pages/admin/CarouselImagesPage";
 import { TenantsPage } from "./pages/admin/TenantsPage";
 import { GeneralSettingsPage } from "./pages/admin/GeneralSettingsPage";
+import { ConfiguracionPage } from "./pages/admin/ConfiguracionPage";
 
 import { SeoSettingsPage } from "./pages/admin/SeoSettingsPage";
 
@@ -261,6 +262,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <GeneralSettingsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="configuracion"
+                element={
+                  <ProtectedRoute>
+                    <ConfiguracionPage />
                   </ProtectedRoute>
                 }
               />

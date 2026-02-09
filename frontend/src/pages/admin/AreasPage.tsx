@@ -10,9 +10,6 @@ import { sweetAlert } from "../../utils/sweetAlert";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit, faTrash, faPlus, faShieldHalved, faLayerGroup, faUserTie, faUserGraduate } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
-import { getHelp, hasHelp } from "../../data/help/helpContent";
-
-const HELP_KEY = "areas" as const;
 
 interface AreaFormData {
   name: string;
@@ -41,7 +38,6 @@ export const AreasPage: React.FC = () => {
   const [viewArea, setViewArea] = useState<Area | null>(null);
 
   const [openInfo, setOpenInfo] = useState(false);
-  const helpEntry = getHelp(HELP_KEY);
 
   const canManage = hasPermission("areas:view"); // Assuming same permission as users/positions for now
 
@@ -210,7 +206,7 @@ export const AreasPage: React.FC = () => {
                     if (viewArea) openEdit(viewArea);
                     closeView();
                   },
-                  variant: "secondary",
+                  variant: "blue",
                 } as const,
               ]
             : []),

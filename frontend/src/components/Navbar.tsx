@@ -5,9 +5,9 @@ import { useCuentaContextStore } from "../stores/cuentaContextStore";
 import { useLumbaStore } from "../stores/lumbaStore";
 import { Link, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faBars, faRightFromBracket, faHouse, faUserGear, faBuilding, faArrowUpRightFromSquare, faCog, faUser, faUserShield, faChevronDown, faUsersGear, faInfoCircle, faImages } from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faBars, faRightFromBracket, faHouse, faUserGear, faBuilding, faArrowUpRightFromSquare, faCog, faUser, faUserShield, faChevronDown, faUsersGear, faInfoCircle, faImages, faMoneyBillWave } from "@fortawesome/free-solid-svg-icons";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
-import { Logo } from "./Logo";
+
 import axios from "../api/axiosConfig";
 import { SettingsModal } from "./SettingsModal";
 import CuentaSelector from "./CuentaSelector";
@@ -263,7 +263,7 @@ export const MobileNavbar: React.FC = () => {
     userRoleNames.length ? (
       <div className="flex flex-wrap gap-1">
         {userRoleNames.map((label) => (
-          <div key={label} className={`flex text-transform: capitalize font-semibold items-center justify-center px-3 py-1 rounded-full ${className} text-xs bg-accent-5 text-white`}>
+          <div key={label} className={`flex text-transform: capitalize font-semibold items-center justify-center px-3 py-1 rounded-full ${className} text-xs bg-white text-black`}>
             <FontAwesomeIcon icon={faUserShield} className="h-3 w-3 mr-1.5" />
             {label}
           </div>
@@ -271,7 +271,7 @@ export const MobileNavbar: React.FC = () => {
       </div>
     ) : (
       <div className="mt-2">
-        <span className={`inline-flex items-center px-2 py-0.5 rounded-full ${className} font-medium bg-accent-5 text-white uppercase`}>{user?.primaryRole ?? "user"}</span>
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-full ${className} font-medium bg-white text-black uppercase`}>{user?.primaryRole ?? "user"}</span>
       </div>
     );
 
@@ -281,11 +281,11 @@ export const MobileNavbar: React.FC = () => {
       <div>
         {user?.tenantSlug && (
           <div className="flex flex-col lg:flex-row gap-2 w-full lg:justify-between items-center lg:items-start lg:px-2">
-            <div className="hidden lg:flex text-transform: capitalize font-semibold items-center justify-center px-3 py-1 rounded-full text-xs bg-accent-5 text-white" title={user.tenantSlug}>
+            <div className="hidden lg:flex text-transform: capitalize font-semibold items-center justify-center px-3 py-1 rounded-full text-xs bg-white text-black" title={user.tenantSlug}>
               <FontAwesomeIcon icon={faBuilding} className="h-3 w-3 mr-1.5" />
               {user.tenantSlug}
             </div>
-            <div className="flex text-transform: capitalize font-semibold items-center justify-center px-3 py-1 rounded-full text-xs bg-accent-5 text-white" title={displayName}>
+            <div className="flex text-transform: capitalize font-semibold items-center justify-center px-3 py-1 rounded-full text-xs bg-white text-black" title={displayName}>
               <FontAwesomeIcon icon={faUser} className="h-3 w-3 mr-1.5" /> {displayName}
             </div>
             <div className="hidden lg:block">
@@ -646,6 +646,30 @@ export const MobileNavbar: React.FC = () => {
 
                     {/* Cuentas */}
                     {cuentaItem && renderMenuItem(cuentaItem)}
+
+                    {/* Configuración */}
+                    <Link
+                      to="/admin/configuracion"
+                      onClick={() => setOpen(false)}
+                      className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${
+                        isActive("/admin/configuracion")
+                          ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm"
+                          : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
+                        <div
+                          className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${
+                            isActive("/admin/configuracion")
+                              ? "bg-white text-blue-600"
+                              : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"
+                          }`}
+                        >
+                          <FontAwesomeIcon icon={faMoneyBillWave} className="h-4 w-4" />
+                        </div>
+                        <span className="font-medium truncate">Facturación</span>
+                      </div>
+                    </Link>
                   </div>
                 </motion.nav>
               )}
@@ -747,8 +771,14 @@ export const MobileNavbar: React.FC = () => {
                 {open ? <FontAwesomeIcon icon={faXmark} className="h-6 w-6 text-accent-1" /> : <FontAwesomeIcon icon={faBars} className="h-6 w-6 text-accent-1" />}
               </button>
             </div>
-            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 lg:static lg:transform-none lg:w-64 lg:-ml-6 lg:flex lg:justify-center lg:items-center">
-              <Logo sizeClass="text-3xl" wrapperClassName="flex items-center cursor-pointer hover:opacity-80 transition-opacity" imgClassName="max-h-12 max-w-[200px]" />
+            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 lg:static lg:transform-none lg:w-64 lg:flex lg:justify-start lg:items-center">
+              <Link to="/admin/dashboard" className="flex items-center cursor-pointer hover:opacity-80 transition-opacity">
+                <img 
+                  src="https://http2.mlstatic.com/frontend-assets/ml-web-navigation/ui-navigation/5.21.22/mercadolibre/logo__large_plus.png" 
+                  alt="Mercado Libre" 
+                  className="max-h-8 max-w-[150px] object-contain" 
+                />
+              </Link>
             </div>
             <div className="flex items-center justify-center space-x-2 ml-auto">
               <div className="hidden lg:block">
@@ -773,7 +803,13 @@ export const MobileNavbar: React.FC = () => {
           <div className="p-4 pb-0">
             <div className="flex items-start justify-between border-b border-neutral-700 mb-2">
               <div>
-                <Logo sizeClass="text-2xl" imgClassName="max-h-10 max-w-[150px]" />
+                <Link to="/admin/dashboard" className="flex items-center cursor-pointer hover:opacity-80 transition-opacity">
+                  <img 
+                    src="https://http2.mlstatic.com/frontend-assets/ml-web-navigation/ui-navigation/5.21.22/mercadolibre/logo__large_plus.png" 
+                    alt="Mercado Libre" 
+                    className="max-h-10 max-w-[150px] object-contain" 
+                  />
+                </Link>
               </div>
               <button onClick={() => setOpen(false)} className="p-3 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
                 <FontAwesomeIcon icon={faXmark} className="h-5 w-5 text-accent-1" />

@@ -227,7 +227,7 @@ export const CuentaInfoPage = () => {
                     if (viewCuenta) openEdit(viewCuenta);
                     closeView();
                   },
-                  variant: "secondary" as const,
+                  variant: "blue" as const,
                 },
               ]
             : []),

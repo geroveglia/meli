@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useAuthStore } from "../stores/authStore";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash, faCheckCircle, faTimes } from "@fortawesome/free-solid-svg-icons";
-import { Logo } from "../components/Logo";
+
 
 // ===== Success Modal Component =====
 interface SuccessModalProps {
@@ -164,49 +164,68 @@ export const SignupPage: React.FC = () => {
         email={registeredEmail} 
         onContinue={handleContinue} 
       />
-      <div className="min-h-screen bg-accent-3 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="w-full max-w-lg">
-          <div className="bg-accent-2 shadow-xl rounded-2xl p-8 animate-slide-up border border-accent-4">
+          <div className="bg-white shadow-xl rounded-2xl p-8 animate-slide-up border border-gray-200">
             <div className="text-center mb-6">
-              <div className="flex justify-center items-center mb-2">
-                <Logo sizeClass="text-3xl" />
+              <div className="flex justify-center items-center mb-6">
+                <img 
+                  src="https://http2.mlstatic.com/frontend-assets/ml-web-navigation/ui-navigation/5.21.22/mercadolibre/logo__large_plus.png" 
+                  alt="Mercado Libre" 
+                  className="h-10 object-contain"
+                />
               </div>
-              <h2 className="text-xl font-bold text-accent-9">Create your account</h2>
-              <p className="text-accent-7">Start managing your organization today</p>
+              <h2 className="text-xl font-bold text-gray-900">Create your account</h2>
+              <p className="text-gray-600">Start managing your organization today</p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" autoComplete="off">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-accent-9 mb-1">First Name</label>
-                  <input {...register("firstName")} type="text" className="input-base" placeholder="John" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                  <input 
+                    {...register("firstName")} 
+                    type="text" 
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3.5 text-sm transition-colors outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400" 
+                    placeholder="John" 
+                  />
                   {errors.firstName && <p className="text-red-500 text-xs mt-1">{errors.firstName.message}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-accent-9 mb-1">Last Name</label>
-                  <input {...register("lastName")} type="text" className="input-base" placeholder="Doe" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                  <input 
+                    {...register("lastName")} 
+                    type="text" 
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3.5 text-sm transition-colors outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400" 
+                    placeholder="Doe" 
+                  />
                   {errors.lastName && <p className="text-red-500 text-xs mt-1">{errors.lastName.message}</p>}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-accent-9 mb-1">Company Name</label>
-                <input {...register("companyName")} type="text" className="input-base" placeholder="Acme Inc." />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                <input 
+                  {...register("companyName")} 
+                  type="text" 
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3.5 text-sm transition-colors outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400" 
+                  placeholder="Acme Inc." 
+                />
                 {errors.companyName && <p className="text-red-500 text-xs mt-1">{errors.companyName.message}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-accent-9 mb-1">
-                   Workspace URL <span className="text-accent-6 font-normal">(Auto-generated)</span>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                   Workspace URL <span className="text-gray-400 font-normal">(Auto-generated)</span>
                  </label>
                  <div className="flex items-center">
-                   <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-accent-4 bg-accent-3 text-accent-7 text-sm py-2.5">
+                   <span className="inline-flex items-center px-3 rounded-l-xl border border-r-0 border-gray-300 bg-gray-100 text-gray-500 text-sm py-3.5 border-y-gray-300">
                      app.domain.com/
                    </span>
                    <input 
                       {...register("slug")} 
                       type="text" 
-                      className="input-base rounded-l-none" 
+                      className="w-full border border-gray-300 rounded-r-xl px-4 py-3.5 text-sm transition-colors outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 border-l-0 rounded-l-none" 
                       placeholder="acme-inc" 
                    />
                  </div>
@@ -214,33 +233,53 @@ export const SignupPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-accent-9 mb-1">Email</label>
-                <input {...register("email")} type="email" className="input-base" placeholder="john@company.com" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input 
+                  {...register("email")} 
+                  type="email" 
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3.5 text-sm transition-colors outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400" 
+                  placeholder="john@company.com" 
+                />
                 {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
               </div>
 
                <div>
-                <label className="block text-sm font-medium text-accent-9 mb-1">Phone (Optional)</label>
-                <input {...register("phone")} type="tel" className="input-base" placeholder="+1 (555) 000-0000" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone (Optional)</label>
+                <input 
+                  {...register("phone")} 
+                  type="tel" 
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3.5 text-sm transition-colors outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400" 
+                  placeholder="+1 (555) 000-0000" 
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-accent-9 mb-1">Password</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
                   <div className="relative">
-                    <input {...register("password")} type={showPassword ? "text" : "password"} className="input-base pr-10" placeholder="••••••••" />
+                    <input 
+                      {...register("password")} 
+                      type={showPassword ? "text" : "password"} 
+                      className="w-full border border-gray-300 rounded-xl px-4 py-3.5 text-sm transition-colors outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 pr-10" 
+                      placeholder="••••••••" 
+                    />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                      <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} className="h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+                      <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} className="h-4 w-4 text-gray-400 hover:text-gray-600" />
                     </button>
                   </div>
                   {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-accent-9 mb-1">Confirm Password</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
                    <div className="relative">
-                    <input {...register("confirmPassword")} type={showConfirmPassword ? "text" : "password"} className="input-base pr-10" placeholder="••••••••" />
+                    <input 
+                      {...register("confirmPassword")} 
+                      type={showConfirmPassword ? "text" : "password"} 
+                      className="w-full border border-gray-300 rounded-xl px-4 py-3.5 text-sm transition-colors outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-400 pr-10" 
+                      placeholder="••••••••" 
+                    />
                     <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                      <FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} className="h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+                      <FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} className="h-4 w-4 text-gray-400 hover:text-gray-600" />
                     </button>
                   </div>
                   {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>}
@@ -248,21 +287,21 @@ export const SignupPage: React.FC = () => {
               </div>
 
               {error && (
-                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-2">
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
                    <div className="mt-0.5 text-red-500"><FontAwesomeIcon icon={faCheckCircle} className="rotate-45" /></div>
-                  <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+                  <p className="text-red-600 text-sm">{error}</p>
                 </div>
               )}
 
-              <button type="submit" disabled={isLoading} className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed mt-2">
+              <button type="submit" disabled={isLoading} className="w-full px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 text-white mt-2">
                 {isLoading ? "Creating Account..." : "Create Account"}
               </button>
             </form>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-accent-7">
+              <p className="text-sm text-gray-600">
                 Already have an account?{" "}
-                <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500 hover:underline">
+                <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 hover:underline">
                   Sign in
                 </Link>
               </p>

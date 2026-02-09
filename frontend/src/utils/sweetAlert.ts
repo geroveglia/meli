@@ -51,7 +51,7 @@ export const sweetAlert = {
       background: "var(--accent-2)",
       color: "var(--accent-1)",
       iconColor: "var(--accent-9)",
-      confirmButtonColor: "var(--accent-9)",
+      confirmButtonColor: "#2563eb",
     });
   },
 
@@ -61,7 +61,7 @@ export const sweetAlert = {
       text,
       icon,
       showCancelButton: true,
-      confirmButtonColor: "var(--accent-9)",
+      confirmButtonColor: "#2563eb",
       cancelButtonColor: "var(--accent-4)",
       confirmButtonText: confirmText,
       cancelButtonText: cancelText,
