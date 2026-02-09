@@ -631,6 +631,11 @@ export const LogisticaPage: React.FC = () => {
                   <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
                     Cantidad
                   </th>
+                  {activeTab === "DESEMPAQUETAR" && (
+                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
+                      Estado
+                    </th>
+                  )}
                   <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
                     Detalle
                   </th>
@@ -666,6 +671,15 @@ export const LogisticaPage: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center text-xs text-gray-500">{order.items.length > 0 ? order.items[0].quantity : 0}</td>
+                      {activeTab === "DESEMPAQUETAR" && (
+                        <td className="px-6 py-4 whitespace-nowrap text-center text-xs">
+                          {order.logisticsStatus.includes("cancelado") ? (
+                            <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">Cancelación</span>
+                          ) : (
+                            <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">Devolución</span>
+                          )}
+                        </td>
+                      )}
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <Button
                           onClick={(e) => {

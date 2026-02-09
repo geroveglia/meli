@@ -495,6 +495,29 @@ export const MobileNavbar: React.FC = () => {
                             { label: "Despachado ML", status: "DESPACHADO_MELI", count: getCount("logistics", "despachado_meli") },
                             { label: "Retiro en Local", status: "RETIRO_EN_LOCAL", count: getCount("logistics", "retiro_local") },
                             { label: "Entregados", status: "ENTREGADOS", count: getCount("logistics", "entregado") },
+                          ].map((sub) => {
+                            const hasNotification = notifications?.[sub.status];
+                            return (
+                              <Link
+                                key={sub.status}
+                                to={`/logistica?status=${sub.status}`}
+                                onClick={() => {
+                                  setOpen(false);
+                                  if (hasNotification) {
+                                    setNotification(sub.status, false);
+                                  }
+                                }}
+                                className={`group relative flex items-center justify-between px-2 py-1.5 rounded-lg transition-all ${location.search.includes(sub.status) ? "!bg-gray-100 !text-accent-1" : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900"}`}
+                              >
+                                <span className="font-medium truncate text-sm">{sub.label}</span>
+                                <span className={`ml-2 flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${hasNotification ? "bg-blue-600 text-white animate-breath-blue border-none" : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"}`}>{sub.count}</span>
+                              </Link>
+                            );
+                          })}
+
+                          <div className="pl-2 pt-2 pb-1 text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">Anulaciones</div>
+
+                          {[
                             { label: "Desempaquetar", status: "DESEMPAQUETAR", count: orders.filter((o) => (selectedCuenta ? o.clientName === selectedCuenta.name : true) && o.packaged && (o.logisticsStatus === "cancelado_vuelto_stock" || o.logisticsStatus === "devolucion_vuelto_stock")).length },
                             { label: "Devolucion", status: "DEVOLUCION", count: orders.filter((o) => (selectedCuenta ? o.clientName === selectedCuenta.name : true) && !o.packaged && o.logisticsStatus === "devolucion_vuelto_stock").length },
                             { label: "Cancelados", status: "CANCELADOS", count: orders.filter((o) => (selectedCuenta ? o.clientName === selectedCuenta.name : true) && !o.packaged && o.logisticsStatus === "cancelado_vuelto_stock").length },
