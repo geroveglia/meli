@@ -10,6 +10,7 @@ import { Home } from "./pages/Home";
 import { ComponentsLab } from "./pages/ComponentsLab";
 import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
+import { PricingPage } from "./pages/PricingPage";
 
 import { RolesPage } from "./pages/admin/RolesPage";
 import { PositionsPage } from "./pages/admin/PositionsPage";
@@ -170,6 +171,7 @@ function App() {
               <Route path="/components" element={<ComponentsLab />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<SignupPage />} />
+              <Route path="/pricing" element={<PricingPage />} />
             </Route>
 
             {/* Rutas protegidas (CON MobileNavbar) - Prefijo /admin */}

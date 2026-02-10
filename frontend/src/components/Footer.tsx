@@ -1,7 +1,7 @@
 import React from "react";
 import { motion, Variants } from "framer-motion";
-import { Layers } from "lucide-react";
-import { useThemeStore } from "../stores/themeStore";
+
+
 
 const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 30 },
@@ -13,21 +13,27 @@ const fadeInUp: Variants = {
 };
 
 import { BrandingSettings } from "../services/brandingService";
-import { Logo } from "./Logo";
+
 
 interface FooterProps {
   branding?: BrandingSettings | null;
 }
 
 export const Footer: React.FC<FooterProps> = ({ branding }) => {
-  const { theme, toggleTheme } = useThemeStore();
+
 
   return (
     <motion.footer initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeInUp} className="mt-20 border-t border-accent-4 pt-16">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12 mb-16">
         <div className="space-y-6">
           <div className="flex items-center gap-2">
-            <Logo to="/" />
+            <a href="/" className="flex items-center gap-2">
+              <img
+                src="https://http2.mlstatic.com/frontend-assets/ml-web-navigation/ui-navigation/5.21.22/mercadolibre/logo__large_plus.png"
+                alt="Mercado Libre"
+                className="h-8 w-auto object-contain"
+              />
+            </a>
           </div>
           <p className="text-accent-6 text-sm leading-relaxed hidden md:block">Pioneering the next generation of weightless digital interfaces. Built for speed, designed for the future.</p>
           <div className="flex gap-4">
