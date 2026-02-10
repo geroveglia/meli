@@ -26,6 +26,7 @@ import { GeneralSettingsPage } from "./pages/admin/GeneralSettingsPage";
 import { ConfiguracionPage } from "./pages/admin/ConfiguracionPage";
 
 import { SeoSettingsPage } from "./pages/admin/SeoSettingsPage";
+import { DocumentationPage } from "./pages/admin/DocumentationPage";
 
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { MobileNavbar } from "./components/Navbar";
@@ -281,6 +282,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <SeoSettingsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="doc/*"
+                element={
+                  <ProtectedRoute>
+                    <DocumentationPage />
                   </ProtectedRoute>
                 }
               />

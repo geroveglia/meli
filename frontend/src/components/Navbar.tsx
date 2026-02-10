@@ -5,7 +5,7 @@ import { useCuentaContextStore } from "../stores/cuentaContextStore";
 import { useLumbaStore } from "../stores/lumbaStore";
 import { Link, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faBars, faRightFromBracket, faHouse, faUserGear, faBuilding, faArrowUpRightFromSquare, faCog, faUser, faUserShield, faChevronDown, faUsersGear, faInfoCircle, faImages, faMoneyBillWave, faBell } from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faBars, faRightFromBracket, faHouse, faUserGear, faBuilding, faArrowUpRightFromSquare, faCog, faUser, faUserShield, faChevronDown, faUsersGear, faInfoCircle, faImages, faMoneyBillWave, faBell, faBook } from "@fortawesome/free-solid-svg-icons";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 
 import axios from "../api/axiosConfig";
@@ -119,8 +119,8 @@ export const MobileNavbar: React.FC = () => {
       setOpenAdminSection("logistica");
     } else if (["/ventas"].includes(location.pathname)) {
       setOpenAdminSection("ventas");
-    } else if (["/admin/carousel-images", "/admin/general", "/admin/seo"].includes(location.pathname)) {
-      setOpenAdminSection("config");
+    } else if (["/admin/carousel-images", "/admin/general", "/admin/seo", "/admin/doc"].includes(location.pathname) || location.pathname.startsWith("/admin/doc")) {
+      setOpenAdminSection("general");
     } else if (["/admin/roles", "/admin/users"].includes(location.pathname)) {
       setOpenAdminSection("users");
     }
@@ -224,6 +224,13 @@ export const MobileNavbar: React.FC = () => {
         path: "/admin/general",
         icon: faCog,
         label: "Logo",
+        scope: "global",
+      });
+
+      base.push({
+        path: "/admin/doc",
+        icon: faBook,
+        label: "Documentación",
         scope: "global",
       });
 
@@ -383,13 +390,14 @@ export const MobileNavbar: React.FC = () => {
     const generalItem = menuItems.find((item) => item.path === "/admin/general");
 
     const seoItem = menuItems.find((item) => item.path === "/admin/seo");
+    const docItem = menuItems.find((item) => item.path === "/admin/doc");
 
     // Lumba Items
     const ventasItem = menuItems.find((item) => item.path === "/ventas");
     const logisticaItem = menuItems.find((item) => item.path === "/logistica");
 
     // Otros items que no pertenecen a ninguna sección
-    const otherAdminItems = menuItems.filter((item) => !userAdminItems.some((u) => u.path === item.path) && item.path !== "/admin/dashboard" && item.path !== "/admin/cuentas" && item.path !== "/admin/tenants" && item.path !== "/admin/carousel-images" && item.path !== "/admin/general" && item.path !== "/admin/seo" && item.path !== "/ventas" && item.path !== "/logistica");
+    const otherAdminItems = menuItems.filter((item) => !userAdminItems.some((u) => u.path === item.path) && item.path !== "/admin/dashboard" && item.path !== "/admin/cuentas" && item.path !== "/admin/tenants" && item.path !== "/admin/carousel-images" && item.path !== "/admin/general" && item.path !== "/admin/seo" && item.path !== "/ventas" && item.path !== "/logistica" && item.path !== "/admin/doc");
 
     const renderMenuItem = (item: any) => {
       // Debug log to verify HMR
@@ -662,6 +670,9 @@ export const MobileNavbar: React.FC = () => {
                   <div className="pb-2">
                     {/* Dashboard */}
                     {dashboardItem && renderMenuItem(dashboardItem)}
+
+                    {/* Documentación */}
+                    {docItem && renderMenuItem(docItem)}
 
                     {/* Tenants (solo superadmin) */}
                     {tenantsItem && renderMenuItem(tenantsItem)}

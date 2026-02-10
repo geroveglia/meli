@@ -118,9 +118,9 @@ export const ComponentsLab: React.FC = () => {
       {/* --- Main Content --- */}
       <main className="pt-32 pb-20 px-4 container mx-auto">
         <motion.div initial="hidden" animate="visible" variants={fadeInUp} className="mb-12">
-          <h4 className="text-xs font-mono text-accent-5 tracking-widest mb-2">DESIGN SYSTEM V2.0</h4>
+          <h4 className="text-xs font-mono text-gray-500 tracking-widest mb-2">DESIGN SYSTEM V2.0</h4>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-accent-9">UI Components Lab</h1>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-black">UI Components Lab</h1>
             <div className="flex gap-4">
               <button className="px-6 py-2.5 rounded-full border border-accent-4 text-sm font-medium hover:bg-accent-2 transition-colors text-accent-8">Documentation</button>
               <button className="px-6 py-2.5 rounded-full bg-accent-9 text-accent-2 text-sm font-semibold hover:text-accent-9 hover:bg-accent-3 transition-colors shadow-lg">Download Kit</button>
@@ -139,21 +139,21 @@ export const ComponentsLab: React.FC = () => {
               <div className="p-2 bg-accent-3 rounded-lg">
                 <Layers size={20} className="text-accent-9" />
               </div>
-              <h2 className="text-xl font-bold text-accent-9">Registration Form</h2>
+              <h2 className="text-xl font-bold text-black">Registration Form</h2>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 w-full">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-accent-6 tracking-wider">EMAIL ADDRESS</label>
+                <label className="text-xs font-bold text-gray-700 tracking-wider">EMAIL ADDRESS</label>
                 <div className="relative">
-                  <input {...register("email")} type="email" placeholder="name@company.com" className="w-full bg-accent-3 border border-accent-4 rounded-xl px-4 py-3.5 outline-none focus:border-accent-9 transition-colors text-sm text-accent-9 placeholder:text-accent-5" />
+                  <input {...register("email")} type="email" placeholder="name@company.com" className="w-full bg-accent-3 border border-accent-4 rounded-xl px-4 py-3.5 outline-none focus:border-accent-9 transition-colors text-sm text-black placeholder:text-gray-400" />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-accent-5">@</span>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <label className="text-xs font-bold text-accent-6 tracking-wider">PASSWORD</label>
+                  <label className="text-xs font-bold text-gray-700 tracking-wider">PASSWORD</label>
                   <span className="text-[10px] text-accent-5">Min 8 chars</span>
                 </div>
                 <div className="relative">
@@ -174,7 +174,7 @@ export const ComponentsLab: React.FC = () => {
 
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <label className="text-xs font-bold text-accent-6 tracking-wider">CONFIRM PASSWORD</label>
+                  <label className="text-xs font-bold text-gray-700 tracking-wider">CONFIRM PASSWORD</label>
                 </div>
                 <div className="relative">
                   <input {...register("confirmPassword")} type={showConfirmPassword ? "text" : "password"} placeholder="••••••••" className="w-full bg-accent-3 border border-accent-4 rounded-xl px-4 py-3.5 outline-none focus:border-accent-9 transition-colors text-sm font-mono tracking-widest text-accent-9 placeholder:text-accent-5 pr-12" />
@@ -223,7 +223,7 @@ export const ComponentsLab: React.FC = () => {
                 <div className="w-1.5 h-1.5 bg-accent-4 rounded-full"></div>
                 <div className="w-1.5 h-1.5 bg-accent-4 rounded-full"></div>
               </div>
-              <h2 className="text-lg font-bold mb-8 text-accent-9">Interactive UI</h2>
+              <h2 className="text-lg font-bold mb-8 text-black">Interactive UI</h2>
 
               <div className="space-y-4">
                 {/* Sonner Toast */}
@@ -233,7 +233,7 @@ export const ComponentsLab: React.FC = () => {
                       <Bell size={18} />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-accent-9">Sonner Toast</h3>
+                      <h3 className="text-sm font-bold text-black">Sonner Toast</h3>
                       <p className="text-xs text-accent-6">Triggers stacked notification</p>
                     </div>
                   </div>
@@ -249,7 +249,7 @@ export const ComponentsLab: React.FC = () => {
                       <ExternalLink size={18} />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-accent-9">SweetAlert2</h3>
+                      <h3 className="text-sm font-bold text-black">SweetAlert2</h3>
                       <p className="text-xs text-accent-6">Monochrome modal overlay</p>
                     </div>
                   </div>
@@ -265,7 +265,7 @@ export const ComponentsLab: React.FC = () => {
                       <MousePointer2 size={18} />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-accent-9">Scale Tap</h3>
+                      <h3 className="text-sm font-bold text-black">Scale Tap</h3>
                       <p className="text-xs text-accent-6">Micro-interaction test</p>
                     </div>
                   </div>
@@ -280,7 +280,7 @@ export const ComponentsLab: React.FC = () => {
               {/* Icons Grid */}
               <div className="bg-accent-2 rounded-[2rem] p-6 border border-accent-4 flex flex-col justify-between transition-colors duration-300">
                 <div>
-                  <h2 className="text-lg font-bold mb-2 text-accent-9">Icons</h2>
+                  <h2 className="text-lg font-bold mb-2 text-black">Icons</h2>
                   <p className="text-xs text-accent-6 mb-6">Material Symbols / Outlined</p>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
@@ -298,7 +298,7 @@ export const ComponentsLab: React.FC = () => {
                   <div className="w-2 h-2 bg-accent-9 rounded-full absolute"></div>
                   <div className="w-16 h-16 bg-accent-9/10 rounded-full absolute animate-ping"></div>
                 </div>
-                <h3 className="font-bold text-sm mb-1 text-accent-9">System Normal</h3>
+                <h3 className="font-bold text-sm mb-1 text-black">System Normal</h3>
                 <p className="text-xs text-accent-9 font-mono">99.9% Uptime</p>
               </div>
             </div>
@@ -307,7 +307,7 @@ export const ComponentsLab: React.FC = () => {
 
         {/* --- Carousel Section --- */}
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeInUp} className="mt-20">
-          <h2 className="text-2xl font-bold mb-8 text-accent-9 flex items-center gap-3">
+          <h2 className="text-2xl font-bold mb-8 text-black flex items-center gap-3">
             <Box size={24} /> Carousel Components
           </h2>
 
@@ -359,7 +359,7 @@ export const ComponentsLab: React.FC = () => {
                           <span className="text-xs font-mono text-accent-5">V2.0</span>
                         </div>
                         <div>
-                          <h3 className="text-lg font-bold text-accent-9 mb-2">Component {item}</h3>
+                          <h3 className="text-lg font-bold text-black mb-2">Component {item}</h3>
                           <p className="text-sm text-accent-6">Scalable react component with built-in dark mode and accessibility features.</p>
                         </div>
                       </div>
