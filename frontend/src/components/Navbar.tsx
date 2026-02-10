@@ -5,7 +5,7 @@ import { useCuentaContextStore } from "../stores/cuentaContextStore";
 import { useLumbaStore } from "../stores/lumbaStore";
 import { Link, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faBars, faRightFromBracket, faHouse, faUserGear, faBuilding, faArrowUpRightFromSquare, faCog, faUser, faUserShield, faChevronDown, faUsersGear, faInfoCircle, faImages, faMoneyBillWave } from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faBars, faRightFromBracket, faHouse, faUserGear, faBuilding, faArrowUpRightFromSquare, faCog, faUser, faUserShield, faChevronDown, faUsersGear, faInfoCircle, faImages, faMoneyBillWave, faBell } from "@fortawesome/free-solid-svg-icons";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 
 import axios from "../api/axiosConfig";
@@ -22,9 +22,11 @@ interface AdminCounts {
 
 export const MobileNavbar: React.FC = () => {
   const { user, logout, hasPermission } = useAuthStore();
+  const { notifications, setNotification } = useLumbaStore(); // Added notifications access
 
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false); // New State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [, setAdminAccordionOpen] = useState(true);
 
@@ -33,6 +35,26 @@ export const MobileNavbar: React.FC = () => {
   if (publicRoutes.includes(location.pathname)) {
     return null;
   }
+
+  // Notification Mapping
+  const notificationMap: Record<string, { label: string; path: string }> = {
+    // Logistica
+    PENDIENTE_PREPARACION: { label: "Nuevos pedidos en preparación", path: "/logistica?status=PENDIENTE_PREPARACION" },
+    LISTO_PARA_ENTREGAR: { label: "Pedidos listos para entregar", path: "/logistica?status=LISTO_PARA_ENTREGAR" },
+    DESPACHADO_MELI: { label: "Pedidos despachados", path: "/logistica?status=DESPACHADO_MELI" },
+    RETIRO_EN_LOCAL: { label: "Retiros en local", path: "/logistica?status=RETIRO_EN_LOCAL" },
+    ENTREGADOS: { label: "Pedidos entregados", path: "/logistica?status=ENTREGADOS" },
+    DESEMPAQUETAR: { label: "Pedidos para desempaquetar", path: "/logistica?status=DESEMPAQUETAR" },
+    DEVOLUCION: { label: "Devoluciones", path: "/logistica?status=DEVOLUCION" },
+    CANCELADOS: { label: "Pedidos cancelados", path: "/logistica?status=CANCELADOS" },
+    // Ventas
+    PENDIENTE_FACTURACION: { label: "Pendientes de facturación", path: "/ventas?status=PENDIENTE_FACTURACION" },
+    FACTURADAS: { label: "Pedidos facturados", path: "/ventas?status=FACTURADAS" },
+    VENTAS_CANCELADAS: { label: "Ventas canceladas", path: "/ventas?status=VENTAS_CANCELADAS" },
+    NOTAS_DE_CREDITO: { label: "Notas de crédito generadas", path: "/ventas?status=NOTAS_DE_CREDITO" },
+  };
+
+  const activeNotifications = Object.keys(notifications || {}).filter((key) => notifications[key]);
 
   // Estado del acordeón persistente: "users" | "general" | null
   const [openAdminSection, setOpenAdminSection] = useState<string | null>(() => {
@@ -767,8 +789,8 @@ export const MobileNavbar: React.FC = () => {
         <div className="px-4 sm:px-6">
           <div className="flex justify-between items-center h-16 relative">
             <div className="lg:hidden">
-              <button onClick={() => setOpen((v) => !v)} className="p-2 rounded-lg hover:bg-accent-3 flex-1 overflow-y-auto space-y-4 mb-4000 transition-colors">
-                {open ? <FontAwesomeIcon icon={faXmark} className="h-6 w-6 text-accent-1" /> : <FontAwesomeIcon icon={faBars} className="h-6 w-6 text-accent-1" />}
+              <button onClick={() => setOpen((v) => !v)} className="p-2 rounded-lg hover:bg-accent-3 flex-1 overflow-y-auto space-y-4 transition-colors text-accent-1">
+                {open ? <FontAwesomeIcon icon={faXmark} className="h-6 w-6" /> : <FontAwesomeIcon icon={faBars} className="h-6 w-6" />}
               </button>
             </div>
             <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 lg:static lg:transform-none lg:w-64 lg:flex lg:justify-start lg:items-center">
@@ -781,6 +803,71 @@ export const MobileNavbar: React.FC = () => {
               </Link>
             </div>
             <div className="flex items-center justify-center space-x-2 ml-auto">
+              {/* Mobile Notification Button (Right) */}
+              <div className="lg:hidden relative">
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="p-2 rounded-lg hover:bg-accent-3 transition-colors text-accent-1 relative"
+                >
+                  <FontAwesomeIcon icon={faBell} className="h-5 w-5" />
+                  {activeNotifications.length > 0 && (
+                    <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 animate-pulse border border-primary-400 dark:border-accent-2"></span>
+                  )}
+                </button>
+
+                {/* Notifications Dropdown (Right Aligned) */}
+                <AnimatePresence>
+                  {showNotifications && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50 origin-top-right"
+                    >
+                      <div className="p-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                        <h3 className="font-semibold text-gray-900 dark:text-white text-sm">Notificaciones</h3>
+                        <span className="text-xs text-gray-500">{activeNotifications.length} nuevas</span>
+                      </div>
+                      <div className="max-h-[60vh] overflow-y-auto">
+                        {activeNotifications.length === 0 ? (
+                          <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm py-8">
+                            <FontAwesomeIcon icon={faBell} className="h-6 w-6 mb-2 opacity-50 block mx-auto" />
+                            No tienes notificaciones
+                          </div>
+                        ) : (
+                          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                            {activeNotifications.map((key) => {
+                              const info = notificationMap[key];
+                              if (!info) return null;
+                              return (
+                                <Link
+                                  key={key}
+                                  to={info.path}
+                                  onClick={() => {
+                                    setNotification(key, false);
+                                    setShowNotifications(false);
+                                  }}
+                                  className="block p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <div className="h-2 w-2 mt-1.5 rounded-full bg-blue-500 flex-shrink-0" />
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{info.label}</p>
+                                      <p className="text-xs text-gray-500 mt-0.5">Toca para ver</p>
+                                    </div>
+                                  </div>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
               <div className="hidden lg:block">
                 <UserCard />
               </div>

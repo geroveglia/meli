@@ -6,7 +6,6 @@ import { PageLayout } from "../../components/PageLayout";
 import { SearchAndFilters } from "../../components/SearchAndFilters";
 import { useSearchParams } from "react-router-dom";
 import { faFile, faBan, faFileInvoiceDollar, faUsersGear, faEye, faTable, faGrip } from "@fortawesome/free-solid-svg-icons";
-import { Badge } from "../../components/Badge";
 import { Checkbox } from "../../components/Checkbox";
 import { Button } from "../../components/Button";
 import { sweetAlert } from "../../utils/sweetAlert";
@@ -241,16 +240,14 @@ export const VentasPage: React.FC = () => {
         filteredOrders.map((order) => (
           <Card
             key={order.id}
+            className={`
+              hover:scale-105 hover:shadow-lg transition-all duration-500 ease-in-out
+              ${exitingOrderIds.includes(order.id) ? "transform -translate-x-full opacity-0" : "transform translate-x-0 opacity-100"}
+            `}
             header={{
               title: order.id,
               subtitle: new Date(order.date).toLocaleDateString(),
               icon: faUsersGear,
-              badges: [
-                {
-                  text: order.meliStatus,
-                  variant: order.meliStatus === "cancelled" ? "warning" : order.meliStatus === "delivered" ? "success" : "info",
-                },
-              ],
             }}
             footer={{
               leftContent: <div className="w-full">{renderActions(order, false, true)}</div>,
@@ -273,29 +270,8 @@ export const VentasPage: React.FC = () => {
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">Total:</span>
+                <span className="text-gray-500 dark:text-gray-400">Total pagado:</span>
                 <span className="font-semibold text-gray-900 dark:text-gray-100">${order.total.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">Comprador:</span>
-                <span className="text-gray-900 dark:text-gray-100 truncate max-w-[150px]" title={order.buyerName}>
-                  {order.buyerName}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">Fecha:</span>
-                <span className="text-gray-900 dark:text-gray-100">{new Date(order.date).toLocaleDateString()}</span>
-              </div>
-
-              <div className="pt-2 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-2">
-                <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-750 p-2 rounded">
-                  <span className="text-xs text-gray-500">Gestión:</span>
-                  <Badge>{order.salesStatus.replace(/_/g, " ")}</Badge>
-                </div>
-                <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-750 p-2 rounded">
-                  <span className="text-xs text-gray-500">Factura:</span>
-                  <Badge>{order.invoiceStatus === "invoiced" ? "Facturada" : order.invoiceStatus === "cancelled" ? "Cancelada" : "Pendiente"}</Badge>
-                </div>
               </div>
             </div>
           </Card>

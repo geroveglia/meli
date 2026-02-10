@@ -164,13 +164,13 @@ export const SignupPage: React.FC = () => {
         email={registeredEmail} 
         onContinue={handleContinue} 
       />
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#ebebeb] flex items-center justify-center p-4">
         <div className="w-full max-w-lg">
           <div className="bg-white shadow-xl rounded-2xl p-8 animate-slide-up border border-gray-200">
             <div className="text-center mb-6">
               <div className="flex justify-center items-center mb-6">
                 <img 
-                  src="https://http2.mlstatic.com/frontend-assets/ml-web-navigation/ui-navigation/5.21.22/mercadolibre/logo__large_plus.png" 
+                  src="https://http2.mlstatic.com/frontend-assets/ml-web-navigation/ui-navigation/5.22.8/mercadolibre/logo__large_plus.png" 
                   alt="Mercado Libre" 
                   className="h-10 object-contain"
                 />

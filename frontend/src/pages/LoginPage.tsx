@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslation } from "react-i18next";
 
-import { Logo } from "../components/Logo";
+
 
 import { useAuthStore } from "../stores/authStore";
 import { useThemeStore } from "../stores/themeStore";
@@ -279,25 +279,25 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-accent-3 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#ebebeb] flex items-center justify-center p-4">
       {/* Controles globales */}
       <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
         <div className="flex gap-2">
           {/* <button onClick={handleLanguageToggle} className="p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800 shadow-md hover:shadow-lg transition-all duration-200" title="Toggle Language">
             <FontAwesomeIcon icon={faGlobe} className="h-5 w-5 text-neutral-600 dark:text-neutral-300" />
           </button> */}
-          <button onClick={toggleTheme} className="p-2 rounded-lg bg-accent-2 shadow-md hover:shadow-lg transition-all duration-200" title="Toggle Theme">
-            {theme === "light" ? <FontAwesomeIcon icon={faMoon} className="h-5 w-5 text-accent-7" /> : <FontAwesomeIcon icon={faSun} className="h-5 w-5 text-accent-1" />}
+          <button onClick={toggleTheme} className="p-2 rounded-lg bg-white shadow-md hover:shadow-lg transition-all duration-200" title="Toggle Theme">
+            {theme === "light" ? <FontAwesomeIcon icon={faMoon} className="h-5 w-5 text-gray-600" /> : <FontAwesomeIcon icon={faSun} className="h-5 w-5 text-yellow-500" />}
           </button>
         </div>
       </div>
 
       {/* Card de login */}
       <div className="w-full max-w-md">
-        <div className="bg-accent-2 shadow-2xl rounded-2xl p-8 animate-slide-up border border-accent-4">
+        <div className="bg-white shadow-2xl rounded-2xl p-8 animate-slide-up border border-gray-200">
           <div className="text-center mb-4">
             <div className="flex justify-center items-center">
-              <Logo sizeClass="text-3xl" />
+              <img src="https://http2.mlstatic.com/frontend-assets/ml-web-navigation/ui-navigation/5.22.8/mercadolibre/logo__large_plus.png" alt="Mercado Libre" className="h-[34px] mb-2" />
             </div>
             <div>
               <p className="text-accent-8">{t("auth.loginSubtitle")}</p>

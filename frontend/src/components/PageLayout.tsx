@@ -1,9 +1,11 @@
 import React from "react";
+import { useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleInfo, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { InfoModal, type InfoModalAction } from "./InfoModal";
 import { getImageUrl } from "../utils/imageHelpers";
+import { useCuentaContextStore } from "../stores/cuentaContextStore";
 
 interface InfoModalControlledProps {
   isOpen: boolean;
@@ -106,6 +108,8 @@ const BADGE_CLASSES: Record<BadgeVariant, string> = {
 };
 
 export const PageLayout: React.FC<PageLayoutProps> = ({ title, subtitle, badge, badgeSecondary, badgeTertiary, badgeState, infoModal, showInfoIcon = false, shouldShowInfo, children, headerActions, headerBack, onBack, avatar, faIcon, faIconSecondary, clientMiniAvatar, preSearchContent, preSearchTitle, preSearchActions, searchAndFilters, postFaIconSecondary, postSearchTitle, postSearchActions, postSearchAndFilters, modal, viewModal, actionCount }) => {
+  const { selectedCuenta } = useCuentaContextStore();
+  const location = useLocation();
   const shouldShowInfoButton = shouldShowInfo ?? (!!infoModal || showInfoIcon || !!subtitle);
 
   const renderBack = () => {
@@ -116,6 +120,28 @@ export const PageLayout: React.FC<PageLayoutProps> = ({ title, subtitle, badge, 
         <button onClick={onBack} className="btn-ghost" aria-label="Volver">
           <FontAwesomeIcon icon={faArrowLeft} className="h-4 w-4" />
         </button>
+      </div>
+    );
+  };
+
+  const renderSelectedClientBadge = () => {
+    const allowedPaths = ["/cuenta-info", "/logistica", "/ventas"];
+    const isAllowedSection = allowedPaths.some(path => location.pathname.startsWith(path));
+
+    if (!selectedCuenta || !isAllowedSection) return null;
+
+    return (
+      <div className="flex items-center gap-2 mb-1">
+        <div className="w-6 h-6 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700 flex items-center justify-center bg-blue-600 text-white text-xs font-bold">
+            {selectedCuenta.avatar ? (
+                <img src={selectedCuenta.avatar} alt={selectedCuenta.name} className="w-full h-full object-cover" />
+            ) : (
+                selectedCuenta.name.charAt(0).toUpperCase()
+            )}
+        </div>
+        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            {selectedCuenta.name}
+        </span>
       </div>
     );
   };
@@ -157,6 +183,8 @@ export const PageLayout: React.FC<PageLayoutProps> = ({ title, subtitle, badge, 
           {/* Header sticky */}
           <div className="sticky top-16 z-20 mb-4 bg-accent-2 border-b border-accent-4 transition-colors duration-300">
             <div className="py-4">
+              {renderSelectedClientBadge()}
+
               <div className="flex gap-3 flex-wrap min-w-0">
                 {renderClientMiniAvatar()}
 

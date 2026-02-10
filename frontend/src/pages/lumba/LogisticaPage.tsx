@@ -468,15 +468,35 @@ export const LogisticaPage: React.FC = () => {
         filteredOrders.map((order) => (
           <Card
             key={order.id}
+            className={`
+              hover:scale-105 hover:shadow-lg transition-all duration-500 ease-in-out
+              ${exitingOrderIds.includes(order.id) ? "transform -translate-x-full opacity-0" : "transform translate-x-0 opacity-100"}
+            `}
             header={{
               title: order.meliOrderId,
               subtitle: new Date(order.date).toLocaleDateString(),
               icon: faTruck,
               badges: [
-                {
-                  text: order.logisticsStatus.replace(/_/g, " "),
-                  variant: order.logisticsStatus === "entregado" ? "success" : order.logisticsStatus.includes("cancelado") ? "warning" : "info",
-                },
+                // Show 'Antes de...' if applicable
+                ...(showShippingCutoff &&
+                (order.logisticsStatus === "pendiente_preparacion" || order.logisticsStatus === "listo_para_entregar") &&
+                order.shippingCutoff !== "-"
+                  ? [
+                      {
+                        text: `Antes de: ${order.shippingCutoff}`,
+                        variant: "danger" as const,
+                      },
+                    ]
+                  : []),
+                // Show 'Estado' for Desempaquetar
+                ...(activeTab === "DESEMPAQUETAR"
+                  ? [
+                      {
+                        text: order.logisticsStatus.includes("cancelado") ? "Cancelación" : "Devolución",
+                        variant: (order.logisticsStatus.includes("cancelado") ? "warning" : "yellow") as any, // fallback or similar
+                      },
+                    ]
+                  : []),
               ],
             }}
             footer={{
@@ -489,7 +509,6 @@ export const LogisticaPage: React.FC = () => {
                 <span className="text-gray-500 dark:text-gray-400">Cuenta:</span>
                 <span className="font-semibold text-gray-900 dark:text-gray-100">{order.clientName}</span>
               </div>
-              {/* Id ML is now the title */}
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500 dark:text-gray-400">Publicación:</span>
                 <span className="text-gray-900 dark:text-gray-100 truncate max-w-[150px]" title={order.items.length > 0 ? order.items[0].title : "-"}>
