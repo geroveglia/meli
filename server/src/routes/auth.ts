@@ -7,7 +7,7 @@ import { Tenant } from "../models/Tenant.js";
 import { requireTenant, TenantRequest } from "../middleware/tenant.js";
 import { validate } from "../middleware/validate.js";
 import { registerSchema, loginSchema } from "../validators/authSchemas.js";
-import { register, checkEmailAvailability } from "../controllers/authController.js";
+import { register, checkEmailAvailability, loginWithGoogle } from "../controllers/authController.js";
 import { signJwt } from "../utils/jwt.js";
 import { addUserToClientUsuarios } from "../services/clientUsuarios.js";
 import { ensureDefaultRoles } from "../services/roleInitService.js";
@@ -63,6 +63,15 @@ router.post("/check-tenants", async (req, res) => {
     console.error("Check tenants error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
+});
+
+router.post("/google", async (req, res) => {
+    // Basic validation inline or create schema if preferred
+    if (!req.body.token) {
+        res.status(400).json({ error: "Token is required" });
+        return;
+    }
+    await loginWithGoogle(req, res);
 });
 
 router.post("/login", validate(loginWithClientSchema), async (req, res) => {

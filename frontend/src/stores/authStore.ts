@@ -35,6 +35,7 @@ interface AuthState {
     phone?: string;
     password: string;
   }) => Promise<{ token: string; user: User; tenant: Tenant }>;
+  loginWithGoogle: (token: string) => Promise<{ requiresTenantSelection?: boolean; tenants?: Tenant[]; redirectTo?: string; user?: User }>;
   login: (email: string, password: string, tenantSlug?: string, cuentaId?: string) => Promise<{ requiresTenantSelection?: boolean; tenants?: Tenant[]; redirectTo?: string; user?: User }>;
   checkTenants: (email: string) => Promise<Tenant[]>;
   logout: () => void;
@@ -166,6 +167,70 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             data,
             message: error?.message || "Network error",
         };
+    }
+  },
+
+  async loginWithGoogle(token: string) {
+    const base = normalizeBaseUrl(import.meta.env.VITE_API_URL);
+    const url = `${base}/auth/google`;
+
+    let data: any = null;
+    let res: Response | null = null;
+    try {
+        res = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ token }),
+        });
+
+        data = await parseResponseSafely(res);
+
+         // Si hay múltiples tenants, devolver info para selección
+        if (res.status === 300 && data?.requiresTenantSelection) {
+            return {
+            requiresTenantSelection: true,
+            tenants: data.tenants || [],
+            };
+        }
+
+        if (!res.ok) {
+            throw {
+                __api: true,
+                status: res.status,
+                message: data?.error || "Error initiating Google login",
+            };
+        }
+        
+        // Éxito
+        const authToken = data?.token;
+        const user = data?.user as User | undefined;
+        const redirectTo = data?.redirectTo;
+
+        if (!authToken) throw new Error("No token received");
+
+        localStorage.setItem("token", authToken);
+        localStorage.setItem("tenantId", user?.tenantId || "");
+        if (user?.tenantSlug) {
+            localStorage.setItem("tenantSlug", user.tenantSlug);
+        }
+        if (user) {
+            localStorage.setItem("user", JSON.stringify(user));
+        }
+        
+        set({
+            token: authToken,
+            tenantId: user?.tenantId || "",
+            isAuthenticated: true,
+            user: user || null,
+        });
+
+        return { redirectTo, user };
+
+    } catch (error: any) {
+        if (error?.__api) throw error;
+        throw { message: error?.message || "Network error" };
     }
   },
 

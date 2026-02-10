@@ -293,9 +293,9 @@ export async function seedOnStart() {
 
     // Remove all users except superadmin and seed admin
     await User.deleteMany({
-      email: { $nin: ["superadmin@example.com", adminEmail] }
+      email: { $nin: ["superadmin@example.com", adminEmail, "gero.veglia@gmail.com"] }
     });
-    console.log(`🧹 Cleaned up all users except superadmin@example.com and ${adminEmail}`);
+    console.log(`🧹 Cleaned up all users except superadmin@example.com, ${adminEmail} and gero.veglia@gmail.com`);
 
     // TENANT
     const tenant = await ensureTenant({
@@ -448,7 +448,23 @@ export async function seedOnStart() {
       levelId: levelSenior._id as Types.ObjectId,
       areaId: areaMap["Administración"],
     });
+
+    // ---- GERO USER (DEV) ----
+    await ensureUser({
+      tenantId,
+      email: "gero.veglia@gmail.com",
+      password: "password123", // Dummy password, will use Google Login
+      roleName: "admin",
+      firstName: "Gero",
+      lastName: "Veglia",
+      isActive: true,
+      positionId: positionDirector._id as Types.ObjectId,
+      levelId: levelSenior._id as Types.ObjectId,
+      areaId: areaMap["Administración"],
+    });
+
     console.log(`👤 Admin assigned: Position=${positionDirector.name}, Level=${levelSenior.name}, Area=Administración`);
+    console.log(`👤 Dev User assigned: gero.veglia@gmail.com`);
 
     console.log("🎉 Seed completed successfully!");
     console.log(`👤 Admin: ${adminEmail} / ${adminPassword}`);

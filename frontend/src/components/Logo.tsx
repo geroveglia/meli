@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { useThemeStore } from "../stores/themeStore";
 import { useBrandingStore } from "../stores/brandingStore";
 
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCube } from "@fortawesome/free-solid-svg-icons";
+// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+// import { faCube } from "@fortawesome/free-solid-svg-icons";
 
 type LogoProps = {
   /** Tailwind size para el <h1>. Ej: "text-2xl" | "text-3xl" */
@@ -50,24 +50,12 @@ export const Logo: React.FC<LogoProps & { forceTheme?: "light" | "dark" }> = ({ 
       {fullLogoUrl ? (
         <img src={fullLogoUrl} alt={`${import.meta.env.VITE_APP_FIRST_NAME} ${import.meta.env.VITE_APP_LAST_NAME} Logo`} className={`object-contain ${imgClassName}`} style={{ width: `${logoWidth}px` }} />
       ) : (
-        <div className="flex items-center gap-3 group">
-          {/* Logo Icon - FontAwesome Cube */}
-          <div className={`relative w-8 h-8 flex items-center justify-center ${activeTheme === "dark" ? "text-white" : "text-black"}`}>
-            <FontAwesomeIcon icon={faCube} className="w-8 h-8 group-hover:animate-pulse transition-all" />
-          </div>
-
-          {/* Logo Text - TEMPLATE using provided style */}
-          <div className="flex flex-col">
-            <span
-              className={`text-2xl font-black tracking-widest uppercase select-none ${activeTheme === "dark" ? "text-white" : "text-black"}`}
-              style={{
-                fontFamily: "'Inter', sans-serif",
-              }}
-            >
-              TEMPLATE
-            </span>
-          </div>
-        </div>
+        <img 
+          src="https://http2.mlstatic.com/frontend-assets/ml-web-navigation/ui-navigation/5.22.8/mercadolibre/logo__large_plus.png" 
+          alt="Mercado Libre" 
+          className={`object-contain ${imgClassName}`} 
+          style={{ height: "34px", width: "auto" }} 
+        />
       )}
     </Link>
   );

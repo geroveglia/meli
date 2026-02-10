@@ -4,13 +4,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslation } from "react-i18next";
+import { GoogleLogin } from "@react-oauth/google";
 
 
 
 import { useAuthStore } from "../stores/authStore";
 import { useThemeStore } from "../stores/themeStore";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMoon, faSun, faMagicWandSparkles, faCheckCircle, faTimesCircle, faEye, faEyeSlash, faBuilding, faLayerGroup } from "@fortawesome/free-solid-svg-icons";
+import { faMagicWandSparkles, faCheckCircle, faTimesCircle, faEye, faEyeSlash, faBuilding, faLayerGroup } from "@fortawesome/free-solid-svg-icons";
 
 // ===== Validación =====
 const loginWithClientSchema = z.object({
@@ -59,7 +60,7 @@ export const LoginPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { login } = useAuthStore();
-  const { theme, toggleTheme } = useThemeStore();
+  // const { theme, toggleTheme } = useThemeStore(); // Theme toggle removed
   const [isLoading, setIsLoading] = useState(false);
   const [, setLoadingUsers] = useState(false);
   const [error, setError] = useState("");
@@ -286,9 +287,7 @@ export const LoginPage: React.FC = () => {
           {/* <button onClick={handleLanguageToggle} className="p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800 shadow-md hover:shadow-lg transition-all duration-200" title="Toggle Language">
             <FontAwesomeIcon icon={faGlobe} className="h-5 w-5 text-neutral-600 dark:text-neutral-300" />
           </button> */}
-          <button onClick={toggleTheme} className="p-2 rounded-lg bg-white shadow-md hover:shadow-lg transition-all duration-200" title="Toggle Theme">
-            {theme === "light" ? <FontAwesomeIcon icon={faMoon} className="h-5 w-5 text-gray-600" /> : <FontAwesomeIcon icon={faSun} className="h-5 w-5 text-yellow-500" />}
-          </button>
+{/* Toggle Theme button removed */}
         </div>
       </div>
 
@@ -380,9 +379,92 @@ export const LoginPage: React.FC = () => {
               </div>
             )}
 
-            <button type="submit" disabled={isLoading} className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed">
-              {isLoading ? t("common.loading") : t("auth.signIn")}
-            </button>
+            <div className="flex flex-col gap-4">
+                <button type="submit" disabled={isLoading} className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed">
+                {isLoading ? t("common.loading") : t("auth.signIn")}
+                </button>
+
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t border-gray-300 dark:border-gray-600" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-white dark:bg-neutral-800 px-2 text-gray-500">O continuar con</span>
+                    </div>
+                </div>
+
+                <div className="flex justify-center">
+                    <GoogleLogin
+                        onSuccess={async (credentialResponse) => {
+                            if (credentialResponse.credential) {
+                                try {
+                                    setIsLoading(true);
+                                    // Use the store action
+                                    const result = await useAuthStore.getState().loginWithGoogle(credentialResponse.credential);
+                                    
+                                    if (result?.requiresTenantSelection && result.tenants) {
+                                        setAvailableTenants(result.tenants);
+                                        setShowTenantSelector(true);
+                                        setError("Este email existe en múltiples tenants. Por favor selecciona uno.");
+                                        setIsLoading(false);
+                                        return;
+                                    }
+
+                                    // Same redirect logic as onSubmit
+                                     // === Redirección para Superadmin ===
+                                    const isSuperAdmin = result?.user?.primaryRole?.toLowerCase() === "superadmin" || result?.user?.roles?.some((r) => r.toLowerCase() === "superadmin");
+
+                                    if (isSuperAdmin) {
+                                        navigate("/admin/dashboard");
+                                        return;
+                                    }
+
+                                    // === Redirección automática ===
+                                    if (result?.redirectTo) {
+                                        navigate(result.redirectTo);
+                                        return;
+                                    }
+
+                                    // === Redirección según permisos ===
+                                    const { hasPermission } = useAuthStore.getState();
+                                    const routes = [
+                                        { permission: "dashboard:view", path: "/ventas" },
+                                        { permission: "dashboard:view", path: "/admin/dashboard" },
+                                        { permission: "clients:view", path: "/admin/clients" },
+                                        { permission: "tenants:view", path: "/admin/tenants" },
+                                        { permission: "levels:view", path: "/admin/levels" },
+                                        { permission: "positions:view", path: "/admin/positions" },
+                                        { permission: "areas:view", path: "/admin/areas" },
+                                        { permission: "users:view", path: "/admin/users" },
+                                        { permission: "roles:view", path: "/admin/roles" },
+                                    ];
+
+                                    for (const route of routes) {
+                                        if (hasPermission(route.permission)) {
+                                        navigate(route.path);
+                                        return;
+                                        }
+                                    }
+                                    navigate("/admin/dashboard");
+
+                                } catch (err: any) {
+                                    console.error("Google login error", err);
+                                    setError(err.message || "Error starting Google session");
+                                    setIsLoading(false);
+                                }
+                            }
+                        }}
+                        onError={() => {
+                            setError("Error initiating Google login");
+                        }}
+                        useOneTap
+                        shape="circle"
+                        theme="outline" 
+                    />
+                </div>
+            </div>
+
+
           </form>
 
           {/* --- Usuarios disponibles --- */}

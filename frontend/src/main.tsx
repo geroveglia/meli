@@ -7,11 +7,15 @@ import App from "./App";
 import "./index.css";
 import "./i18n";
 
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
 // Add all solid and brand icons to the library
 library.add(fas, fab);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <App />
+    </GoogleOAuthProvider>
   </StrictMode>
 );

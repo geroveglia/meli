@@ -43,7 +43,7 @@ const envSchema = z.object({
   SEED_CLIENT_EMAIL: z.string().default("cliente@example.com"),
   SEED_CLIENT_PASS: z.string().default("changeme"),
   DEFAULT_TENANT_USER_PASSWORD: z.string().default("tenant123"),
-  API_URL: z.string().url().default("http://localhost:8080"),
+  API_URL: z.string().trim().url().default("http://localhost:8080"),
 
   // Database Selection
   DB_CONNECTION: z.enum(["mongodb", "mysql"]).default("mongodb"),
