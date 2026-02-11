@@ -15,6 +15,13 @@ export interface Cuenta {
   avatar?: string;
   status: CuentaStatus;
   isFavorite?: boolean;
+  
+  mercadolibre?: {
+      item: any;
+      nickname: string;
+      sellerId: number;
+      isConnected: boolean;
+  };
 
   createdAt: string;
   updatedAt: string;
@@ -37,7 +44,6 @@ export interface CreateCuentaData {
   phone?: string;
   address?: string;
   status?: CuentaStatus;
-
 }
 
 export interface UpdateCuentaData {
@@ -47,7 +53,6 @@ export interface UpdateCuentaData {
   phone?: string | null;
   address?: string | null;
   status?: CuentaStatus;
-
 }
 
 export interface CuentaListParams {
@@ -55,13 +60,24 @@ export interface CuentaListParams {
   limit?: number;
   search?: string;
   status?: CuentaStatus;
-
 }
-
-/* ---------- Normalizer ---------- */
 
 function normalizeCuenta(raw: unknown): Cuenta {
   const data = raw as Record<string, unknown>;
+  
+  let meliData = undefined;
+  if (data?.mercadolibre) {
+      const m = data.mercadolibre as any;
+      if (m.accessToken) {
+          meliData = {
+              nickname: m.nickname,
+              sellerId: m.sellerId,
+              isConnected: true,
+              item: m // keep full object if needed
+          };
+      }
+  }
+
   return {
     _id: String(data?._id ?? ""),
     tenantId: String(data?.tenantId ?? ""),
@@ -72,7 +88,9 @@ function normalizeCuenta(raw: unknown): Cuenta {
     address: data?.address ? String(data.address) : undefined,
     avatar: data?.avatar ? String(data.avatar) : undefined,
     status: (data?.status as CuentaStatus) ?? "active",
-    isFavorite: Boolean(data?.isFavorite ?? false),
+    isFavorite: Boolean(data?.isFavorite ?? false), // removed extra space
+    
+    mercadolibre: meliData,
 
     createdAt: String(data?.createdAt ?? ""),
     updatedAt: String(data?.updatedAt ?? ""),

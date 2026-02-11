@@ -7,6 +7,9 @@ export const TopBarFilters: React.FC = () => {
     const { 
         selectedAccount, 
         setAccount, 
+        accounts,
+        fetchAccounts,
+        fetchOrders,
         searchQuery, 
         setSearchQuery,
         dateFrom,
@@ -16,7 +19,36 @@ export const TopBarFilters: React.FC = () => {
     const { logout } = useAuthStore();
     const navigate = useNavigate();
 
-    const accounts: MeliAccount[] = ['Todas', 'Cuenta 1', 'Cuenta 2', 'Cuenta 3'];
+    React.useEffect(() => {
+        fetchAccounts();
+    }, []);
+
+    // Re-fetch orders when account changes
+    React.useEffect(() => {
+        fetchOrders();
+    }, [selectedAccount, fetchOrders]);
+
+    const handleAccountChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const val = e.target.value;
+        if (val === "Todas") {
+            setAccount("Todas");
+        } else {
+            const acc = accounts.find(a => typeof a !== 'string' && a.id === val);
+            if (acc) setAccount(acc);
+        }
+    };
+
+    const getAccountValue = (acc: MeliAccount) => {
+        if (acc === "Todas") return "Todas";
+        return acc.id;
+    };
+
+    const getAccountLabel = (acc: MeliAccount) => {
+        if (acc === "Todas") return "Todas";
+        return acc.name;
+    };
+
+    const currentParamsValue = selectedAccount === "Todas" ? "Todas" : selectedAccount.id;
 
     const handleLogout = () => {
         logout();
@@ -32,12 +64,14 @@ export const TopBarFilters: React.FC = () => {
                 <div className="flex flex-col gap-1">
                     <label className="text-xs text-gray-500 font-medium uppercase">Cuenta MELI</label>
                     <select 
-                        value={selectedAccount} 
-                        onChange={(e) => setAccount(e.target.value as MeliAccount)}
+                        value={currentParamsValue} 
+                        onChange={handleAccountChange}
                         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
                     >
-                        {accounts.map(acc => (
-                            <option key={acc} value={acc}>{acc}</option>
+                        {accounts.map((acc, idx) => (
+                            <option key={typeof acc === 'string' ? acc : acc.id} value={getAccountValue(acc)}>
+                                {getAccountLabel(acc)}
+                            </option>
                         ))}
                     </select>
                 </div>

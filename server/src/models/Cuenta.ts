@@ -17,7 +17,14 @@ export interface ICuenta extends Document {
   createdAt: Date;
   updatedAt: Date;
   usuarios?: { userId: Types.ObjectId; permiso: "ver" | "editar" }[];
-  ownerUserId?: Types.ObjectId;
+  mercadolibre?: {
+    accessToken: string;
+    refreshToken: string;
+    expiresAt: number;
+    userId: string;
+    nickname: string;
+    sellerId: number;
+  };
 }
 
 const cuentaSchema = new Schema<ICuenta>(
@@ -66,6 +73,14 @@ const cuentaSchema = new Schema<ICuenta>(
       type: Boolean,
       default: false,
       index: true,
+    },
+    mercadolibre: {
+      accessToken: String,
+      refreshToken: String,
+      expiresAt: Number,
+      userId: String,
+      nickname: String,
+      sellerId: Number,
     },
     usuarios: [
       {

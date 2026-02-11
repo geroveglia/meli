@@ -1,5 +1,6 @@
 
 import { Tenant } from "../models/Tenant.js";
+import mongoose from "mongoose";
 
 const MELI_API_URL = "https://api.mercadolibre.com";
 
@@ -166,25 +167,68 @@ const fetchMeliResource = async (resource: string, accessToken: string) => {
     return response.json();
 };
 
-export const handleNotification = async (topic: string, resource: string, tenantId: string) => {
-    console.log(`[MELI Webhook] Processing ${topic} for resource ${resource} (Tenant: ${tenantId})`);
+import { Cuenta } from "../models/Cuenta.js";
+
+// ... previous imports ...
+
+export const handleNotification = async (topic: string, resource: string, tenantId: string, clientId?: string) => {
+    console.log(`[MELI Webhook] Processing ${topic} for resource ${resource} (Tenant: ${tenantId}, Client: ${clientId || 'N/A'})`);
     
-    const tenant = await Tenant.findById(tenantId);
-    if(!tenant || !tenant.mercadolibre?.accessToken) {
-        console.error(`Tenant ${tenantId} not found or not connected to MELI`);
-        return;
+    let accessToken: string;
+    let refreshToken: string;
+    let expiresAt: Date | undefined;
+    let saveTokens: (newTokens: any) => Promise<void>;
+    let tenantObjectId = tenantId;
+
+    if (clientId) {
+        // --- Client (Cuenta) Logic ---
+        const cuenta = await Cuenta.findOne({ _id: clientId, tenantId });
+        if (!cuenta || !cuenta.mercadolibre?.accessToken) {
+             console.error(`Cuenta ${clientId} not found or not connected to MELI`);
+             return;
+        }
+        accessToken = cuenta.mercadolibre.accessToken;
+        refreshToken = cuenta.mercadolibre.refreshToken;
+        expiresAt = cuenta.mercadolibre.expiresAt ? new Date(cuenta.mercadolibre.expiresAt) : undefined;
+        
+        saveTokens = async (newTokens) => {
+             cuenta.mercadolibre = {
+                 ...cuenta.mercadolibre!,
+                 accessToken: newTokens.accessToken,
+                 refreshToken: newTokens.refreshToken,
+                 expiresAt: newTokens.expiresAt.getTime()
+             };
+             await cuenta.save();
+        };
+
+    } else {
+        // --- Tenant Logic (Legacy) ---
+        const tenant = await Tenant.findById(tenantId);
+        if(!tenant || !tenant.mercadolibre?.accessToken) {
+            console.error(`Tenant ${tenantId} not found or not connected to MELI`);
+            return;
+        }
+        accessToken = tenant.mercadolibre.accessToken;
+        refreshToken = tenant.mercadolibre.refreshToken;
+        expiresAt = tenant.mercadolibre.expiresAt;
+
+        saveTokens = async (newTokens) => {
+            tenant.mercadolibre = {
+                 ...tenant.mercadolibre!,
+                 accessToken: newTokens.accessToken,
+                 refreshToken: newTokens.refreshToken,
+                 expiresAt: newTokens.expiresAt
+            };
+            await tenant.save();
+        };
     }
 
     // Check expiration and refresh if needed
-    let accessToken = tenant.mercadolibre.accessToken;
-    if(tenant.mercadolibre.expiresAt && tenant.mercadolibre.expiresAt.getTime() < Date.now()) {
+    if(expiresAt && expiresAt.getTime() < Date.now()) {
          try {
             console.log("Refreshing expired token...");
-            const newTokens = await refreshAccessToken(tenant.mercadolibre.refreshToken);
-            tenant.mercadolibre.accessToken = newTokens.accessToken;
-            tenant.mercadolibre.refreshToken = newTokens.refreshToken;
-            tenant.mercadolibre.expiresAt = newTokens.expiresAt;
-            await tenant.save();
+            const newTokens = await refreshAccessToken(refreshToken);
+            await saveTokens(newTokens);
             accessToken = newTokens.accessToken;
          } catch (e) {
              console.error("Failed to refresh token during webhook processing", e);
@@ -209,7 +253,8 @@ export const handleNotification = async (topic: string, resource: string, tenant
 
             // Map to our Order Model
             const orderUpdate = {
-                tenantId: tenant._id,
+                tenantId: tenantObjectId,
+                clientId: clientId || undefined,
                 meliId: orderData.id.toString(),
                 packId: orderData.pack_id ? orderData.pack_id.toString() : null,
                 dateCreated: new Date(orderData.date_created),
@@ -265,6 +310,11 @@ export const handleNotification = async (topic: string, resource: string, tenant
                 existingOrder.lastUpdated = orderUpdate.lastUpdated;
                 existingOrder.payment = orderUpdate.payment; // update status
                 
+                // Ensure clientId is set if missing
+                if (clientId && !existingOrder.clientId) {
+                    existingOrder.clientId = new mongoose.Types.ObjectId(clientId);
+                }
+
                 if (orderUpdate.shipping) {
                     existingOrder.shipping = orderUpdate.shipping;
                     

@@ -14,29 +14,45 @@ import { Card } from "../../components/Card";
 import { useCuentaContextStore } from "../../stores/cuentaContextStore";
 
 export const VentasPage: React.FC = () => {
-  const { orders, selectedAccount, searchQuery, dateFrom, dateTo, setAccount, setSearchQuery, setDateRange, updateOrderSalesStatus, fetchOrders } = useLumbaStore();
+  const { orders, accounts, selectedAccount, searchQuery, dateFrom, dateTo, setAccount, setSearchQuery, setDateRange, updateOrderSalesStatus, fetchOrders } = useLumbaStore();
   const { selectedCuenta } = useCuentaContextStore();
 
   const [searchParams] = useSearchParams();
   const activeTab = searchParams.get("status") || "TODAS";
 
   // Fetch orders on mount
+  // Fetch orders on mount
   React.useEffect(() => {
-      fetchOrders();
+      const init = async () => {
+          await fetchAccounts();
+          await fetchOrders();
+      };
+      init();
+      
       const interval = setInterval(fetchOrders, 30000); // Poll every 30s
       return () => clearInterval(interval);
   }, []);
 
-  // Derived state for filter options (mocked for now, similar to Logistica)
+  // Derived state for filter options
   const filters = [
     {
-      value: selectedAccount,
-      onChange: (val: string) => setAccount(val as any),
+      value: typeof selectedAccount === "string" ? selectedAccount : selectedAccount.id,
+      onChange: (val: string) => {
+          if (val === "Todas") {
+              setAccount("Todas");
+          } else {
+              const account = accounts.find((a) => typeof a !== "string" && a.id === val);
+              if (account) setAccount(account);
+          }
+      },
       options: [
         { value: "Todas", label: "Todas las Cuentas" },
-        { value: "Cuenta 1", label: "Cuenta 1" },
-        { value: "Cuenta 2", label: "Cuenta 2" },
-        { value: "Cuenta 3", label: "Cuenta 3" },
+        ...accounts
+            .filter((a) => typeof a !== "string") // Exclude "Todas" if strictly typed, though accounts usually includes it? check store
+            .map((a) => {
+                const acc = a as import("../../stores/lumbaStore").TenantAccount;
+                return { value: acc.id, label: acc.name };
+            }),
       ],
     },
   ];
@@ -75,14 +91,22 @@ export const VentasPage: React.FC = () => {
   const filteredOrders = useMemo(() => {
     let result = orders;
 
-    // 0. Filter by Client Context
+    // 0. Filter by Client Context (Navbar Selection)
     if (selectedCuenta) {
-      result = result.filter((o) => o.clientName === selectedCuenta.name);
+       // Filter orders where the order's account matches the selected client
+       result = result.filter((o) => {
+           if (typeof o.account === 'string') return false; // "N/A" or "Cuenta Desconocida"
+           return o.account.id === selectedCuenta._id;
+       });
     }
 
-    // 1. Filter by Account
+    // 1. Filter by Account (Page Filter)
     if (selectedAccount !== "Todas") {
-      result = result.filter((o) => o.account === selectedAccount);
+      result = result.filter((o) => {
+          if (typeof o.account === 'string') return false;
+          if (typeof selectedAccount === 'string') return false; // Should not happen if not "Todas"
+          return o.account.id === selectedAccount.id;
+      });
     }
 
     // 2. Filter by Search Query

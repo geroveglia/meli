@@ -2,11 +2,13 @@
 import { Request, Response } from "express";
 import { getAuthUrl, authorize, handleNotification } from "../services/meliService.js";
 import { Tenant } from "../models/Tenant.js";
+import { Cuenta } from "../models/Cuenta.js";
 import { AuthenticatedRequest } from "../middleware/auth.js";
+import mongoose from "mongoose";
 
 // Helper to encode state
-const encodeState = (tenantId: string) => {
-    return Buffer.from(JSON.stringify({ tenantId, nonce: Date.now() })).toString('base64');
+const encodeState = (tenantId: string, cuentaId?: string) => {
+    return Buffer.from(JSON.stringify({ tenantId, cuentaId, nonce: Date.now() })).toString('base64');
 };
 
 // Helper to decode state
@@ -21,6 +23,7 @@ const decodeState = (state: string) => {
 export const getAuth = (req: Request, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const tenantId = authReq.tenantId; // Set by authenticateToken
+    const cuentaId = req.query.cuentaId as string;
 
     if (!tenantId) {
         return res.status(400).json({ error: "Tenant ID not found in request" });
@@ -34,7 +37,7 @@ export const getAuth = (req: Request, res: Response) => {
     const apiUrl = process.env.API_URL || `https://${req.get('host')}`;
     const redirectUri = `${apiUrl}${callbackPath}`;
 
-    const state = encodeState(tenantId);
+    const state = encodeState(tenantId, cuentaId);
     
     // Check if we need to persist redirectUri in session or just rely on env/params
     // For now, we regenerate it in callback or pass it if needed, but MELI requires exact match.
@@ -66,7 +69,7 @@ export const callback = async (req: Request, res: Response) => {
         return res.status(400).send("Estado inválido");
     }
 
-    const { tenantId } = decoded;
+    const { tenantId, cuentaId } = decoded;
 
     try {
         const apiUrl = process.env.API_URL || `https://${req.get('host')}`;
@@ -74,16 +77,37 @@ export const callback = async (req: Request, res: Response) => {
 
         const tokenData = await authorize(code, redirectUri);
 
-        // Update Tenant
-        await Tenant.findByIdAndUpdate(tenantId, {
-            mercadolibre: {
+        if (cuentaId) {
+             // Update specific Cuenta (Client)
+             const cuenta = await Cuenta.findOne({ _id: cuentaId, tenantId });
+             if (!cuenta) {
+                 return res.status(404).send("Cuenta no encontrada para vincular");
+             }
+             
+             cuenta.mercadolibre = {
                 accessToken: tokenData.accessToken,
                 refreshToken: tokenData.refreshToken,
-                expiresAt: tokenData.expiresAt,
+                expiresAt: tokenData.expiresAt.getTime(),
                 sellerId: tokenData.sellerId,
-                nickname: tokenData.nickname
-            }
-        });
+                nickname: tokenData.nickname,
+                userId: String(tokenData.sellerId) // Mapping sellerId to userId field for consistency
+             };
+             await cuenta.save();
+             console.log(`Linked MELI to Cuenta: ${cuenta.name} (${cuenta._id})`);
+
+        } else {
+            // Fallback: Update Tenant (Legacy / Single Account)
+            await Tenant.findByIdAndUpdate(tenantId, {
+                mercadolibre: {
+                    accessToken: tokenData.accessToken,
+                    refreshToken: tokenData.refreshToken,
+                    expiresAt: tokenData.expiresAt,
+                    sellerId: tokenData.sellerId,
+                    nickname: tokenData.nickname
+                }
+            });
+            console.log(`Linked MELI to Tenant: ${tenantId}`);
+        }
 
         // Redirect to Frontend
         // Ideally, we redirect to a success page on the frontend
@@ -109,19 +133,33 @@ export const webhook = async (req: Request, res: Response) => {
             return;
         }
 
-        // Find tenant by sellerId
-        const tenant = await Tenant.findOne({ 'mercadolibre.sellerId': user_id });
+        let tenantId: string | null = null;
+        let clientId: string | null = null;
+
+        // 1. Try to find a Cuenta (Client) with this sellerId
+        const cuenta = await Cuenta.findOne({ 'mercadolibre.sellerId': user_id });
+        if (cuenta) {
+            tenantId = String(cuenta.tenantId);
+            clientId = String(cuenta._id);
+            console.log(`[MELI Webhook] Found Cuenta: ${cuenta.name} for sellerId ${user_id}`);
+        } else {
+            // 2. Fallback: Try to find a Tenant with this sellerId
+            const tenant = await Tenant.findOne({ 'mercadolibre.sellerId': user_id });
+            if (tenant) {
+                 tenantId = String(tenant._id);
+                 console.log(`[MELI Webhook] Found Tenant: for sellerId ${user_id}`);
+            }
+        }
         
-        if (!tenant) {
-            console.warn(`[MELI Webhook] No tenant found for sellerId ${user_id}`);
+        if (!tenantId) {
+            console.warn(`[MELI Webhook] No tenant/cuenta found for sellerId ${user_id}`);
             return;
         }
 
-        await handleNotification(topic, resource, String(tenant._id));
+        await handleNotification(topic, resource, tenantId, clientId);
 
     } catch (e) {
         console.error("Error processing webhook:", e);
-        // Even if we fail processing, we already sent 200 OK. 
         // Even if we fail processing, we already sent 200 OK. 
         // Logic failure should be logged.
     }
@@ -130,18 +168,30 @@ export const webhook = async (req: Request, res: Response) => {
 export const disconnect = async (req: Request, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const tenantId = authReq.tenantId;
+    const { cuentaId } = req.body; // Expect cuentaId in body if disconnecting a specific account
 
     if (!tenantId) {
         return res.status(400).json({ error: "Tenant ID not found" });
     }
 
     try {
-        await Tenant.findByIdAndUpdate(tenantId, {
-            $unset: { mercadolibre: 1 }
-        });
+        if (cuentaId) {
+            const cuenta = await Cuenta.findOne({ _id: cuentaId, tenantId });
+            if (cuenta) {
+                cuenta.mercadolibre = undefined;
+                await cuenta.save();
+            }
+        } else {
+            await Tenant.findByIdAndUpdate(tenantId, {
+                $unset: { mercadolibre: 1 }
+            });
+        }
+        
         res.json({ message: "Disconnected successfully" });
     } catch (e) {
         console.error("Error disconnecting MELI:", e);
         res.status(500).json({ error: "Failed to disconnect" });
     }
 };
+
+

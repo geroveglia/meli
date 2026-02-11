@@ -17,7 +17,7 @@ import { Button } from "../../components/Button";
 import { useCuentaContextStore } from "../../stores/cuentaContextStore";
 
 export const LogisticaPage: React.FC = () => {
-  const { orders, selectedAccount, setAccount, searchQuery, setSearchQuery, dateFrom, dateTo, setDateRange, updateOrderLogisticsStatus, setOrderPackaged, setOrderTagStatus, fetchOrders } = useLumbaStore();
+  const { orders, accounts, selectedAccount, setAccount, searchQuery, setSearchQuery, dateFrom, dateTo, setDateRange, updateOrderLogisticsStatus, setOrderPackaged, setOrderTagStatus, fetchAccounts, fetchOrders } = useLumbaStore();
   const { selectedCuenta } = useCuentaContextStore();
 
   const [searchParams] = useSearchParams();
@@ -26,7 +26,12 @@ export const LogisticaPage: React.FC = () => {
 
   // Fetch orders on mount
   React.useEffect(() => {
-      fetchOrders();
+      const init = async () => {
+          await fetchAccounts();
+          await fetchOrders();
+      };
+      init();
+      
       const interval = setInterval(fetchOrders, 30000); 
       return () => clearInterval(interval);
   }, []);
@@ -65,12 +70,20 @@ export const LogisticaPage: React.FC = () => {
 
     // 0. Filter by Client Context
     if (selectedCuenta) {
-      result = result.filter((o) => o.clientName === selectedCuenta.name);
+       // Filter orders where the order's account matches the selected client
+       result = result.filter((o) => {
+           if (typeof o.account === 'string') return false; // "N/A" or "Cuenta Desconocida"
+           return o.account.id === selectedCuenta._id;
+       });
     }
 
     // 1. Filter by Account
     if (selectedAccount !== "Todas") {
-      result = result.filter((o) => o.account === selectedAccount);
+      result = result.filter((o) => {
+          if (typeof o.account === 'string') return false;
+          if (typeof selectedAccount === 'string') return false; 
+          return o.account.id === selectedAccount.id;
+      });
     }
 
     // 2. Filter by Search Query
@@ -462,9 +475,12 @@ export const LogisticaPage: React.FC = () => {
   // Filter Options
   const accountOptions = [
     { value: "Todas", label: "Todas las Cuentas" },
-    { value: "Cuenta 1", label: "Cuenta 1" },
-    { value: "Cuenta 2", label: "Cuenta 2" },
-    { value: "Cuenta 3", label: "Cuenta 3" },
+    ...accounts
+        .filter((a) => typeof a !== "string") 
+        .map((a) => {
+            const acc = a as import("../../stores/lumbaStore").TenantAccount;
+            return { value: acc.id, label: acc.name };
+        }),
   ];
 
   const renderCards = () => (
@@ -596,8 +612,15 @@ export const LogisticaPage: React.FC = () => {
 
           filters={[
             {
-              value: selectedAccount,
-              onChange: (val) => setAccount(val as MeliAccount),
+              value: typeof selectedAccount === "string" ? selectedAccount : selectedAccount.id,
+              onChange: (val) => {
+                  if (val === "Todas") {
+                      setAccount("Todas");
+                  } else {
+                      const account = accounts.find((a) => typeof a !== "string" && a.id === val);
+                      if (account) setAccount(account);
+                  }
+              },
               options: accountOptions,
             },
           ]}

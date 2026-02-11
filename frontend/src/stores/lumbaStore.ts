@@ -3,7 +3,13 @@ import { persist } from "zustand/middleware";
 
 // --- Types ---
 
-export type MeliAccount = "Cuenta 1" | "Cuenta 2" | "Cuenta 3" | "Todas";
+export interface TenantAccount {
+    id: string;
+    name: string;
+    sellerId?: number;
+}
+
+export type MeliAccount = "Todas" | TenantAccount;
 
 // Ventas internal states
 export type SalesState = "pendiente_facturacion" | "facturada" | "venta_cancelada" | "nota_credito";
@@ -60,6 +66,7 @@ export interface Order {
 
 interface LumbaState {
   orders: Order[];
+  accounts: MeliAccount[]; // List of available accounts
   selectedAccount: MeliAccount;
   searchQuery: string;
   dateFrom: string;
@@ -74,6 +81,7 @@ interface LumbaState {
   setNotification: (statusKey: string, hasNotification: boolean) => void;
 
   // Order Actions
+  fetchAccounts: () => Promise<void>;
   fetchOrders: () => Promise<void>; // New Action
   updateOrderSalesStatus: (orderId: string, status: SalesState, billingType?: "auto" | "manual") => void;
   updateOrderLogisticsStatus: (orderId: string, status: LogisticsState) => void;
@@ -112,7 +120,16 @@ export const useLumbaStore = create<LumbaState>()(
       dateTo: "",
       notifications: {},
 
-      setAccount: (account) => set({ selectedAccount: account }),
+      accounts: [], // List of available tenants
+      
+      setAccount: (account) => {
+          if (account !== "Todas") {
+              localStorage.setItem('tenantId', account.id);
+          } else {
+              localStorage.removeItem('tenantId'); // Revert to default
+          }
+          set({ selectedAccount: account });
+      },
       setSearchQuery: (query) => set({ searchQuery: query }),
       setDateRange: (from, to) => set({ dateFrom: from, dateTo: to }),
       setNotification: (statusKey, hasNotification) =>
@@ -120,9 +137,59 @@ export const useLumbaStore = create<LumbaState>()(
           notifications: { ...state.notifications, [statusKey]: hasNotification },
         })),
         
+      fetchAccounts: async () => {
+          try {
+              // Fetch Tenants (Admin/Agency level)
+              const tenantsPromise = api.get('/tenants?limit=100').catch(() => ({ data: { tenants: [] } }));
+              // Fetch Cuentas (Clients level)
+              const cuentasPromise = api.get('/cuentas?limit=100').catch(() => ({ data: { cuentas: [] } }));
+
+              const [tenantsRes, cuentasRes] = await Promise.all([tenantsPromise, cuentasPromise]);
+              
+              const tenants = tenantsRes.data.tenants || [];
+              const cuentas = cuentasRes.data.cuentas || [];
+              
+              const accounts: MeliAccount[] = [
+                  "Todas", 
+                  ...tenants.map((t: any) => ({
+                      id: t._id,
+                      name: t.company?.legalName || t.name,
+                      sellerId: t.mercadolibre?.sellerId,
+                      type: 'tenant' as const
+                  })),
+                  ...cuentas.map((c: any) => ({
+                      id: c._id,
+                      name: c.name + (c.company ? ` (${c.company})` : ''),
+                      sellerId: c.mercadolibre?.sellerId,
+                      type: 'cuenta' as const
+                  }))
+              ];
+              
+              set({ accounts });
+          } catch (error) {
+              console.error("Failed to fetch accounts:", error);
+          }
+      },
+
       fetchOrders: async () => {
           try {
-              const response = await api.get('/orders');
+              const { selectedAccount, accounts } = get();
+              const params: any = {};
+              
+              // Handle Multi-tenant selection
+              if (selectedAccount === "Todas") {
+                  // If SuperAdmin, might want all tenants. If Agency, might want all clients.
+                  // Default behavior: "all" tenants/clients visible to user.
+                  params.mode = "all"; 
+              } else if (typeof selectedAccount === 'object' && selectedAccount?.id) {
+                  if (selectedAccount.type === 'tenant') {
+                      params.tenantId = selectedAccount.id;
+                  } else {
+                      params.clientId = selectedAccount.id;
+                  }
+              }
+
+              const response = await api.get('/orders', { params });
               const backendOrders = response.data;
               
               // Map Backend Order to Frontend Order Interface
@@ -131,8 +198,8 @@ export const useLumbaStore = create<LumbaState>()(
                   meliOrderId: o.meliId,
                   packId: o.packId,
                   date: o.dateCreated,
-                  account: "Cuenta 1", // Default for now
-                  clientName: "Cliente Demo", // Default
+                  account: o.clientId ? accounts.find(a => typeof a !== 'string' && a.id === o.clientId) || "Cuenta Desconocida" : "N/A", 
+                  clientName: o.buyer.id ? (o.buyer.nickname || "Cliente Web") : "Cliente Demo",
                   buyerName: o.buyer.nickname || `${o.buyer.firstName} ${o.buyer.lastName}`,
                   buyerAddress: o.shipping?.receiverAddress?.addressLine || "-",
                   total: o.payment.total,

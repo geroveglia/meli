@@ -7,16 +7,35 @@ const router = Router();
 // GET /api/v1/orders
 router.get("/", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const tenantId = req.tenantId;
-    if (!tenantId) {
-       res.status(400).json({ error: "Tenant ID required" });
-       return;
+    let tenantId = req.tenantId;
+    
+    // Multi-tenant / SuperAdmin Logic
+    const requestedTenant = req.query.tenantId as string;
+    const requestedClient = req.query.clientId as string;
+    const requestedMode = req.query.mode as string;
+    
+    const userRoles = req.user?.roles || [];
+    const isSuperAdmin = req.user?.primaryRole === 'superadmin' || userRoles.includes('superadmin');
+
+    if (isSuperAdmin) {
+        if (requestedTenant === 'all' || requestedMode === 'all') {
+            tenantId = undefined; // No tenant filter = All
+        } else if (requestedTenant) {
+            tenantId = requestedTenant;
+        }
     }
 
     // Default Filters
     const { status, dateFrom, dateTo, search } = req.query;
     
-    let query: any = { tenantId };
+    let query: any = {};
+    if (tenantId) {
+        query.tenantId = tenantId;
+    }
+    
+    if (requestedClient) {
+        query.clientId = requestedClient;
+    }
 
     if (dateFrom && dateTo) {
       query.dateCreated = { 
