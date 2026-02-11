@@ -11,7 +11,7 @@ export const PublicNavbar: React.FC = () => {
 
   const navLinks = [
     { label: "Home", href: "/#product" },
-    { label: "Components", href: "/components" },
+    { label: "Cómo Funciona", href: "/components" },
     { label: "Pricing", href: "/pricing" },
     { label: "Company", href: "/#company" },
   ];

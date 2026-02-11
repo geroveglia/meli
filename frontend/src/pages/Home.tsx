@@ -43,19 +43,19 @@ export const Home: React.FC = () => {
 
           {/* Content */}
           <div className="relative z-10 max-w-5xl">
-            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8 }} className="text-5xl sm:text-6xl md:text-8xl lg:text-[7.5rem] font-extrabold leading-[0.9] tracking-tight mb-8 text-black">
-              ZERO <br />
-              GRAVITY <br />
-              <span className="text-accent-5">INTERFACE.</span>
+            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8 }} className="text-5xl sm:text-6xl md:text-8xl lg:text-[6rem] font-extrabold leading-[0.9] tracking-tight mb-8 text-black">
+              GESTIÓN <br />
+              UNIFICADA <br />
+              <span className="text-accent-5">MERCADOLIBRE.</span>
             </motion.h1>
 
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4, duration: 0.8 }} className="text-lg md:text-2xl text-accent-6 max-w-2xl mb-12 font-light leading-relaxed">
-              Redefining spatial computing with weightless UI components and monochrome aesthetics.
+              Unifica todas tus cuentas de MercadoLibre en una sola plataforma. Visualiza y administra tu facturación y logística desde un panel administrativo centralizado.
             </motion.p>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.6 }} className="flex items-center gap-4">
               <button className="px-6 py-3 md:px-8 md:py-4 bg-accent-9 text-accent-2 font-bold rounded-full flex items-center gap-2 hover:opacity-90 hover:bg-accent-3 dark:hover:bg-accent-3 hover:text-accent-9 transition-colors text-sm md:text-base">
-                View Case <ArrowUpRight size={20} />
+                Comenzar Ahora <ArrowUpRight size={20} />
               </button>
               <div className="flex gap-1 px-4">
                 <span className="w-12 h-1 bg-accent-9 rounded-full"></span>
@@ -80,8 +80,8 @@ export const Home: React.FC = () => {
             <div className="absolute top-6 right-6 px-3 py-1 bg-accent-3 rounded-full text-xs font-mono border border-accent-4 text-accent-8">↗ +12.4%</div>
 
             <div className="mt-24">
-              <h3 className="text-5xl font-bold mb-2 text-black">8.2M</h3>
-              <p className="text-xs tracking-widest text-accent-5 uppercase font-semibold">Active Global Users</p>
+              <h3 className="text-5xl font-bold mb-2 text-black">Multi</h3>
+              <p className="text-xs tracking-widest text-accent-5 uppercase font-semibold">Cuentas Conectadas</p>
             </div>
 
             <div className="absolute bottom-4 left-4 right-4 h-1 bg-accent-3 rounded-full overflow-hidden">
@@ -96,9 +96,9 @@ export const Home: React.FC = () => {
             </div>
 
             <h3 className="text-3xl font-bold mb-4 text-black">
-              Modular <br /> Architecture
+              Facturación <br /> Centralizada
             </h3>
-            <p className="text-accent-6 text-sm leading-relaxed max-w-xs mb-8">Scalable components designed for next-gen apps.</p>
+            <p className="text-accent-6 text-sm leading-relaxed max-w-xs mb-8">Administra facturas y notas de crédito de todas tus cuentas.</p>
 
             <button className="flex items-center gap-3 px-6 py-3 bg-accent-3 border border-accent-4 rounded-full text-xs font-bold tracking-widest hover:bg-accent-4 transition-colors text-accent-9">
               <ArrowUpRight size={16} /> explore
@@ -115,7 +115,7 @@ export const Home: React.FC = () => {
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                <span className="text-sm font-bold text-black">Live Updates</span>
+                <span className="text-sm font-bold text-black">Logística en Vivo</span>
               </div>
               <Activity size={16} className="text-accent-5" />
             </div>
@@ -130,7 +130,7 @@ export const Home: React.FC = () => {
                   <span className="text-[10px] font-mono text-accent-5">10:42 AM</span>
                   <span className="text-[10px] bg-accent-9 text-accent-2 px-1.5 py-0.5 rounded font-bold">NEW</span>
                 </div>
-                <p className="text-sm font-medium text-black">System v2.4.0 deployed.</p>
+                <p className="text-sm font-medium text-black">Stock sincronizado.</p>
               </div>
 
               <div className="relative pl-6 opacity-60">
@@ -138,7 +138,7 @@ export const Home: React.FC = () => {
                 <div className="mb-1">
                   <span className="text-[10px] font-mono text-accent-5">09:15 AM</span>
                 </div>
-                <p className="text-sm font-medium text-accent-8">Asset pack "Obsidian" released.</p>
+                <p className="text-sm font-medium text-accent-8">Envío entregado a tiempo.</p>
               </div>
 
               <div className="relative pl-6 opacity-40">
@@ -146,7 +146,7 @@ export const Home: React.FC = () => {
                 <div className="mb-1">
                   <span className="text-[10px] font-mono text-accent-5">07:30 AM</span>
                 </div>
-                <p className="text-sm font-medium text-accent-8">Maintenance completed.</p>
+                <p className="text-sm font-medium text-accent-8">Etiqueta generada correctamente.</p>
               </div>
             </div>
           </motion.div>
