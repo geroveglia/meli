@@ -103,10 +103,34 @@ router.get(
     }
   }
 );
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /tenants/current - Obtener tenant actual
+// ─────────────────────────────────────────────────────────────────────────────
+router.get(
+  "/current",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const tenantId = req.tenantId; // Set by authenticateToken
+      if (!tenantId) {
+        res.status(400).json({ error: "Tenant ID required" });
+        return;
+      }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Multer Configuration for Branding
-// ─────────────────────────────────────────────────────────────────────────────
+      const tenant = await Tenant.findById(tenantId).lean();
+      if (!tenant) {
+        res.status(404).json({ error: "Tenant not found" });
+        return;
+      }
+
+      res.json(tenant);
+    } catch (error) {
+      console.error("Get current tenant error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
 
 const storage = multer.diskStorage({
   destination: function (_req, _file, cb) {

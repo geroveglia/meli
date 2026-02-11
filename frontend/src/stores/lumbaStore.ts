@@ -74,6 +74,7 @@ interface LumbaState {
   setNotification: (statusKey: string, hasNotification: boolean) => void;
 
   // Order Actions
+  fetchOrders: () => Promise<void>; // New Action
   updateOrderSalesStatus: (orderId: string, status: SalesState, billingType?: "auto" | "manual") => void;
   updateOrderLogisticsStatus: (orderId: string, status: LogisticsState) => void;
   setOrderPackaged: (orderId: string, isPackaged: boolean) => void;
@@ -83,166 +84,33 @@ interface LumbaState {
   simulateMeliUpdates: () => void;
 }
 
-// --- Mock Data Generator ---
+// --- API Helper ---
+import axios from 'axios';
 
-import mockOrders from "../mocks/orders.json";
-import mockShipments from "../mocks/shipments.json";
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8081/api/v1',
+});
 
-// Demo client names - these should match the clients in the database
-// Only include clients that actually exist in your system
-const DEMO_CLIENTS = ["Cliente", "Cliente 2"];
-
-// --- Mock Data Generator ---
-
-const generateMockOrders = (): Order[] => {
-  const allLogisticsStates: LogisticsState[] = [
-    "pendiente_preparacion",
-    "listo_para_entregar",
-    "despachado_meli",
-    "retiro_local",
-    "entregado",
-    "cancelado_vuelto_stock",
-    "devolucion_vuelto_stock",
-  ];
-
-  const mappedOrders: Order[] = mockOrders.map((meliOrder: any, index: number) => {
-    // Find corresponding shipment
-    const shipment = mockShipments.find((s: any) => s.order_id === meliOrder.id || (meliOrder.shipping && s.id === meliOrder.shipping.id));
-
-    // Assign client cyclically between available clients
-    const clientIndex = index % DEMO_CLIENTS.length;
-    const assignedClient = DEMO_CLIENTS[clientIndex];
-
-    // Map items
-    const items: OrderItem[] = meliOrder.order_items.map((item: any) => {
-      // Try to find variant info in variation_attributes
-      const variantColor = item.item.variation_attributes?.find((attr: any) => attr.id === "COLOR")?.value_name;
-      const variantVoltage = item.item.variation_attributes?.find((attr: any) => attr.id === "VOLTAGE")?.value_name;
-      const variant = [variantColor, variantVoltage].filter(Boolean).join(" / ") || "-";
-
-      return {
-        id: item.item.id,
-        title: item.item.title,
-        quantity: item.quantity,
-        price: item.unit_price,
-        variant: variant,
-      };
-    });
-
-    // Determine derived statuses
-    let meliStatus: MeliStatus = "ready_to_ship";
-    if (shipment?.status === "ready_to_ship") meliStatus = "ready_to_ship";
-    if (shipment?.status === "shipped") meliStatus = "shipped";
-    if (shipment?.status === "delivered") meliStatus = "delivered";
-    if (shipment?.status === "cancelled") meliStatus = "cancelled";
-
-    // Fallback if no shipment found but order status exists
-    if (!shipment && meliOrder.status === "paid") meliStatus = "ready_to_ship";
-
-    let logisticsStatus: LogisticsState = "pendiente_preparacion";
-    if (meliStatus === "shipped") logisticsStatus = "despachado_meli";
-    if (meliStatus === "delivered") logisticsStatus = "entregado";
-    if (shipment?.substatus === "ready_to_print") logisticsStatus = "pendiente_preparacion";
-
-    let salesStatus: SalesState = "pendiente_facturacion";
-    if (meliOrder.status === "paid") {
-      salesStatus = "pendiente_facturacion";
-    }
-    // Example logic if we wanted to map 'billed' status if it existed
-    // if (meliOrder.status === 'billed') salesStatus = 'facturada';
-
-    // Calculate Invoice Status
-    let invoiceStatus: "pending" | "invoiced" | "cancelled" = "pending";
-    // Logic: derived directly from salesStatus
-    if ((salesStatus as string) === "facturada") {
-      invoiceStatus = "invoiced";
-    } else if ((salesStatus as string) === "venta_cancelada") {
-      invoiceStatus = "cancelled";
-    }
-
-    // --- FORCE STATES FOR DEMO ---
-    // Ensure we have at least one order in each state
-    if (index < allLogisticsStates.length) {
-      logisticsStatus = allLogisticsStates[index];
-    }
-
-    // Consistency Adjustments for Forced States
-    let tagStatus: "impresas" | "pendientes" | "error" = "pendientes";
-    let packaged = false;
-
-    if (logisticsStatus === "listo_para_entregar") {
-      packaged = true;
-      tagStatus = "impresas";
-    } else if (logisticsStatus === "despachado_meli") {
-       packaged = true;
-       tagStatus = "impresas";
-       meliStatus = "shipped"; // Sync meli status
-    } else if (logisticsStatus === "entregado") {
-       packaged = true;
-       tagStatus = "impresas";
-       meliStatus = "delivered";
-    } else if (logisticsStatus === "retiro_local") {
-       // Optional: configure specific fields for local pickup
-       packaged = true; // Assumed packaged for pickup
-    }
-
-    if (logisticsStatus === "pendiente_preparacion") {
-        // Leave defaults
-    } else {
-        // For other states (cancelado, devolucion), ensure reasonable defaults
-         if(logisticsStatus === "cancelado_vuelto_stock") {
-             meliStatus = "cancelled";
-         }
-    }
-
-    return {
-      id: `INT-${meliOrder.id.toString().slice(-6)}`, // Fake internal ID
-      meliOrderId: meliOrder.id.toString(),
-      packId: meliOrder.pack_id ? meliOrder.pack_id.toString() : null,
-      date: meliOrder.date_created,
-      account: "Cuenta 1", // Hardcoded as mocks don't specify account mapping
-      clientName: assignedClient, // Distributed among demo clients
-      buyerName: `${meliOrder.buyer.first_name} ${meliOrder.buyer.last_name}`,
-      buyerAddress: shipment?.receiver_address ? `${shipment.receiver_address.address_line}, ${shipment.receiver_address.city.name}` : "-",
-      total: meliOrder.total_amount,
-      items: items,
-
-      salesStatus,
-      logisticsStatus,
-      meliStatus,
-
-      tagStatus,
-      shippingStatus: meliStatus === "delivered" ? "delivered" : "not_delivered",
-      shippingSubStatus: shipment?.substatus || "-",
-      lastUpdated: meliOrder.last_updated,
-      shippingCutoff: items.length % 2 === 0 ? "15:00 hs" : "12:00 hs", // Mock data logic
-
-      invoiceStatus,
-      docType: null, // Not explicit in provided JSON
-      docNumber: null, // Not explicit in provided JSON
-
-      billingType: null,
-      packaged,
-    };
-  });
-
-  return mappedOrders;
-};
+// Interceptor for Auth
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token'); 
+    const tenantId = localStorage.getItem('tenantId'); // Assuming we store this
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    if (tenantId) config.headers['X-Tenant-Id'] = tenantId;
+    return config;
+});
 
 // --- Store Implementation ---
 
 export const useLumbaStore = create<LumbaState>()(
   persist(
-    (set, _get) => ({
-      orders: generateMockOrders(),
+    (set, get) => ({
+      orders: [], // Start empty, fetch on mount
       selectedAccount: "Todas",
       searchQuery: "",
       dateFrom: "",
       dateTo: "",
-      notifications: (() => {
-        // Initialize with PENDIENTE_PREPARACION true if we have pending preparation orders
-        return { PENDIENTE_PREPARACION: true };
-      })(),
+      notifications: {},
 
       setAccount: (account) => set({ selectedAccount: account }),
       setSearchQuery: (query) => set({ searchQuery: query }),
@@ -251,10 +119,59 @@ export const useLumbaStore = create<LumbaState>()(
         set((state) => ({
           notifications: { ...state.notifications, [statusKey]: hasNotification },
         })),
+        
+      fetchOrders: async () => {
+          try {
+              const response = await api.get('/orders');
+              const backendOrders = response.data;
+              
+              // Map Backend Order to Frontend Order Interface
+              const mappedOrders: Order[] = backendOrders.map((o: any) => ({
+                  id: o.id || o._id, // Use Mongo ID or Virtual
+                  meliOrderId: o.meliId,
+                  packId: o.packId,
+                  date: o.dateCreated,
+                  account: "Cuenta 1", // Default for now
+                  clientName: "Cliente Demo", // Default
+                  buyerName: o.buyer.nickname || `${o.buyer.firstName} ${o.buyer.lastName}`,
+                  buyerAddress: o.shipping?.receiverAddress?.addressLine || "-",
+                  total: o.payment.total,
+                  items: o.items.map((i: any) => ({
+                      id: i.id,
+                      title: i.title,
+                      quantity: i.quantity,
+                      price: i.unitPrice,
+                      variant: "-"
+                  })),
+                  
+                  salesStatus: o.salesStatus,
+                  logisticsStatus: o.logisticsStatus,
+                  meliStatus: o.shipping?.status === 'shipped' ? 'shipped' : 
+                              o.shipping?.status === 'delivered' ? 'delivered' : 
+                              o.shipping?.status === 'cancelled' ? 'cancelled' : 'ready_to_ship',
+                              
+                  tagStatus: "pendientes", // Default
+                  shippingStatus: o.shipping?.status === 'delivered' ? 'delivered' : 'not_delivered',
+                  shippingSubStatus: o.shipping?.substatus || "-",
+                  lastUpdated: o.lastUpdated,
+                  shippingCutoff: "15:00 hs",
+                  
+                  invoiceStatus: o.invoiceId ? "invoiced" : "pending",
+                  docType: null,
+                  docNumber: null,
+                  billingType: null,
+                  packaged: o.isPackaged || false
+              }));
+              
+              set({ orders: mappedOrders });
+          } catch (error) {
+              console.error("Failed to fetch orders:", error);
+          }
+      },
 
       updateOrderSalesStatus: (orderId, status, billingType) =>
         set((state) => {
-          // Map internal status to Tab/Notification Key
+            // TODO: Call API to update status in backend
           const statusToKey: Record<string, string> = {
             pendiente_facturacion: "PENDIENTE_FACTURACION",
             facturada: "FACTURADAS",
@@ -270,8 +187,8 @@ export const useLumbaStore = create<LumbaState>()(
         }),
 
       updateOrderLogisticsStatus: (orderId, status) =>
-        set((state) => {
-          // Map internal status to Tab/Notification Key
+        set((state) => { 
+            // TODO: Call API
           const statusToKey: Record<string, string> = {
             pendiente_preparacion: "PENDIENTE_PREPARACION",
             listo_para_entregar: "LISTO_PARA_ENTREGAR",
@@ -288,7 +205,6 @@ export const useLumbaStore = create<LumbaState>()(
             notifications: (() => {
                const order = state.orders.find((o) => o.id === orderId);
                let key = statusKey;
-               // Override key if packaged and going to cancel/return
                if (order?.packaged && (status === "cancelado_vuelto_stock" || status === "devolucion_vuelto_stock")) {
                  key = "DESEMPAQUETAR";
                }
@@ -303,7 +219,6 @@ export const useLumbaStore = create<LumbaState>()(
            const order = state.orders.find((o) => o.id === orderId);
 
            if (order && !isPackaged) {
-             // If unpacking, notify the destination tab
              if (order.logisticsStatus === "cancelado_vuelto_stock") {
                newNotifications["CANCELADOS"] = true;
              } else if (order.logisticsStatus === "devolucion_vuelto_stock") {
@@ -322,13 +237,11 @@ export const useLumbaStore = create<LumbaState>()(
           orders: state.orders.map((o) => {
             if (o.id !== orderId) return o;
             
-            // Side effect: If printing label (via API in real life), ML status updates to ready_to_ship
             let newMeliStatus = o.meliStatus;
             let newLogisticsStatus = o.logisticsStatus;
             
             if (status === "impresas" && o.meliStatus !== "shipped" && o.meliStatus !== "delivered") {
                newMeliStatus = "ready_to_ship";
-               // Also visually ensure it's "Listo para entregar" if everything else is ready
                if(o.packaged) {
                    newLogisticsStatus = "listo_para_entregar";
                }
@@ -344,71 +257,7 @@ export const useLumbaStore = create<LumbaState>()(
         })),
 
       simulateMeliUpdates: () =>
-        set((state) => {
-          // Randomly pick some orders and advance their MELI state
-          const newOrders = state.orders.map((order) => {
-            if (Math.random() > 0.2) return order; // 20% chance to update
-
-            let newMeliStatus = order.meliStatus;
-            let newLogisticsStatus = order.logisticsStatus;
-            let newSalesStatus = order.salesStatus;
-            let newBillingType = order.billingType;
-
-            // Automation Rules logic
-            if (order.meliStatus === "ready_to_ship") {
-              // Simulate moving to shipped
-              newMeliStatus = "shipped";
-            } else if (order.meliStatus === "shipped") {
-              // Simulate moving to delivered
-              newMeliStatus = "delivered";
-            } 
-            
-            // Randomly simulate cancellation for testing automation
-            if (Math.random() > 0.95 && newMeliStatus !== "shipped" && newMeliStatus !== "delivered") {
-               newMeliStatus = "cancelled";
-            }
-
-            // Apply side effects
-            if (newMeliStatus === "shipped" && newLogisticsStatus !== "despachado_meli") {
-              newLogisticsStatus = "despachado_meli";
-              // Sales automation: if shipped, ensure it is billed (if not already)
-              if (newSalesStatus === "pendiente_facturacion") {
-                newSalesStatus = "facturada";
-                newBillingType = "auto"; // Auto-billing triggered
-              }
-            }
-            if (newMeliStatus === "delivered") {
-              newLogisticsStatus = "entregado";
-            }
-            
-            // Cancellation Automation
-            if (newMeliStatus === "cancelled") {
-                // Logistics update
-                if (newLogisticsStatus !== "cancelado_vuelto_stock" && newLogisticsStatus !== "devolucion_vuelto_stock") {
-                    newLogisticsStatus = "cancelado_vuelto_stock";
-                }
-                
-                // Billing update
-                if (newSalesStatus === "facturada") {
-                    // Logic: If already billed, move to Credit Note
-                    newSalesStatus = "nota_credito"; 
-                } else if (newSalesStatus === "pendiente_facturacion") {
-                    // Logic: If not billed, just cancel
-                    newSalesStatus = "venta_cancelada";
-                }
-            }
-
-            return {
-              ...order,
-              meliStatus: newMeliStatus,
-              logisticsStatus: newLogisticsStatus,
-              salesStatus: newSalesStatus,
-              billingType: newBillingType,
-            };
-          });
-
-          return { orders: newOrders };
-        }),
+        set((state) => ({ orders: state.orders })), // Disable simulation for now
     }),
     {
       name: "lumba-store", // key in local storage
@@ -419,3 +268,4 @@ export const useLumbaStore = create<LumbaState>()(
     },
   ),
 );
+

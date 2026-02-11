@@ -14,11 +14,18 @@ import { Card } from "../../components/Card";
 import { useCuentaContextStore } from "../../stores/cuentaContextStore";
 
 export const VentasPage: React.FC = () => {
-  const { orders, selectedAccount, searchQuery, dateFrom, dateTo, setAccount, setSearchQuery, setDateRange, updateOrderSalesStatus } = useLumbaStore();
+  const { orders, selectedAccount, searchQuery, dateFrom, dateTo, setAccount, setSearchQuery, setDateRange, updateOrderSalesStatus, fetchOrders } = useLumbaStore();
   const { selectedCuenta } = useCuentaContextStore();
 
   const [searchParams] = useSearchParams();
   const activeTab = searchParams.get("status") || "TODAS";
+
+  // Fetch orders on mount
+  React.useEffect(() => {
+      fetchOrders();
+      const interval = setInterval(fetchOrders, 30000); // Poll every 30s
+      return () => clearInterval(interval);
+  }, []);
 
   // Derived state for filter options (mocked for now, similar to Logistica)
   const filters = [

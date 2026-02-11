@@ -84,6 +84,13 @@ export interface ITenant extends Document {
       dark?: Record<string, string>;
     };
   };
+  mercadolibre?: {
+    accessToken: string;
+    refreshToken: string;
+    expiresAt: Date;
+    sellerId: number;
+    nickname: string;
+  };
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -211,6 +218,14 @@ const tenantSchema = new Schema<ITenant>(
         light: { type: Schema.Types.Mixed, default: {} },
         dark: { type: Schema.Types.Mixed, default: {} },
       },
+    },
+
+    mercadolibre: {
+      accessToken: { type: String },
+      refreshToken: { type: String },
+      expiresAt: { type: Date },
+      sellerId: { type: Number },
+      nickname: { type: String },
     },
 
     isActive: { type: Boolean, default: true },

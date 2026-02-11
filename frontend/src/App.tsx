@@ -24,6 +24,7 @@ import { CarouselImagesPage } from "./pages/admin/CarouselImagesPage";
 import { TenantsPage } from "./pages/admin/TenantsPage";
 import { GeneralSettingsPage } from "./pages/admin/GeneralSettingsPage";
 import { ConfiguracionPage } from "./pages/admin/ConfiguracionPage";
+import { IntegrationsPage } from "./pages/admin/IntegrationsPage";
 
 import { SeoSettingsPage } from "./pages/admin/SeoSettingsPage";
 import { DocumentationPage } from "./pages/admin/DocumentationPage";
@@ -276,6 +277,14 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+                <Route
+                  path="integrations"
+                  element={
+                    <ProtectedRoute>
+                      <IntegrationsPage />
+                    </ProtectedRoute>
+                  }
+                />
 
               <Route
                 path="seo"

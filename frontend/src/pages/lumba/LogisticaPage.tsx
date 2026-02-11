@@ -17,12 +17,19 @@ import { Button } from "../../components/Button";
 import { useCuentaContextStore } from "../../stores/cuentaContextStore";
 
 export const LogisticaPage: React.FC = () => {
-  const { orders, selectedAccount, setAccount, searchQuery, setSearchQuery, dateFrom, dateTo, setDateRange, updateOrderLogisticsStatus, setOrderPackaged, setOrderTagStatus } = useLumbaStore();
+  const { orders, selectedAccount, setAccount, searchQuery, setSearchQuery, dateFrom, dateTo, setDateRange, updateOrderLogisticsStatus, setOrderPackaged, setOrderTagStatus, fetchOrders } = useLumbaStore();
   const { selectedCuenta } = useCuentaContextStore();
 
   const [searchParams] = useSearchParams();
   const activeTab = searchParams.get("status") || "TODAS";
   const showShippingCutoff = ["TODAS", "PENDIENTE_PREPARACION", "LISTO_PARA_ENTREGAR"].includes(activeTab);
+
+  // Fetch orders on mount
+  React.useEffect(() => {
+      fetchOrders();
+      const interval = setInterval(fetchOrders, 30000); 
+      return () => clearInterval(interval);
+  }, []);
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);

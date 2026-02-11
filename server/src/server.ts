@@ -34,9 +34,10 @@ import { areaRoutes } from "./routes/areas.js";
 import { levelRoutes } from "./routes/levels.js";
 import { cuentaRoutes } from "./routes/cuentas.js";
 import { tenantRoutes } from "./routes/tenants.js";
-import { projectRoutes } from "./routes/projects.js";
-import { carouselImageRoutes } from "./routes/carouselImages.js";
-import { seoRoutes } from "./routes/seo.js";
+import { meliRouter } from "./routes/meli.js";
+import { orderRouter } from "./routes/orders.js";
+
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -126,9 +127,8 @@ app.use("/api/v1/areas", areaRoutes);
 app.use("/api/v1/levels", levelRoutes);
 app.use("/api/v1/cuentas", cuentaRoutes);
 app.use("/api/v1/tenants", tenantRoutes);
-app.use("/api/v1/projects", projectRoutes);
-app.use("/api/v1/carousel-images", carouselImageRoutes);
-app.use("/api/v1/seo", seoRoutes);
+app.use("/api/v1/meli", meliRouter);
+app.use("/api/v1/orders", orderRouter);
 
 // ───────────────── 404 + errores (al final) ─────────────────
 app.use(notFoundHandler);
