@@ -98,7 +98,7 @@ export const PricingPage: React.FC = () => {
                 <button
                   className={`w-full py-3 px-6 rounded-full font-medium transition-colors ${
                     plan.buttonVariant === "dark"
-                      ? "bg-black text-white hover:bg-gray-800"
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
                       : "bg-gray-200 text-black hover:bg-gray-300"
                   }`}
                 >

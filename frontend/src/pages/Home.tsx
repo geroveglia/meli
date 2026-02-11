@@ -31,7 +31,7 @@ export const Home: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-accent-3 text-accent-9 font-sans selection:bg-accent-9 selection:text-accent-1 transition-colors duration-300">
+    <div className="min-h-screen bg-accent-3 text-black font-sans selection:bg-accent-9 selection:text-accent-1 transition-colors duration-300">
       {/* --- Navbar --- */}
 
       <main className="pt-32 pb-20 px-4 container mx-auto">
@@ -43,7 +43,7 @@ export const Home: React.FC = () => {
 
           {/* Content */}
           <div className="relative z-10 max-w-5xl">
-            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8 }} className="text-5xl sm:text-6xl md:text-8xl lg:text-[7.5rem] font-extrabold leading-[0.9] tracking-tight mb-8 text-accent-9">
+            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8 }} className="text-5xl sm:text-6xl md:text-8xl lg:text-[7.5rem] font-extrabold leading-[0.9] tracking-tight mb-8 text-black">
               ZERO <br />
               GRAVITY <br />
               <span className="text-accent-5">INTERFACE.</span>
@@ -80,7 +80,7 @@ export const Home: React.FC = () => {
             <div className="absolute top-6 right-6 px-3 py-1 bg-accent-3 rounded-full text-xs font-mono border border-accent-4 text-accent-8">↗ +12.4%</div>
 
             <div className="mt-24">
-              <h3 className="text-5xl font-bold mb-2 text-accent-9">8.2M</h3>
+              <h3 className="text-5xl font-bold mb-2 text-black">8.2M</h3>
               <p className="text-xs tracking-widest text-accent-5 uppercase font-semibold">Active Global Users</p>
             </div>
 
@@ -95,7 +95,7 @@ export const Home: React.FC = () => {
               <Layers size={20} className="text-accent-9" />
             </div>
 
-            <h3 className="text-3xl font-bold mb-4 text-accent-9">
+            <h3 className="text-3xl font-bold mb-4 text-black">
               Modular <br /> Architecture
             </h3>
             <p className="text-accent-6 text-sm leading-relaxed max-w-xs mb-8">Scalable components designed for next-gen apps.</p>
@@ -115,7 +115,7 @@ export const Home: React.FC = () => {
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                <span className="text-sm font-bold text-accent-9">Live Updates</span>
+                <span className="text-sm font-bold text-black">Live Updates</span>
               </div>
               <Activity size={16} className="text-accent-5" />
             </div>
@@ -130,7 +130,7 @@ export const Home: React.FC = () => {
                   <span className="text-[10px] font-mono text-accent-5">10:42 AM</span>
                   <span className="text-[10px] bg-accent-9 text-accent-2 px-1.5 py-0.5 rounded font-bold">NEW</span>
                 </div>
-                <p className="text-sm font-medium text-accent-9">System v2.4.0 deployed.</p>
+                <p className="text-sm font-medium text-black">System v2.4.0 deployed.</p>
               </div>
 
               <div className="relative pl-6 opacity-60">

@@ -61,7 +61,7 @@ export const MobileNavbar: React.FC = () => {
     return localStorage.getItem("adminOpenSection") || "general";
   });
 
-  const toggleAdminSection = (section: "users" | "general" | "config" | "logistica" | "ventas") => {
+  const toggleAdminSection = (section: "users" | "general" | "config" | "logistica" | "ventas" | "doc") => {
     const newVal = openAdminSection === section ? null : section;
     setOpenAdminSection(newVal);
     if (newVal) localStorage.setItem("adminOpenSection", newVal);
@@ -119,8 +119,10 @@ export const MobileNavbar: React.FC = () => {
       setOpenAdminSection("logistica");
     } else if (["/ventas"].includes(location.pathname)) {
       setOpenAdminSection("ventas");
-    } else if (["/admin/carousel-images", "/admin/general", "/admin/seo", "/admin/doc"].includes(location.pathname) || location.pathname.startsWith("/admin/doc")) {
+    } else if (["/admin/carousel-images", "/admin/general", "/admin/seo"].includes(location.pathname)) {
       setOpenAdminSection("general");
+    } else if (location.pathname.startsWith("/admin/doc")) {
+      setOpenAdminSection("doc");
     } else if (["/admin/roles", "/admin/users"].includes(location.pathname)) {
       setOpenAdminSection("users");
     }
@@ -227,12 +229,7 @@ export const MobileNavbar: React.FC = () => {
         scope: "global",
       });
 
-      base.push({
-        path: "/admin/doc",
-        icon: faBook,
-        label: "Documentación",
-        scope: "global",
-      });
+
 
       base.push({
         path: "/admin/seo",
@@ -346,7 +343,7 @@ export const MobileNavbar: React.FC = () => {
   interface NavMenuProps {
     menuItems: any[];
     openAdminSection: string | null;
-    toggleAdminSection: (section: "users" | "general" | "config" | "logistica" | "ventas") => void;
+    toggleAdminSection: (section: "users" | "general" | "config" | "logistica" | "ventas" | "doc") => void;
     onItemClick?: () => void;
     handleMenuClick: (e: React.MouseEvent<HTMLAnchorElement>, item: any) => void;
     setIsSettingsOpen: (open: boolean) => void;
@@ -390,14 +387,14 @@ export const MobileNavbar: React.FC = () => {
     const generalItem = menuItems.find((item) => item.path === "/admin/general");
 
     const seoItem = menuItems.find((item) => item.path === "/admin/seo");
-    const docItem = menuItems.find((item) => item.path === "/admin/doc");
+
 
     // Lumba Items
     const ventasItem = menuItems.find((item) => item.path === "/ventas");
     const logisticaItem = menuItems.find((item) => item.path === "/logistica");
 
     // Otros items que no pertenecen a ninguna sección
-    const otherAdminItems = menuItems.filter((item) => !userAdminItems.some((u) => u.path === item.path) && item.path !== "/admin/dashboard" && item.path !== "/admin/cuentas" && item.path !== "/admin/tenants" && item.path !== "/admin/carousel-images" && item.path !== "/admin/general" && item.path !== "/admin/seo" && item.path !== "/ventas" && item.path !== "/logistica" && item.path !== "/admin/doc");
+    const otherAdminItems = menuItems.filter((item) => !userAdminItems.some((u) => u.path === item.path) && item.path !== "/admin/dashboard" && item.path !== "/admin/cuentas" && item.path !== "/admin/tenants" && item.path !== "/admin/carousel-images" && item.path !== "/admin/general" && item.path !== "/admin/seo" && item.path !== "/ventas" && item.path !== "/logistica");
 
     const renderMenuItem = (item: any) => {
       // Debug log to verify HMR
@@ -639,7 +636,69 @@ export const MobileNavbar: React.FC = () => {
           </div>
         )}
 
-        {/* DIVIDER - Línea divisoria */}
+            {/* Documentación - como menú desplegable */}
+              {(
+                <div>
+                  <button onClick={() => toggleAdminSection("doc")} className={`w-full group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${location.pathname.startsWith("/admin/doc") ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}>
+                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${location.pathname.startsWith("/admin/doc") ? "bg-white text-blue-600" : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"}`}>
+                        <FontAwesomeIcon icon={faBook} className="h-4 w-4" />
+                      </div>
+                      <span className="font-medium truncate">Documentación</span>
+                    </div>
+                    <FontAwesomeIcon icon={faChevronDown} className={`h-3 w-3 text-gray-400 transform transition-transform ${openAdminSection === "doc" ? "rotate-180" : ""}`} />
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {openAdminSection === "doc" && (
+                      <motion.nav
+                        key="doc"
+                        initial="collapsed"
+                        animate="open"
+                        exit="collapsed"
+                        variants={{
+                          open: { opacity: 1, height: "auto" },
+                          collapsed: { opacity: 0, height: 0 },
+                        }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        className="overflow-hidden space-y-1 ml-4"
+                      >
+                         <div className="py-1">
+                          <div className="pl-2 pt-2 pb-1 text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">General</div>
+                           {[
+                              { label: "Introducción", path: "/admin/doc" },
+                              { label: "Estructura del Proyecto", path: "/admin/doc/structure" },
+                           ].map((sub) => (
+                              <Link
+                                key={sub.path}
+                                to={sub.path}
+                                onClick={() => setOpen(false)}
+                                className={`group relative flex items-center justify-between px-2 py-1.5 rounded-lg transition-all ${location.pathname === sub.path ? "!bg-gray-100 !text-accent-1" : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900"}`}
+                              >
+                                <span className="font-medium truncate text-sm">{sub.label}</span>
+                              </Link>
+                           ))}
+
+                           <div className="pl-2 pt-2 pb-1 text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">Lumba (MercadoLibre)</div>
+                           {[
+                              { label: "Lógica & Estados", path: "/admin/doc/meli-logic" },
+                           ].map((sub) => (
+                              <Link
+                                key={sub.path}
+                                to={sub.path}
+                                onClick={() => setOpen(false)}
+                                className={`group relative flex items-center justify-between px-2 py-1.5 rounded-lg transition-all ${location.pathname === sub.path ? "!bg-gray-100 !text-accent-1" : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900"}`}
+                              >
+                                <span className="font-medium truncate text-sm">{sub.label}</span>
+                              </Link>
+                           ))}
+                         </div>
+                      </motion.nav>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+
         {cuentaItem && (dashboardItem || tenantsItem || userAdminItems.length > 0) && <div className="border-t border-gray-200 dark:border-gray-700 mx-4 my-3" />}
 
         {/* ADMIN GENERAL - Dashboard, Tenants y Cuentas */}
@@ -671,8 +730,7 @@ export const MobileNavbar: React.FC = () => {
                     {/* Dashboard */}
                     {dashboardItem && renderMenuItem(dashboardItem)}
 
-                    {/* Documentación */}
-                    {docItem && renderMenuItem(docItem)}
+
 
                     {/* Tenants (solo superadmin) */}
                     {tenantsItem && renderMenuItem(tenantsItem)}

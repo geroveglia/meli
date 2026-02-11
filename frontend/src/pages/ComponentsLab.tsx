@@ -372,7 +372,7 @@ export const ComponentsLab: React.FC = () => {
         {/* --- Admin Modal Demo Section --- */}
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeInUp} className="mt-12 bg-accent-2 border border-accent-4 text-accent-9 rounded-[2rem] p-12 relative overflow-hidden text-center">
           <div className="relative z-10 max-w-2xl mx-auto">
-            <h2 className="text-3xl font-bold mb-4">Admin Modal Interface</h2>
+            <h2 className="text-3xl font-bold mb-4 text-black">Admin Modal Interface</h2>
             <p className="text-accent-6 mb-8">Fully responsive modal component with header, footer, and backdrop states, designed for the admin dashboard.</p>
             <button onClick={() => setIsModalOpen(true)} className="px-8 py-3 bg-accent-9 text-accent-2 font-bold rounded-full hover:text-accent-9 hover:bg-accent-3 transition-colors">
               Launch Demo Modal

@@ -18,7 +18,7 @@ export const PublicNavbar: React.FC = () => {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-accent-2/80 backdrop-blur-md border-b border-accent-4 transition-colors duration-300">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#FFE600] backdrop-blur-md border-b border-accent-4 transition-colors duration-300">
         <div className="container mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Link to="/" className="flex items-center gap-2">
@@ -35,7 +35,7 @@ export const PublicNavbar: React.FC = () => {
               const isActive = item.href === location.pathname || (location.pathname === "/" && ((location.hash === itemHash && itemHash !== "") || (location.hash === "" && item.label === "Home")));
 
               return (
-                <Link key={item.label} to={item.href} className={`px-5 py-2 text-sm transition-colors rounded-full ${isActive ? "text-accent-9 bg-accent-3" : "text-accent-6 hover:text-accent-9 hover:bg-accent-3"}`}>
+                <Link key={item.label} to={item.href} className={`px-5 py-2 text-sm transition-colors rounded-full ${isActive ? "text-black bg-white shadow-sm font-semibold" : "text-gray-600 hover:text-black hover:bg-white/50"}`}>
                   {item.label}
                 </Link>
               );
