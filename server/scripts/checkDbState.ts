@@ -47,7 +47,7 @@ const checkState = async () => {
     console.log(`📦 Total Orders found: ${orders.length}`);
     
     orders.forEach(o => {
-        console.log(`  - Order MELI ID: ${o.meliId} | Status: ${o.payment.status} | Created: ${o.dateCreated}`);
+        console.log(`  - Order MELI ID: ${o.meliId} | Sales: ${o.salesStatus} | Logistics: ${o.logisticsStatus} | Payment: ${o.payment.status}`);
     });
 
     process.exit();

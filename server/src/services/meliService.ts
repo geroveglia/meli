@@ -1,6 +1,16 @@
 
 import { Tenant } from "../models/Tenant.js";
 import mongoose from "mongoose";
+import fs from "fs";
+import path from "path";
+
+const LOG_FILE = "C:\\wamp64\\www\\meli\\server\\server_debug.log";
+const logDebug = (msg: string) => {
+    try {
+        fs.appendFileSync(LOG_FILE, `[${new Date().toISOString()}] ${msg}\n`);
+    } catch (e) { console.error("Log failed", e); }
+};
+
 
 const MELI_API_URL = "https://api.mercadolibre.com";
 
@@ -239,7 +249,7 @@ export const handleNotification = async (topic: string, resource: string, tenant
     try {
         if (topic === 'orders_v2' || resource.includes('/orders/')) {
             const orderData = await fetchMeliResource(resource, accessToken);
-            // console.log("Order Data:", JSON.stringify(orderData, null, 2));
+            logDebug(`Order Data: ${JSON.stringify(orderData)}`);
 
             // Fetch Shipping info if available
             let shippingData = null;
@@ -248,7 +258,19 @@ export const handleNotification = async (topic: string, resource: string, tenant
                     shippingData = await fetchMeliResource(`/shipments/${orderData.shipping.id}`, accessToken);
                 } catch (err) {
                     console.warn(`Could not fetch shipment ${orderData.shipping.id}`, err);
+                    logDebug(`Error fetching shipment ${orderData.shipping.id}: ${err}`);
                 }
+            }
+
+            // Map to our Order Model
+            // Logic for internal status mappings
+            let computedLogisticsStatus = 'pendiente_preparacion';
+            if (shippingData) {
+                if (shippingData.status === 'delivered') computedLogisticsStatus = 'entregado';
+                else if (shippingData.status === 'shipped') computedLogisticsStatus = 'despachado_meli';
+            } else {
+                // If no shipping (e.g. pickup), check if fulfilled
+                if (orderData.fulfilled) computedLogisticsStatus = 'entregado';
             }
 
             // Map to our Order Model
@@ -296,9 +318,7 @@ export const handleNotification = async (topic: string, resource: string, tenant
                     } : undefined
                 } : undefined,
                 
-                // Logic for internal status mappings
-                // If MELI status is 'paid', we set to 'pendiente_facturacion' locally if new
-                // If MELI shipping is 'shipped', we set 'despachado_meli'
+                logisticsStatus: computedLogisticsStatus as any,
             };
 
             // Upsert Order
@@ -317,13 +337,11 @@ export const handleNotification = async (topic: string, resource: string, tenant
 
                 if (orderUpdate.shipping) {
                     existingOrder.shipping = orderUpdate.shipping;
-                    
-                    // Automations based on Shipping Status
-                    if (orderUpdate.shipping.status === 'shipped') {
-                        existingOrder.logisticsStatus = 'despachado_meli';
-                    } else if (orderUpdate.shipping.status === 'delivered') {
-                        existingOrder.logisticsStatus = 'entregado';
-                    }
+                }
+                
+                // Automations based on Computed Logistics Status (Checking fulfilled or shipping status)
+                if (orderUpdate.logisticsStatus === 'entregado' || orderUpdate.logisticsStatus === 'despachado_meli') {
+                    existingOrder.logisticsStatus = orderUpdate.logisticsStatus;
                 }
 
                 if (orderUpdate.payment.status === 'cancelled') {
