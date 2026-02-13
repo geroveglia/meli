@@ -32,7 +32,13 @@ type JWTPayload = {
 
 export function authenticateToken(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
   const h = req.header("Authorization") ?? "";
-  const token = h.startsWith("Bearer ") ? h.slice(7) : "";
+  let token = h.startsWith("Bearer ") ? h.slice(7) : "";
+  
+  // Allow token in query param (e.g. for file downloads / window.open)
+  if (!token && req.query.token) {
+      token = String(req.query.token);
+  }
+
   if (!token) {
     res.status(401).json({ error: "Missing token" });
     return;

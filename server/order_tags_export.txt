@@ -1,0 +1,16 @@
+Order Tags Export:
+
+MeliId: 2000015109753534
+SalesStatus: venta_cancelada
+LogisticsStatus: cancelado_vuelto_stock
+PaymentStatus: paid
+ShippingStatus: pending
+Tags: []
+-----------------------------------
+MeliId: 2000015136780804
+SalesStatus: pendiente_facturacion
+LogisticsStatus: pendiente_preparacion
+PaymentStatus: paid
+ShippingStatus: pending
+Tags: ["no_shipping","paid","not_delivered","test_order"]
+-----------------------------------

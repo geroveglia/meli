@@ -1,0 +1,74 @@
+Connecting to MongoDB... (DB: meli_development)
+Connected to MongoDB
+Sample Order: {
+  "buyer": {
+    "id": 123,
+    "nickname": "TEST_BUYER",
+    "firstName": "Juan",
+    "lastName": "Perez"
+  },
+  "payment": {
+    "total": 1500,
+    "currencyId": "ARS",
+    "status": "paid"
+  },
+  "shipping": {
+    "receiverAddress": {
+      "addressLine": "Calle Falsa 123",
+      "city": "Buenos Aires",
+      "state": "Capital Federal",
+      "zipCode": "1414",
+      "country": "Argentina"
+    },
+    "id": 888000111,
+    "status": "delivered",
+    "substatus": "delivered",
+    "trackingNumber": "TRK123456",
+    "serviceId": 1
+  },
+  "_id": "698cc73403420b3f3749104e",
+  "tenantId": "697b6e8a96d9378f31af93fe",
+  "meliId": "999000111",
+  "packId": null,
+  "dateCreated": "2026-02-11T18:15:16.447Z",
+  "lastUpdated": "2026-02-12T18:49:33.860Z",
+  "items": [
+    {
+      "id": "ITEM123",
+      "title": "Producto de Prueba",
+      "quantity": 1,
+      "unitPrice": 1500,
+      "currencyId": "ARS",
+      "_id": "698cc73403420b3f3749104f"
+    }
+  ],
+  "salesStatus": "venta_cancelada",
+  "logisticsStatus": "cancelado_vuelto_stock",
+  "tags": [],
+  "isPackaged": false,
+  "createdAt": "2026-02-11T18:15:16.555Z",
+  "updatedAt": "2026-02-13T15:00:09.651Z",
+  "__v": 0,
+  "clientId": "6984949ba681731e27a46b9d"
+}
+Found 18 orders without sellerId
+Found 3 potential tokens to attempt recovery.
+Skipping order 999000111: No working token found in pool.
+Skipping order 2000015109469322: No working token found in pool.
+Skipping order 2000015108814864: No working token found in pool.
+Skipping order 2000015109753534: No working token found in pool.
+Skipping order 2000015109897110: No working token found in pool.
+Skipping order 2000015109934514: No working token found in pool.
+Skipping order 2000015109663342: No working token found in pool.
+Skipping order 2000015109604624: No working token found in pool.
+Skipping order 2000015125551680: No working token found in pool.
+Skipping order 2000015134282302: No working token found in pool.
+Skipping order 2000015135721860: No working token found in pool.
+Skipping order 999000333: No working token found in pool.
+Skipping order 2000015136605450: No working token found in pool.
+Skipping order 2000015136780804: No working token found in pool.
+Skipping order 2000015138080554: No working token found in pool.
+Skipping order 2000015138201204: No working token found in pool.
+Skipping order 2000015138329022: No working token found in pool.
+Skipping order 2000015138566804: No working token found in pool.
+Backfill complete. Success: 0, Skipped: 18, Errors: 0

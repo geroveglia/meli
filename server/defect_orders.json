@@ -1,0 +1,24 @@
+[
+  {
+    "id": "2000015109663342",
+    "payment": "paid",
+    "shippingStatus": "pending",
+    "logistics": "pendiente_preparacion",
+    "sales": "pendiente_facturacion",
+    "fullShipping": {
+      "receiverAddress": {},
+      "status": "pending"
+    }
+  },
+  {
+    "id": "2000015135721860",
+    "payment": "paid",
+    "shippingStatus": "pending",
+    "logistics": "pendiente_preparacion",
+    "sales": "pendiente_facturacion",
+    "fullShipping": {
+      "receiverAddress": {},
+      "status": "pending"
+    }
+  }
+]

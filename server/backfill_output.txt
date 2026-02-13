@@ -1,0 +1,68 @@
+Connecting to MongoDB... (DB: weprodu_mvp)
+Connected to MongoDB
+Sample Order: {
+  "shipping": {
+    "status": "pending"
+  },
+  "salesStatus": "pendiente_facturacion",
+  "logisticsStatus": "pendiente_preparacion",
+  "tags": [],
+  "isPackaged": false,
+  "_id": "698cbc317ce18d28cc8fcf01",
+  "tenantId": "696e0afdee864e3d5ceec539",
+  "userId": "696424e7888f8216c8488b8c",
+  "description": "",
+  "category": "Licencia especial",
+  "categoryId": "69862ab1aa8726708a7ef526",
+  "subcategories": [
+    "sub_1770400350178"
+  ],
+  "status": "delivered",
+  "requestedAt": "2026-02-11T17:28:17.078Z",
+  "actionCompleted": true,
+  "dynamicValue": {
+    "fechaDesde": "2026-02-11",
+    "fechaHasta": "2026-02-21"
+  },
+  "requiereAccionFutura": false,
+  "signatureStatus": "signed",
+  "documents": [],
+  "futureActions": [
+    {
+      "requiereAccionFutura": true,
+      "tipoAccionFutura": "documento",
+      "descripcionAccion": "Me comprometo a presentar la documentación o comprobantes solicitados.",
+      "responsableAccion": "usuario",
+      "documentoRequerido": "Certificado",
+      "fechaCreacionAccion": "2026-02-11T17:28:17.102Z",
+      "estadoAccion": "documento_presentado",
+      "_id": "698cbc317ce18d28cc8fcf03",
+      "createdAt": "2026-02-11T17:28:17.120Z",
+      "updatedAt": "2026-02-11T17:36:11.496Z",
+      "documentoUrl": "/storage/696e0afdee864e3d5ceec539/696424e7888f8216c8488b8c/documents/document_698cbe0b7ce18d28cc8fcf76.jpeg"
+    }
+  ],
+  "orderNumber": "DEM-ORD-000002",
+  "createdAt": "2026-02-11T17:28:17.121Z",
+  "updatedAt": "2026-02-11T17:37:46.805Z",
+  "__v": 1,
+  "preApprovedAt": "2026-02-11T17:32:35.634Z",
+  "preApprovedBy": "6964224c888f8216c84879e2",
+  "pdfPreAprobacionUrl": "/storage/696e0afdee864e3d5ceec539/696424e7888f8216c8488b8c/orders/pdfs/pedido_DEM-ORD-000002_1770831158055.pdf",
+  "approvedAt": "2026-02-11T17:34:01.859Z",
+  "approvedBy": "6964224c888f8216c84879e2",
+  "signatureSentAt": "2026-02-11T17:34:01.859Z",
+  "documentoUrl": "/storage/696e0afdee864e3d5ceec539/696424e7888f8216c8488b8c/documents/document_698cbe0b7ce18d28cc8fcf76.jpeg",
+  "signatureNotifiedAt": "2026-02-11T17:36:27.560Z",
+  "signedAt": "2026-02-11T17:37:22.088Z",
+  "signedBy": "6964224c888f8216c84879e2",
+  "deliveredAt": "2026-02-11T17:37:46.804Z",
+  "items": []
+}
+Found 4 orders without sellerId
+Found 0 potential tokens to attempt recovery.
+Skipping order undefined: No working token found in pool.
+Skipping order undefined: No working token found in pool.
+Skipping order undefined: No working token found in pool.
+Skipping order undefined: No working token found in pool.
+Backfill complete. Success: 0, Skipped: 4, Errors: 0

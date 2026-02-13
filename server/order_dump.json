@@ -1,0 +1,51 @@
+{
+  "buyer": {
+    "id": 3197636298,
+    "nickname": "TESTUSER6163467649848579264",
+    "firstName": "Test",
+    "lastName": "Test"
+  },
+  "payment": {
+    "total": 1000,
+    "currencyId": "ARS",
+    "status": "cancelled"
+  },
+  "shipping": {
+    "receiverAddress": {
+      "addressLine": "Vicente Lopez Y Planes 281",
+      "city": "Buenos Aires",
+      "state": "Buenos Aires",
+      "zipCode": "1636",
+      "country": "Argentina"
+    },
+    "id": 46458655943,
+    "status": "shipped",
+    "substatus": null,
+    "trackingNumber": "183534",
+    "serviceId": null
+  },
+  "_id": "698e26cb7c1ec74e69864603",
+  "tenantId": "697b6e8a96d9378f31af93fe",
+  "clientId": "6984949ba681731e27a46b9d",
+  "meliId": "2000015125551680",
+  "packId": null,
+  "dateCreated": "2026-02-12T19:15:04.000Z",
+  "lastUpdated": "2026-02-12T19:38:58.000Z",
+  "items": [
+    {
+      "id": "MLA2856010866",
+      "title": "Item De Prueba Api - No Ofertar",
+      "quantity": 1,
+      "unitPrice": 1000,
+      "currencyId": "ARS",
+      "_id": "698e26cb7c1ec74e69864604"
+    }
+  ],
+  "salesStatus": "venta_cancelada",
+  "logisticsStatus": "cancelado_vuelto_stock",
+  "tags": [],
+  "isPackaged": false,
+  "createdAt": "2026-02-12T19:15:23.529Z",
+  "updatedAt": "2026-02-12T19:39:16.121Z",
+  "__v": 0
+}

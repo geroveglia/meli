@@ -14,7 +14,7 @@ import { Card } from "../../components/Card";
 import { useCuentaContextStore } from "../../stores/cuentaContextStore";
 
 export const VentasPage: React.FC = () => {
-  const { orders, accounts, selectedAccount, searchQuery, dateFrom, dateTo, setAccount, setSearchQuery, setDateRange, updateOrderSalesStatus, fetchOrders } = useLumbaStore();
+  const { orders, selectedAccount, searchQuery, dateFrom, dateTo, setSearchQuery, setDateRange, updateOrderSalesStatus, fetchOrders, fetchAccounts } = useLumbaStore();
   const { selectedCuenta } = useCuentaContextStore();
 
   const [searchParams] = useSearchParams();
@@ -32,30 +32,6 @@ export const VentasPage: React.FC = () => {
       const interval = setInterval(fetchOrders, 30000); // Poll every 30s
       return () => clearInterval(interval);
   }, []);
-
-  // Derived state for filter options
-  const filters = [
-    {
-      value: typeof selectedAccount === "string" ? selectedAccount : selectedAccount.id,
-      onChange: (val: string) => {
-          if (val === "Todas") {
-              setAccount("Todas");
-          } else {
-              const account = accounts.find((a) => typeof a !== "string" && a.id === val);
-              if (account) setAccount(account);
-          }
-      },
-      options: [
-        { value: "Todas", label: "Todas las Cuentas" },
-        ...accounts
-            .filter((a) => typeof a !== "string") // Exclude "Todas" if strictly typed, though accounts usually includes it? check store
-            .map((a) => {
-                const acc = a as import("../../stores/lumbaStore").TenantAccount;
-                return { value: acc.id, label: acc.name };
-            }),
-      ],
-    },
-  ];
 
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [exitingOrderIds, setExitingOrderIds] = useState<string[]>([]);
@@ -362,7 +338,6 @@ export const VentasPage: React.FC = () => {
           searchPlaceholder="Buscar por ID, comprador..."
           searchTerm={searchQuery}
           onSearchChange={setSearchQuery}
-          filters={filters}
           dateFilter={{
             startDate: dateFrom,
             endDate: dateTo,

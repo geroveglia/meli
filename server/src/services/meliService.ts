@@ -131,6 +131,36 @@ import { Order } from "../models/Order.js";
 // Helper to fetch any resource from MELI
 const fetchMeliResource = async (resource: string, accessToken: string) => {
     // --- MOCK MODE FOR TESTING ---
+    if (resource.includes("test-order-not-delivered")) {
+        console.log("Returning MOCK NOT DELIVERED order data for testing");
+        return {
+            id: 999000333,
+            pack_id: null,
+            date_created: new Date().toISOString(),
+            last_updated: new Date().toISOString(),
+            buyer: { id: 123, nickname: "TEST_BUYER", first_name: "Juan", last_name: "Perez" },
+            order_items: [{ item: { id: "ITEM123", title: "Producto de Prueba", variation_attributes: [] }, quantity: 1, unit_price: 1500, currency_id: "ARS" }],
+            total_amount: 1500,
+            currency_id: "ARS",
+            status: "paid", 
+            shipping: { id: 666000111 } // triggers mock not_delivered shipment
+        };
+    }
+    if (resource.includes("test-order-cancelled")) {
+        console.log("Returning MOCK CANCELLED order data for testing");
+        return {
+            id: 999000222,
+            pack_id: null,
+            date_created: new Date().toISOString(),
+            last_updated: new Date().toISOString(),
+            buyer: { id: 123, nickname: "TEST_BUYER", first_name: "Juan", last_name: "Perez" },
+            order_items: [{ item: { id: "ITEM123", title: "Producto de Prueba", variation_attributes: [] }, quantity: 1, unit_price: 1500, currency_id: "ARS" }],
+            total_amount: 1500,
+            currency_id: "ARS",
+            status: "paid", // Payment is paid, but shipping cancelled
+            shipping: { id: 777000111 } // triggers mock cancelled shipment
+        };
+    }
     if (resource.includes("test-order")) {
         console.log("Returning MOCK order data for testing");
         return {
@@ -162,6 +192,38 @@ const fetchMeliResource = async (resource: string, accessToken: string) => {
             }
         };
     }
+    if (resource.includes("shipments/666000111")) {
+        return {
+            id: 666000111,
+            status: "not_delivered",
+            substatus: null,
+            tracking_number: null,
+            service_id: 1,
+            receiver_address: {
+                address_line: "Calle Falsa 123",
+                city: { name: "Buenos Aires" },
+                state: { name: "Capital Federal" },
+                zip_code: "1414",
+                country: { name: "Argentina" }
+            }
+        };
+    }
+    if (resource.includes("shipments/777000111")) {
+        return {
+            id: 777000111,
+            status: "cancelled",
+            substatus: null,
+            tracking_number: null,
+            service_id: 1,
+            receiver_address: {
+                address_line: "Calle Falsa 123",
+                city: { name: "Buenos Aires" },
+                state: { name: "Capital Federal" },
+                zip_code: "1414",
+                country: { name: "Argentina" }
+            }
+        };
+    }
     // -----------------------------
 
     const response = await fetch(`${MELI_API_URL}${resource.startsWith('/') ? '' : '/'}${resource}`, {
@@ -175,6 +237,34 @@ const fetchMeliResource = async (resource: string, accessToken: string) => {
     }
     
     return response.json();
+};
+
+export const getShipmentLabel = async (shipmentId: number, accessToken: string) => {
+    // Check for mock shipment
+    if (shipmentId === 888000111) {
+        console.log("Mocking label download for test shipment");
+        // Return a dummy PDF buffer or URL? 
+        // For simplicity in this mock context, let's return a redirect to a sample PDF or similar, 
+        // but the controller expects a stream/buffer. 
+        // Let's actually fail or return a simple text as PDF for now if genuinely mocking file download.
+        // Or better, return a URL if we were doing client side redirect.
+        // But since we want to proxy, we need to fetch.
+        // Let's just mock a fetch to a public PDF for testing.
+        const mockPdf = await fetch("https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf");
+        return mockPdf; 
+    }
+
+    const response = await fetch(`${MELI_API_URL}/shipment_labels?shipment_ids=${shipmentId}&response_type=pdf`, {
+        headers: {
+            "Authorization": `Bearer ${accessToken}`
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to fetch label: ${response.statusText}`);
+    }
+
+    return response;
 };
 
 import { Cuenta } from "../models/Cuenta.js";
@@ -277,6 +367,7 @@ export const handleNotification = async (topic: string, resource: string, tenant
             const orderUpdate = {
                 tenantId: tenantObjectId,
                 clientId: clientId || undefined,
+                sellerId: orderData.seller?.id, // Capture Seller ID
                 meliId: orderData.id.toString(),
                 packId: orderData.pack_id ? orderData.pack_id.toString() : null,
                 dateCreated: new Date(orderData.date_created),
@@ -318,8 +409,47 @@ export const handleNotification = async (topic: string, resource: string, tenant
                     } : undefined
                 } : undefined,
                 
+                salesStatus: 'pendiente_facturacion' as any,
                 logisticsStatus: computedLogisticsStatus as any,
+                tags: orderData.tags || [], // Map tags
             };
+
+
+
+
+
+            // Upsert Order
+            // Automations based on Computed Logistics Status (Checking fulfilled or shipping status)
+            // Apply these to the orderUpdate object directly so they apply to NEW and EXISTING orders
+            if (orderUpdate.logisticsStatus === 'entregado' || orderUpdate.logisticsStatus === 'despachado_meli') {
+                // computedLogisticsStatus already handles this, but ensuring consistency
+            }
+
+            // Enhanced check for active shipping
+            const isShippingActive = orderUpdate.shipping && (
+                ['pending', 'ready_to_ship', 'shipped', 'delivered'].includes(orderUpdate.shipping.status) ||
+                // Also consider active if status is undefined/null but we have an ID, or if it's not explicitly cancelled/not_delivered
+                !['cancelled', 'not_delivered'].includes(orderUpdate.shipping.status)
+            );
+            
+            // Pickup Handling
+            const isPickup = orderUpdate.tags && orderUpdate.tags.includes('no_shipping');
+
+            const hasCancellationTags = orderUpdate.tags && (
+                orderUpdate.tags.includes('cancelled') || 
+                (orderUpdate.tags.includes('not_delivered') && !isShippingActive && !isPickup) // Ignore not_delivered for pickup orders
+            );
+
+
+
+            if (
+                orderUpdate.payment.status === 'cancelled' || 
+                (orderUpdate.shipping && (orderUpdate.shipping.status === 'cancelled' || orderUpdate.shipping.status === 'not_delivered')) ||
+                hasCancellationTags
+            ) {
+                orderUpdate.salesStatus = 'venta_cancelada';
+                orderUpdate.logisticsStatus = 'cancelado_vuelto_stock'; 
+            }
 
             // Upsert Order
             const existingOrder = await Order.findOne({ meliId: orderUpdate.meliId });
@@ -339,14 +469,15 @@ export const handleNotification = async (topic: string, resource: string, tenant
                     existingOrder.shipping = orderUpdate.shipping;
                 }
                 
-                // Automations based on Computed Logistics Status (Checking fulfilled or shipping status)
-                if (orderUpdate.logisticsStatus === 'entregado' || orderUpdate.logisticsStatus === 'despachado_meli') {
+                // Update internal statuses if changed in orderUpdate
+                existingOrder.salesStatus = orderUpdate.salesStatus;
+                
+                // Prevent regression: If we are 'listo_para_entregar' internally, and MeLi says 'pendiente_preparacion' (ready_to_ship), keep our internal state.
+                // We only overwrite if MeLi advances to 'despachado_meli', 'entregado', or 'cancelado'.
+                if (existingOrder.logisticsStatus === 'listo_para_entregar' && orderUpdate.logisticsStatus === 'pendiente_preparacion') {
+                    // Keep existing
+                } else {
                     existingOrder.logisticsStatus = orderUpdate.logisticsStatus;
-                }
-
-                if (orderUpdate.payment.status === 'cancelled') {
-                    existingOrder.salesStatus = 'venta_cancelada';
-                    existingOrder.logisticsStatus = 'cancelado_vuelto_stock'; // simplified logic
                 }
 
                 await existingOrder.save();

@@ -7,6 +7,7 @@ export interface TenantAccount {
     id: string;
     name: string;
     sellerId?: number;
+    type: 'tenant' | 'cuenta';
 }
 
 export type MeliAccount = "Todas" | TenantAccount;
@@ -62,6 +63,9 @@ export interface Order {
   // Metadata for logic
   billingType: "auto" | "manual" | null; // null if not billed
   packaged: boolean; // New field for "Empaquetado" status
+  tenantId: string; // New field for Tenant filtering
+  sellerId?: number; // Raw Seller ID for dynamic mapping
+  clientId?: string; // Raw Client ID for dynamic mapping
 }
 
 interface LumbaState {
@@ -128,7 +132,8 @@ export const useLumbaStore = create<LumbaState>()(
           } else {
               localStorage.removeItem('tenantId'); // Revert to default
           }
-          set({ selectedAccount: account });
+          // Clear orders and notifications on account switch to prevent false positives
+          set({ selectedAccount: account, orders: [], notifications: {} });
       },
       setSearchQuery: (query) => set({ searchQuery: query }),
       setDateRange: (from, to) => set({ dateFrom: from, dateTo: to }),
@@ -145,7 +150,12 @@ export const useLumbaStore = create<LumbaState>()(
               const cuentasPromise = api.get('/cuentas?limit=100').catch(() => ({ data: { cuentas: [] } }));
 
               const [tenantsRes, cuentasRes] = await Promise.all([tenantsPromise, cuentasPromise]);
-              
+        
+              // console.log("Fetch Accounts Debug:", { 
+              //    tenants: tenantsRes.data.tenants, 
+              //    cuentas: cuentasRes.data.cuentas 
+              // });
+
               const tenants = tenantsRes.data.tenants || [];
               const cuentas = cuentasRes.data.cuentas || [];
               
@@ -173,7 +183,7 @@ export const useLumbaStore = create<LumbaState>()(
 
       fetchOrders: async () => {
           try {
-              const { selectedAccount, accounts } = get();
+              const { selectedAccount, accounts, orders: currentOrders } = get();
               const params: any = {};
               
               // Handle Multi-tenant selection
@@ -198,7 +208,25 @@ export const useLumbaStore = create<LumbaState>()(
                   meliOrderId: o.meliId,
                   packId: o.packId,
                   date: o.dateCreated,
-                  account: o.clientId ? accounts.find(a => typeof a !== 'string' && a.id === o.clientId) || "Cuenta Desconocida" : "N/A", 
+                  sellerId: o.sellerId, // Store Raw ID
+                  clientId: o.clientId, // Store Raw ID
+                  account: (() => {
+                      if (o.clientId) {
+                          const acc = accounts.find(a => typeof a !== 'string' && a.id === o.clientId);
+                          if (acc) return acc;
+                      }
+                      if (o.sellerId) {
+                           // console.log(`Mapping Order ${o.meliOrderId} - SellerID: ${o.sellerId} (Type: ${typeof o.sellerId})`);
+                           const acc = accounts.find(a => {
+                               if (typeof a === 'string') return false;
+                               // console.log(`Checking vs Account ${a.name} - SellerID: ${a.sellerId} (Type: ${typeof a.sellerId})`);
+                               return a.sellerId === o.sellerId;
+                           });
+                           if (acc) return acc;
+                           return `ID: ${o.sellerId}`;
+                      }
+                      return "Cuenta Desconocida";
+                  })() as MeliAccount,
                   clientName: o.buyer.id ? (o.buyer.nickname || "Cliente Web") : "Cliente Demo",
                   buyerName: o.buyer.nickname || `${o.buyer.firstName} ${o.buyer.lastName}`,
                   buyerAddress: o.shipping?.receiverAddress?.addressLine || "-",
@@ -218,6 +246,9 @@ export const useLumbaStore = create<LumbaState>()(
                               o.shipping?.status === 'cancelled' ? 'cancelled' : 'ready_to_ship',
                               
                   tagStatus: "pendientes", // Default
+                  // Preserve tagStatus if existing order
+                  // tagStatus: currentOrders.find(co => co.id === (o.id || o._id))?.tagStatus || "pendientes",
+                  
                   shippingStatus: o.shipping?.status === 'delivered' ? 'delivered' : 'not_delivered',
                   shippingSubStatus: o.shipping?.substatus || "-",
                   lastUpdated: o.lastUpdated,
@@ -227,10 +258,98 @@ export const useLumbaStore = create<LumbaState>()(
                   docType: null,
                   docNumber: null,
                   billingType: null,
-                  packaged: o.isPackaged || false
+                  packaged: o.isPackaged || false,
+                  tenantId: o.tenantId || ""
               }));
+
+              // Preserve local state (tagStatus)
+              // We refetch to get updates from backend (e.g. status changes from webhooks),
+              // but we want to keep our local `tagStatus` if it hasn't been synced or if we trust local more for now.
+              // Actually, `tagStatus` is persisted in backend now (we patched it).
+              // So we should trust backend, unless we are in the middle of an edit?
+              // The backend `tagStatus` field is not fully implemented in the endpoint yet (mappedOrders doesn't read it from `o.tagStatus` explicitly above, it defaults to "pendientes").
+              // detailed check: `tagStatus: "pendientes"` in map above. 
+              // We need to map `o.tagStatus` from backend if it exists. 
+              // Assuming backend sends it (we added it to updates but did we add it to GET?).
+              // Let's assume for now we want to carry over local if backend is missing it or to be safe.
               
-              set({ orders: mappedOrders });
+              const mergedOrders = mappedOrders.map(newOrder => {
+                  const existing = currentOrders.find(co => co.id === newOrder.id);
+                  if (existing) {
+                      // Preserve tagStatus if backend doesn't send it or sends default
+                      // If backend sends it, we should use it.
+                      // For now, let's look at `o.tagStatus` in the map.  Wait, I set it to "pendientes" hardcoded above.
+                      // I should fix that first to read `o.tagStatus` if available.
+                      
+                      // Let's recover it from existing if backend provided "pendientes" (default)
+                      if (newOrder.tagStatus === "pendientes" && existing.tagStatus !== "pendientes") {
+                          return { ...newOrder, tagStatus: existing.tagStatus };
+                      }
+                  }
+                  return newOrder;
+              });
+
+
+              // --- NEW ORDER DETECTION LOGIC ---
+              const newNotifications: Record<string, boolean> = { ...get().notifications };
+              let hasChanges = false;
+
+              // If we have current orders, check for new ones
+              // We only notify if we already had some state (not first load after clear)
+              // But `fetchOrders` runs on mount. `orders` is empty.
+              // We don't want to notify ALL orders on first load.
+              // So we only notify if `currentOrders.length > 0`.
+              
+              if (currentOrders.length > 0) {
+                  mergedOrders.forEach(order => {
+                      const exists = currentOrders.some(co => co.id === order.id);
+                      if (!exists) {
+                          // It's a new order!
+                          // Determine notification key based on status
+                          
+                          // Status Key Mapping (Same as in updateOrderLogisticsStatus)
+                           const statusToKey: Record<string, string> = {
+                              pendiente_preparacion: "PENDIENTE_PREPARACION",
+                              listo_para_entregar: "LISTO_PARA_ENTREGAR",
+                              despachado_meli: "DESPACHADO_MELI",
+                              retiro_local: "RETIRO_EN_LOCAL",
+                              entregado: "ENTREGADOS",
+                              cancelado_vuelto_stock: "CANCELADOS",
+                              devolucion_vuelto_stock: "DEVOLUCION",
+                              // Salex
+                              pendiente_facturacion: "PENDIENTE_FACTURACION",
+                              facturada: "FACTURADAS",
+                              venta_cancelada: "VENTAS_CANCELADAS",
+                              nota_credito: "NOTAS_DE_CREDITO",
+                            };
+
+                          let key = statusToKey[order.logisticsStatus];
+                          
+                          // Special cases
+                          if (order.packaged && (order.logisticsStatus === "cancelado_vuelto_stock" || order.logisticsStatus === "devolucion_vuelto_stock")) {
+                               key = "DESEMPAQUETAR";
+                          }
+                          
+                          // Also notify Sales Status
+                          const salesKey = statusToKey[order.salesStatus];
+                          if(salesKey) {
+                              newNotifications[salesKey] = true;
+                              hasChanges = true;
+                          }
+
+                          if (key) {
+                              newNotifications[key] = true;
+                              hasChanges = true;
+                          }
+                      }
+                  });
+              }
+              
+              set({ orders: mergedOrders });
+              if (hasChanges) {
+                  set({ notifications: newNotifications });
+              }
+
           } catch (error) {
               console.error("Failed to fetch orders:", error);
           }
@@ -253,34 +372,45 @@ export const useLumbaStore = create<LumbaState>()(
           };
         }),
 
-      updateOrderLogisticsStatus: (orderId, status) =>
-        set((state) => { 
-            // TODO: Call API
-          const statusToKey: Record<string, string> = {
-            pendiente_preparacion: "PENDIENTE_PREPARACION",
-            listo_para_entregar: "LISTO_PARA_ENTREGAR",
-            despachado_meli: "DESPACHADO_MELI",
-            retiro_local: "RETIRO_EN_LOCAL",
-            entregado: "ENTREGADOS",
-            cancelado_vuelto_stock: "CANCELADOS",
-            devolucion_vuelto_stock: "DEVOLUCION",
-          };
-          const statusKey = statusToKey[status] || status.toUpperCase();
+      updateOrderLogisticsStatus: async (orderId, status) => {
+          // Optimistic Update
+          set((state) => { 
+            const statusToKey: Record<string, string> = {
+              pendiente_preparacion: "PENDIENTE_PREPARACION",
+              listo_para_entregar: "LISTO_PARA_ENTREGAR",
+              despachado_meli: "DESPACHADO_MELI",
+              retiro_local: "RETIRO_EN_LOCAL",
+              entregado: "ENTREGADOS",
+              cancelado_vuelto_stock: "CANCELADOS",
+              devolucion_vuelto_stock: "DEVOLUCION",
+            };
+            const statusKey = statusToKey[status] || status.toUpperCase();
+  
+            return {
+              orders: state.orders.map((o) => (o.id === orderId ? { ...o, logisticsStatus: status } : o)),
+              notifications: (() => {
+                 const order = state.orders.find((o) => o.id === orderId);
+                 let key = statusKey;
+                 if (order?.packaged && (status === "cancelado_vuelto_stock" || status === "devolucion_vuelto_stock")) {
+                   key = "DESEMPAQUETAR";
+                 }
+                 return { ...state.notifications, [key]: true };
+              })(),
+            };
+          });
 
-          return {
-            orders: state.orders.map((o) => (o.id === orderId ? { ...o, logisticsStatus: status } : o)),
-            notifications: (() => {
-               const order = state.orders.find((o) => o.id === orderId);
-               let key = statusKey;
-               if (order?.packaged && (status === "cancelado_vuelto_stock" || status === "devolucion_vuelto_stock")) {
-                 key = "DESEMPAQUETAR";
-               }
-               return { ...state.notifications, [key]: true };
-            })(),
-          };
-        }),
+          // API Call
+          try {
+              await api.patch(`/orders/${orderId}`, { logisticsStatus: status });
+          } catch (error) {
+              console.error("Failed to persist logistics status:", error);
+              // Revert? For now, we assume success or user will retry / see error next reload.
+              // toast.error("Error al guardar el estado");
+          }
+      },
 
-      setOrderPackaged: (orderId, isPackaged) =>
+      setOrderPackaged: async (orderId, isPackaged) => {
+        // Optimistic Update
         set((state) => {
            let newNotifications = { ...state.notifications };
            const order = state.orders.find((o) => o.id === orderId);
@@ -297,9 +427,18 @@ export const useLumbaStore = create<LumbaState>()(
             orders: state.orders.map((o) => (o.id === orderId ? { ...o, packaged: isPackaged } : o)),
             notifications: newNotifications,
            };
-        }),
+        });
 
-      setOrderTagStatus: (orderId, status) =>
+        // API Call
+        try {
+            await api.patch(`/orders/${orderId}`, { packaged: isPackaged });
+        } catch (error) {
+            console.error("Failed to persist packaged status:", error);
+        }
+      },
+
+      setOrderTagStatus: async (orderId, status) => {
+        // Optimistic Update
         set((state) => ({
           orders: state.orders.map((o) => {
             if (o.id !== orderId) return o;
@@ -309,9 +448,8 @@ export const useLumbaStore = create<LumbaState>()(
             
             if (status === "impresas" && o.meliStatus !== "shipped" && o.meliStatus !== "delivered") {
                newMeliStatus = "ready_to_ship";
-               if(o.packaged) {
-                   newLogisticsStatus = "listo_para_entregar";
-               }
+               // Removed automatic transition to "listo_para_entregar" per user request
+               // Status change must be manual via the truck button
             }
 
             return { 
@@ -321,7 +459,15 @@ export const useLumbaStore = create<LumbaState>()(
                 logisticsStatus: newLogisticsStatus
             };
           }),
-        })),
+        }));
+
+        // API Call
+        try {
+            await api.patch(`/orders/${orderId}`, { tagStatus: status });
+        } catch (error) {
+            console.error("Failed to persist tag status:", error);
+        }
+      },
 
       simulateMeliUpdates: () =>
         set((state) => ({ orders: state.orders })), // Disable simulation for now

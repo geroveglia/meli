@@ -3,6 +3,7 @@ import mongoose, { Document, Schema } from "mongoose";
 export interface IOrder extends Document {
   tenantId: mongoose.Types.ObjectId;
   clientId?: mongoose.Types.ObjectId; // Reference to "Cuenta"
+  sellerId?: number;
   meliId: string;
   packId?: string;
   dateCreated: Date;
@@ -58,6 +59,7 @@ const orderSchema = new Schema<IOrder>(
   {
     tenantId: { type: Schema.Types.ObjectId, ref: "Tenant", required: true, index: true },
     clientId: { type: Schema.Types.ObjectId, ref: "Cuenta", index: true },
+    sellerId: { type: Number, index: true }, // MeLi Seller ID for robust mapping
     meliId: { type: String, required: true, unique: true, index: true },
     packId: { type: String },
     dateCreated: { type: Date, required: true },
