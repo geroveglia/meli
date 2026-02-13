@@ -255,6 +255,12 @@ export const LogisticaPage: React.FC = () => {
       return;
     }
 
+    if (action === "VER") {
+      const order = orderOrIds as Order;
+      setSelectedOrder(order);
+      return;
+    }
+
     if (action === "IMPRIMIR_ETIQUETA") {
       const confirmHtml = renderToStaticMarkup(
         <span className="flex items-center gap-2">

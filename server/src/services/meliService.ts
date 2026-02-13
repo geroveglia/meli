@@ -443,7 +443,7 @@ export const handleNotification = async (topic: string, resource: string, tenant
 
 
             if (
-                orderUpdate.payment.status === 'cancelled' || 
+                ['cancelled', 'partially_refunded', 'refunded'].includes(orderUpdate.payment.status) || 
                 (orderUpdate.shipping && (orderUpdate.shipping.status === 'cancelled' || orderUpdate.shipping.status === 'not_delivered')) ||
                 hasCancellationTags
             ) {

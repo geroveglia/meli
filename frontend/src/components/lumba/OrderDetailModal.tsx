@@ -56,7 +56,9 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ isOpen, onCl
                                             <div className="space-y-2">
                                                 <div>
                                                     <p className="text-xs text-gray-500 dark:text-gray-400">Cuenta</p>
-                                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{order.account}</p>
+                                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                                        {typeof order.account === 'string' ? order.account : order.account.name}
+                                                    </p>
                                                 </div>
                                                 <div>
                                                     <p className="text-xs text-gray-500 dark:text-gray-400">Fecha de Compra</p>
