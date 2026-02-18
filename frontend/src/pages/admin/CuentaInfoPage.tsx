@@ -31,23 +31,7 @@ const initialFormData: CuentaFormData = {
 
 /* ---------- Status Badge Helper ---------- */
 
-const getStatusBadge = (status: CuentaStatus) => {
-  const config = {
-    active: {
-      text: "Activo",
-      classes: "bg-accent-5 text-white",
-    },
-    inactive: {
-      text: "Inactivo",
-      classes: "bg-accent-3 text-accent-7",
-    },
-    lead: {
-      text: "Lead",
-      classes: "bg-accent-2 text-accent-7 border border-accent-4",
-    },
-  };
-  return config[status] || config["active"];
-};
+
 
 export const CuentaInfoPage = () => {
   const selectedCuenta = useCuentaContextStore((state) => state.selectedCuenta);
@@ -299,12 +283,7 @@ export const CuentaInfoPage = () => {
             title: selectedCuenta.name,
             subtitle: selectedCuenta.company || selectedCuenta.email,
             icon: faBuilding,
-            badges: [
-              {
-                text: getStatusBadge(selectedCuenta.status).text,
-                variant: selectedCuenta.status === "active" ? "success" : selectedCuenta.status === "lead" ? "warning" : "default",
-              },
-            ],
+
           }}
           footer={
             canManage

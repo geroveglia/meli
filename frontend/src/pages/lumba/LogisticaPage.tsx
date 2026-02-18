@@ -588,28 +588,92 @@ export const LogisticaPage: React.FC = () => {
   // --- Info Modal State ---
   const [isInfoOpen, setIsInfoOpen] = useState(false);
 
-  const infoContent = (
-    <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
-      <p>Acciones disponibles para gestionar la logística de tus envíos:</p>
-      <ul className="list-disc pl-5 space-y-2">
-        <li>
-          <strong>Empaquetar:</strong> Marca la orden como empaquetada, habilitando la impresión de etiqueta.
-        </li>
-        <li>
-          <strong>Imprimir:</strong> Descarga la etiqueta de envío y marca la orden como etiquetada.
-        </li>
-        <li>
-          <strong>Listo:</strong> Marca la orden como lista para entregar al correo o colecta.
-        </li>
-        <li>
-          <strong>Reimprimir:</strong> Permite volver a imprimir la etiqueta si es necesario.
-        </li>
-        <li>
-          <strong>Ver detalle:</strong> Muestra toda la información detallada de la orden.
-        </li>
-      </ul>
-    </div>
-  );
+  const tabInfoContent: Record<string, React.ReactNode> = {
+    TODAS: (
+      <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+        <p>Visión general de todos los pedidos. Utiliza los filtros superiores para buscar por:</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>ID de pedido o nombre de comprador.</li>
+          <li>Rango de fechas.</li>
+          <li>Cuenta o Tenant específico.</li>
+        </ul>
+      </div>
+    ),
+    PENDIENTE_PREPARACION: (
+      <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+        <p><strong>Pedidos nuevos pendientes de preparación.</strong></p>
+        <p>Flujo de trabajo sugerido:</p>
+        <ol className="list-decimal pl-5 space-y-1">
+          <li>Verifica que tienes el stock físico.</li>
+          <li>Presiona <strong>Empaquetar</strong> para bloquear el stock.</li>
+          <li>Presiona <strong>Imprimir Etiqueta</strong> y pégala en el paquete.</li>
+          <li>Presiona <strong>Listo para entregar</strong> para finalizar la preparación.</li>
+        </ol>
+      </div>
+    ),
+    LISTO_PARA_ENTREGAR: (
+      <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+        <p><strong>Pedidos listos para despacho.</strong></p>
+        <p>Estos paquetes ya tienen su etiqueta pegada y están esperando ser:</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Despachados en una sucursal de correo.</li>
+          <li>Retirados por la colecta de MercadoLibre.</li>
+        </ul>
+        <p className="text-xs text-gray-500 mt-2">El estado cambiará automáticamente a "Despachado" cuando el correo escanee la etiqueta.</p>
+      </div>
+    ),
+    DESPACHADO_MELI: (
+      <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+        <p><strong>Pedidos en tránsito.</strong></p>
+        <p>Estos pedidos ya fueron entregados al correo y están camino al comprador.</p>
+        <p>No requieren ninguna acción manual.</p>
+      </div>
+    ),
+    RETIRO_EN_LOCAL: (
+      <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+        <p><strong>Retiro en sucursal.</strong></p>
+        <p>El comprador pasará a buscar el producto por el local.</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Verifica la identidad del comprador al entregar.</li>
+          <li>Presiona <strong>Marcar Entregado</strong> una vez que el producto haya sido retirado.</li>
+        </ul>
+      </div>
+    ),
+    ENTREGADOS: (
+      <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+        <p><strong>Historial de entregas finalizadas.</strong></p>
+        <p>Aquí puedes consultar pedidos pasados que ya fueron recibidos por el comprador.</p>
+      </div>
+    ),
+    CANCELADOS: (
+      <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+        <p><strong>Pedidos cancelados.</strong></p>
+        <p>La venta fue cancelada por el comprador o por falta de stock antes de ser despachada.</p>
+        <p className="text-yellow-600 dark:text-yellow-500 font-medium">Nota: Si el pedido ya estaba empaquetado, aparecerá en la pestaña "Desempaquetar".</p>
+      </div>
+    ),
+    DEVOLUCION: (
+      <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+        <p><strong>Devoluciones iniciadas.</strong></p>
+        <p>El comprador ha iniciado un reclamo o devolución después de recibir el producto.</p>
+        <p>Debes estar atento a la recepción del producto devuelto.</p>
+      </div>
+    ),
+    DESEMPAQUETAR: (
+      <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+        <p><strong>Recuperación de Stock Físico.</strong></p>
+        <p>Aquí aparecen los pedidos que fueron <strong>Cancelados</strong> o son <strong>Devoluciones</strong>, pero que físicamente el sistema considera "Empaquetados".</p>
+        <p><strong>Acción requerida:</strong></p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Busca el paquete físico.</li>
+          <li>Quita el producto de la caja/bolsa.</li>
+          <li>Presiona <strong>Desempaquetar</strong> para devolver el producto al stock disponible.</li>
+        </ul>
+      </div>
+    ),
+  };
+
+  const currentInfoContent = tabInfoContent[activeTab] || tabInfoContent["TODAS"];
 
   // --- Title Mapping ---
   const tabTitles: Record<string, string> = {
@@ -637,8 +701,8 @@ export const LogisticaPage: React.FC = () => {
         isOpen: isInfoOpen,
         onOpen: () => setIsInfoOpen(true),
         onClose: () => setIsInfoOpen(false),
-        title: "Ayuda Logística",
-        content: infoContent,
+        title: `Información: ${pageTitle}`,
+        content: currentInfoContent,
       }}
       searchAndFilters={
         <SearchAndFilters

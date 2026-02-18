@@ -29,6 +29,7 @@ export const MobileNavbar: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false); // New State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [, setAdminAccordionOpen] = useState(true);
+  const [isDocOpen, setIsDocOpen] = useState(false);
 
   // No renderizar el Navbar en rutas públicas
   const publicRoutes = ["/login", "/register", "/register-client"];
@@ -122,7 +123,8 @@ export const MobileNavbar: React.FC = () => {
     } else if (["/admin/carousel-images", "/admin/general", "/admin/seo"].includes(location.pathname)) {
       setOpenAdminSection("general");
     } else if (location.pathname.startsWith("/admin/doc")) {
-      setOpenAdminSection("doc");
+      setOpenAdminSection("general");
+      setIsDocOpen(true);
     } else if (["/admin/roles", "/admin/users"].includes(location.pathname)) {
       setOpenAdminSection("users");
     }
@@ -641,68 +643,7 @@ export const MobileNavbar: React.FC = () => {
           </div>
         )}
 
-            {/* Documentación - como menú desplegable */}
-              {(
-                <div>
-                  <button onClick={() => toggleAdminSection("doc")} className={`w-full group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${location.pathname.startsWith("/admin/doc") ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}>
-                    <div className="flex items-center space-x-3 flex-1 min-w-0">
-                      <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${location.pathname.startsWith("/admin/doc") ? "bg-white text-blue-600" : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"}`}>
-                        <FontAwesomeIcon icon={faBook} className="h-4 w-4" />
-                      </div>
-                      <span className="font-medium truncate">Documentación</span>
-                    </div>
-                    <FontAwesomeIcon icon={faChevronDown} className={`h-3 w-3 text-gray-400 transform transition-transform ${openAdminSection === "doc" ? "rotate-180" : ""}`} />
-                  </button>
 
-                  <AnimatePresence initial={false}>
-                    {openAdminSection === "doc" && (
-                      <motion.nav
-                        key="doc"
-                        initial="collapsed"
-                        animate="open"
-                        exit="collapsed"
-                        variants={{
-                          open: { opacity: 1, height: "auto" },
-                          collapsed: { opacity: 0, height: 0 },
-                        }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="overflow-hidden space-y-1 ml-4"
-                      >
-                         <div className="py-1">
-                          <div className="pl-2 pt-2 pb-1 text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">General</div>
-                           {[
-                              { label: "Introducción", path: "/admin/doc" },
-                              { label: "Estructura del Proyecto", path: "/admin/doc/structure" },
-                           ].map((sub) => (
-                              <Link
-                                key={sub.path}
-                                to={sub.path}
-                                onClick={() => setOpen(false)}
-                                className={`group relative flex items-center justify-between px-2 py-1.5 rounded-lg transition-all ${location.pathname === sub.path ? "!bg-gray-100 !text-accent-1" : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900"}`}
-                              >
-                                <span className="font-medium truncate text-sm">{sub.label}</span>
-                              </Link>
-                           ))}
-
-                           <div className="pl-2 pt-2 pb-1 text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">Lumba (MercadoLibre)</div>
-                           {[
-                              { label: "Lógica & Estados", path: "/admin/doc/meli-logic" },
-                           ].map((sub) => (
-                              <Link
-                                key={sub.path}
-                                to={sub.path}
-                                onClick={() => setOpen(false)}
-                                className={`group relative flex items-center justify-between px-2 py-1.5 rounded-lg transition-all ${location.pathname === sub.path ? "!bg-gray-100 !text-accent-1" : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900"}`}
-                              >
-                                <span className="font-medium truncate text-sm">{sub.label}</span>
-                              </Link>
-                           ))}
-                         </div>
-                      </motion.nav>
-                    )}
-                  </AnimatePresence>
-                </div>
-              )}
 
         {cuentaItem && (dashboardItem || tenantsItem || userAdminItems.length > 0) && <div className="border-t border-gray-200 dark:border-gray-700 mx-4 my-3" />}
 
@@ -766,6 +707,70 @@ export const MobileNavbar: React.FC = () => {
                         <span className="font-medium truncate">Facturación</span>
                       </div>
                     </Link>
+
+                    {/* Documentación - Submenú */}
+                    <div>
+                      <button 
+                        onClick={() => setIsDocOpen(!isDocOpen)} 
+                        className={`w-full group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${location.pathname.startsWith("/admin/doc") ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}
+                      >
+                        <div className="flex items-center space-x-3 flex-1 min-w-0">
+                          <div className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${location.pathname.startsWith("/admin/doc") ? "bg-white text-blue-600" : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"}`}>
+                            <FontAwesomeIcon icon={faBook} className="h-4 w-4" />
+                          </div>
+                          <span className="font-medium truncate">Documentación</span>
+                        </div>
+                        <FontAwesomeIcon icon={faChevronDown} className={`h-3 w-3 text-gray-400 transform transition-transform ${isDocOpen ? "rotate-180" : ""}`} />
+                      </button>
+
+                      <AnimatePresence initial={false}>
+                        {isDocOpen && (
+                          <motion.nav
+                            key="doc-submenu"
+                            initial="collapsed"
+                            animate="open"
+                            exit="collapsed"
+                            variants={{
+                              open: { opacity: 1, height: "auto" },
+                              collapsed: { opacity: 0, height: 0 },
+                            }}
+                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                            className="overflow-hidden space-y-1 ml-4"
+                          >
+                             <div className="py-1">
+                              <div className="pl-2 pt-2 pb-1 text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">General</div>
+                               {[
+                                  { label: "Introducción", path: "/admin/doc" },
+                                  { label: "Estructura del Proyecto", path: "/admin/doc/structure" },
+                               ].map((sub) => (
+                                  <Link
+                                    key={sub.path}
+                                    to={sub.path}
+                                    onClick={() => setOpen(false)}
+                                    className={`group relative flex items-center justify-between px-2 py-1.5 rounded-lg transition-all ${location.pathname === sub.path ? "!bg-gray-100 !text-accent-1" : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900"}`}
+                                  >
+                                    <span className="font-medium truncate text-sm">{sub.label}</span>
+                                  </Link>
+                               ))}
+
+                               <div className="pl-2 pt-2 pb-1 text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">Lumba (MercadoLibre)</div>
+                               {[
+                                  { label: "Lógica & Estados", path: "/admin/doc/meli-logic" },
+                               ].map((sub) => (
+                                  <Link
+                                    key={sub.path}
+                                    to={sub.path}
+                                    onClick={() => setOpen(false)}
+                                    className={`group relative flex items-center justify-between px-2 py-1.5 rounded-lg transition-all ${location.pathname === sub.path ? "!bg-gray-100 !text-accent-1" : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900"}`}
+                                  >
+                                    <span className="font-medium truncate text-sm">{sub.label}</span>
+                                  </Link>
+                               ))}
+                             </div>
+                          </motion.nav>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
                 </motion.nav>
               )}

@@ -6,6 +6,7 @@ import axios from "../../api/axiosConfig";
 import { toast } from "sonner";
 import { Switch } from "@headlessui/react";
 import { PageLayout } from "../../components/PageLayout";
+import { sweetAlert } from "../../utils/sweetAlert";
 
 interface BillingSettings {
   autoBilling: boolean;
@@ -42,7 +43,7 @@ export const ConfiguracionPage: React.FC = () => {
     try {
       const response = await axios.put("/tenants/current/billing-settings", settings);
       setSettings(response.data);
-      toast.success("Configuración guardada correctamente");
+      sweetAlert.success("¡Guardado!", "Los cambios se han guardado correctamente.");
     } catch (error) {
       console.error("Error saving billing settings:", error);
       toast.error("Error al guardar la configuración");

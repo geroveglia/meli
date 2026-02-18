@@ -5,6 +5,7 @@ import { Tenant } from "../models/Tenant.js";
 import { Cuenta } from "../models/Cuenta.js";
 import { AuthenticatedRequest } from "../middleware/auth.js";
 import mongoose from "mongoose";
+import { Order } from "../models/Order.js";
 
 // Helper to encode state
 const encodeState = (tenantId: string, cuentaId?: string) => {
@@ -243,6 +244,98 @@ export const sync = async (req: Request, res: Response) => {
     } catch (e) {
         console.error("Sync error:", e);
         res.status(500).json({ error: "Failed to start sync" });
+    }
+};
+
+export const getDashboardStats = async (req: Request, res: Response) => {
+    const authReq = req as AuthenticatedRequest;
+    const tenantId = authReq.tenantId;
+
+    if (!tenantId) {
+        return res.status(400).json({ error: "Tenant ID required" });
+    }
+
+    try {
+        // Aggregation for Total Orders and Revenue
+        const totalStats = await Order.aggregate([
+            { $match: { 
+                tenantId: new mongoose.Types.ObjectId(tenantId),
+                // Exclude cancelled sales from even counting? Maybe. 
+                // Usually dashboard shows Volume. Let's keep it simple.
+            }},
+            {
+                $group: {
+                    _id: null,
+                    count: { $sum: 1 },
+                    // Only sum revenue if not cancelled? Or total processed?
+                    // Let's rely on payment.status = 'approved' for revenue
+                    totalRevenue: { 
+                        $sum: { 
+                            $cond: [{ $eq: ["$payment.status", "approved"] }, "$payment.total", 0] 
+                        } 
+                    }
+                }
+            }
+        ]);
+
+        // Aggregation for Logistics Status
+        const statusStats = await Order.aggregate([
+            { $match: { tenantId: new mongoose.Types.ObjectId(tenantId) } },
+            {
+                $group: {
+                    _id: "$logisticsStatus",
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+
+        // Aggregation for Sales History (Last 7 days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
+        const salesHistory = await Order.aggregate([
+            { $match: { 
+                tenantId: new mongoose.Types.ObjectId(tenantId),
+                dateCreated: { $gte: sevenDaysAgo }
+            }},
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$dateCreated" } },
+                    orders: { $sum: 1 },
+                    revenue: { 
+                        $sum: { 
+                            $cond: [{ $eq: ["$payment.status", "approved"] }, "$payment.total", 0] 
+                        } 
+                    }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+
+        const totalOrders = totalStats[0]?.count || 0;
+        const totalRevenue = totalStats[0]?.totalRevenue || 0;
+
+        res.json({
+            orders: {
+                total: totalOrders,
+                revenue: totalRevenue,
+                average: totalOrders > 0 ? totalRevenue / totalOrders : 0
+            },
+            statusDistribution: statusStats.map(s => ({ 
+                name: s._id || "Desconocido", 
+                value: s.count 
+            })),
+            salesHistory: salesHistory.map(h => ({
+                date: h._id,
+                orders: h.orders,
+                revenue: h.revenue
+            }))
+        });
+
+    } catch (e) {
+        console.error("Error fetching dashboard stats:", e);
+        res.status(500).json({ error: "Failed to fetch stats" });
     }
 };
 
