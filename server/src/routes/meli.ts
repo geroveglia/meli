@@ -1,6 +1,6 @@
 
 import { Router } from "express";
-import { getAuth, callback, webhook, disconnect } from "../controllers/meliController.js";
+import { getAuth, callback, webhook, disconnect, sync } from "../controllers/meliController.js";
 import { authenticateToken } from "../middleware/auth.js";
 
 const router = Router();
@@ -12,5 +12,6 @@ router.post("/disconnect", authenticateToken, disconnect);
 // Public routes for MELI callbacks
 router.get("/callback", callback);
 router.post("/notifications", webhook);
+router.post("/sync", authenticateToken, sync);
 
 export { router as meliRouter };

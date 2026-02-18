@@ -341,154 +341,185 @@ export const handleNotification = async (topic: string, resource: string, tenant
             const orderData = await fetchMeliResource(resource, accessToken);
             logDebug(`Order Data: ${JSON.stringify(orderData)}`);
 
-            // Fetch Shipping info if available
-            let shippingData = null;
-            if (orderData.shipping && orderData.shipping.id) {
-                try {
-                    shippingData = await fetchMeliResource(`/shipments/${orderData.shipping.id}`, accessToken);
-                } catch (err) {
-                    console.warn(`Could not fetch shipment ${orderData.shipping.id}`, err);
-                    logDebug(`Error fetching shipment ${orderData.shipping.id}: ${err}`);
-                }
-            }
-
-            // Map to our Order Model
-            // Logic for internal status mappings
-            let computedLogisticsStatus = 'pendiente_preparacion';
-            if (shippingData) {
-                if (shippingData.status === 'delivered') computedLogisticsStatus = 'entregado';
-                else if (shippingData.status === 'shipped') computedLogisticsStatus = 'despachado_meli';
-            } else {
-                // If no shipping (e.g. pickup), check if fulfilled
-                if (orderData.fulfilled) computedLogisticsStatus = 'entregado';
-            }
-
-            // Map to our Order Model
-            const orderUpdate = {
-                tenantId: tenantObjectId,
-                clientId: clientId || undefined,
-                sellerId: orderData.seller?.id, // Capture Seller ID
-                meliId: orderData.id.toString(),
-                packId: orderData.pack_id ? orderData.pack_id.toString() : null,
-                dateCreated: new Date(orderData.date_created),
-                lastUpdated: new Date(orderData.last_updated),
-                
-                buyer: {
-                    id: orderData.buyer.id,
-                    nickname: orderData.buyer.nickname,
-                    firstName: orderData.buyer.first_name,
-                    lastName: orderData.buyer.last_name,
-                },
-
-                items: orderData.order_items.map((item: any) => ({
-                    id: item.item.id,
-                    title: item.item.title,
-                    quantity: item.quantity,
-                    unitPrice: item.unit_price,
-                    currencyId: item.currency_id,
-                })),
-
-                payment: {
-                    total: orderData.total_amount,
-                    currencyId: orderData.currency_id,
-                    status: orderData.status,
-                },
-
-                shipping: shippingData ? {
-                    id: shippingData.id,
-                    status: shippingData.status,
-                    substatus: shippingData.substatus,
-                    trackingNumber: shippingData.tracking_number,
-                    serviceId: shippingData.service_id,
-                    receiverAddress: shippingData.receiver_address ? {
-                        addressLine: shippingData.receiver_address.address_line,
-                        city: shippingData.receiver_address.city.name,
-                        state: shippingData.receiver_address.state.name,
-                        zipCode: shippingData.receiver_address.zip_code,
-                        country: shippingData.receiver_address.country.name
-                    } : undefined
-                } : undefined,
-                
-                salesStatus: 'pendiente_facturacion' as any,
-                logisticsStatus: computedLogisticsStatus as any,
-                tags: orderData.tags || [], // Map tags
-            };
-
-
-
-
-
-            // Upsert Order
-            // Automations based on Computed Logistics Status (Checking fulfilled or shipping status)
-            // Apply these to the orderUpdate object directly so they apply to NEW and EXISTING orders
-            if (orderUpdate.logisticsStatus === 'entregado' || orderUpdate.logisticsStatus === 'despachado_meli') {
-                // computedLogisticsStatus already handles this, but ensuring consistency
-            }
-
-            // Enhanced check for active shipping
-            const isShippingActive = orderUpdate.shipping && (
-                ['pending', 'ready_to_ship', 'shipped', 'delivered'].includes(orderUpdate.shipping.status) ||
-                // Also consider active if status is undefined/null but we have an ID, or if it's not explicitly cancelled/not_delivered
-                !['cancelled', 'not_delivered'].includes(orderUpdate.shipping.status)
-            );
-            
-            // Pickup Handling
-            const isPickup = orderUpdate.tags && orderUpdate.tags.includes('no_shipping');
-
-            const hasCancellationTags = orderUpdate.tags && (
-                orderUpdate.tags.includes('cancelled') || 
-                (orderUpdate.tags.includes('not_delivered') && !isShippingActive && !isPickup) // Ignore not_delivered for pickup orders
-            );
-
-
-
-            if (
-                ['cancelled', 'partially_refunded', 'refunded'].includes(orderUpdate.payment.status) || 
-                (orderUpdate.shipping && (orderUpdate.shipping.status === 'cancelled' || orderUpdate.shipping.status === 'not_delivered')) ||
-                hasCancellationTags
-            ) {
-                orderUpdate.salesStatus = 'venta_cancelada';
-                orderUpdate.logisticsStatus = 'cancelado_vuelto_stock'; 
-            }
-
-            // Upsert Order
-            const existingOrder = await Order.findOne({ meliId: orderUpdate.meliId });
-            
-            if (existingOrder) {
-                // Update existing
-                // Only update status if meaningful changes
-                existingOrder.lastUpdated = orderUpdate.lastUpdated;
-                existingOrder.payment = orderUpdate.payment; // update status
-                
-                // Ensure clientId is set if missing
-                if (clientId && !existingOrder.clientId) {
-                    existingOrder.clientId = new mongoose.Types.ObjectId(clientId);
-                }
-
-                if (orderUpdate.shipping) {
-                    existingOrder.shipping = orderUpdate.shipping;
-                }
-                
-                // Update internal statuses if changed in orderUpdate
-                existingOrder.salesStatus = orderUpdate.salesStatus;
-                
-                // Prevent regression: If we are 'listo_para_entregar' internally, and MeLi says 'pendiente_preparacion' (ready_to_ship), keep our internal state.
-                // We only overwrite if MeLi advances to 'despachado_meli', 'entregado', or 'cancelado'.
-                if (existingOrder.logisticsStatus === 'listo_para_entregar' && orderUpdate.logisticsStatus === 'pendiente_preparacion') {
-                    // Keep existing
-                } else {
-                    existingOrder.logisticsStatus = orderUpdate.logisticsStatus;
-                }
-
-                await existingOrder.save();
-                console.log(`Order ${orderUpdate.meliId} updated.`);
-            } else {
-                // New Order
-                await Order.create(orderUpdate);
-                console.log(`Order ${orderUpdate.meliId} created.`);
-            }
+            // Use the extracted function
+            await processOrder(orderData, tenantId, clientId, accessToken); 
         }
     } catch (error) {
         console.error("Error processing resource:", error);
     }
 };
+
+// Extracting logic to process a single order data object
+export const processOrder = async (orderData: any, tenantId: string, clientId?: string, accessToken?: string) => {
+    try {
+        logDebug(`Processing Order: ${orderData.id}`);
+
+        // Fetch Shipping info if available
+        let shippingData = null;
+        if (orderData.shipping && orderData.shipping.id && accessToken) {
+            try {
+                shippingData = await fetchMeliResource(`/shipments/${orderData.shipping.id}`, accessToken);
+            } catch (err) {
+                console.warn(`Could not fetch shipment ${orderData.shipping.id}`, err);
+                logDebug(`Error fetching shipment ${orderData.shipping.id}: ${err}`);
+            }
+        }
+
+        // Map to our Order Model
+        // Logic for internal status mappings
+        let computedLogisticsStatus = 'pendiente_preparacion';
+        if (shippingData) {
+            if (shippingData.status === 'delivered') computedLogisticsStatus = 'entregado';
+            else if (shippingData.status === 'shipped') computedLogisticsStatus = 'despachado_meli';
+        } else {
+            // If no shipping (e.g. pickup), check if fulfilled
+            if (orderData.fulfilled) computedLogisticsStatus = 'entregado';
+        }
+
+        // Map to our Order Model
+        const orderUpdate = {
+            tenantId: new mongoose.Types.ObjectId(tenantId),
+            clientId: clientId ? new mongoose.Types.ObjectId(clientId) : undefined,
+            sellerId: orderData.seller?.id, // Capture Seller ID
+            meliId: orderData.id.toString(),
+            packId: orderData.pack_id ? orderData.pack_id.toString() : null,
+            dateCreated: new Date(orderData.date_created),
+            lastUpdated: new Date(orderData.last_updated),
+            
+            buyer: {
+                id: orderData.buyer.id,
+                nickname: orderData.buyer.nickname,
+                firstName: orderData.buyer.first_name,
+                lastName: orderData.buyer.last_name,
+            },
+
+            items: orderData.order_items.map((item: any) => ({
+                id: item.item.id,
+                title: item.item.title,
+                quantity: item.quantity,
+                unitPrice: item.unit_price,
+                currencyId: item.currency_id,
+            })),
+
+            payment: {
+                total: orderData.total_amount,
+                currencyId: orderData.currency_id,
+                status: orderData.status,
+            },
+
+            shipping: shippingData ? {
+                id: shippingData.id,
+                status: shippingData.status,
+                substatus: shippingData.substatus,
+                trackingNumber: shippingData.tracking_number,
+                serviceId: shippingData.service_id,
+                receiverAddress: shippingData.receiver_address ? {
+                    addressLine: shippingData.receiver_address.address_line,
+                    city: shippingData.receiver_address.city.name,
+                    state: shippingData.receiver_address.state.name,
+                    zipCode: shippingData.receiver_address.zip_code,
+                    country: shippingData.receiver_address.country.name
+                } : undefined
+            } : undefined,
+            
+            salesStatus: 'pendiente_facturacion' as any,
+            logisticsStatus: computedLogisticsStatus as any,
+            tags: orderData.tags || [], // Map tags
+        };
+
+        // Automations based on Computed Logistics Status (Checking fulfilled or shipping status)
+        // Apply these to the orderUpdate object directly so they apply to NEW and EXISTING orders
+        if (orderUpdate.logisticsStatus === 'entregado' || orderUpdate.logisticsStatus === 'despachado_meli') {
+            // computedLogisticsStatus already handles this, but ensuring consistency
+        }
+
+        // Enhanced check for active shipping
+        const isShippingActive = orderUpdate.shipping && (
+            ['pending', 'ready_to_ship', 'shipped', 'delivered'].includes(orderUpdate.shipping.status) ||
+            // Also consider active if status is undefined/null but we have an ID, or if it's not explicitly cancelled/not_delivered
+            !['cancelled', 'not_delivered'].includes(orderUpdate.shipping.status)
+        );
+        
+        // Pickup Handling
+        const isPickup = orderUpdate.tags && orderUpdate.tags.includes('no_shipping');
+
+        const hasCancellationTags = orderUpdate.tags && (
+            orderUpdate.tags.includes('cancelled') || 
+            (orderUpdate.tags.includes('not_delivered') && !isShippingActive && !isPickup) // Ignore not_delivered for pickup orders
+        );
+
+        if (
+            ['cancelled', 'partially_refunded', 'refunded'].includes(orderUpdate.payment.status) || 
+            (orderUpdate.shipping && (orderUpdate.shipping.status === 'cancelled' || orderUpdate.shipping.status === 'not_delivered')) ||
+            hasCancellationTags
+        ) {
+            orderUpdate.salesStatus = 'venta_cancelada';
+            orderUpdate.logisticsStatus = 'cancelado_vuelto_stock'; 
+        }
+
+        // Upsert Order
+        const existingOrder = await Order.findOne({ meliId: orderUpdate.meliId });
+        
+        if (existingOrder) {
+            // Update existing
+            // Only update status if meaningful changes
+            existingOrder.lastUpdated = orderUpdate.lastUpdated;
+            existingOrder.payment = orderUpdate.payment; // update status
+            
+            // Ensure clientId is set if missing
+            if (clientId && !existingOrder.clientId) {
+                existingOrder.clientId = new mongoose.Types.ObjectId(clientId);
+            }
+
+            // Update sellerId if missing
+            if (!existingOrder.sellerId && orderUpdate.sellerId) {
+                existingOrder.sellerId = orderUpdate.sellerId;
+            }
+
+            if (orderUpdate.shipping) {
+                existingOrder.shipping = orderUpdate.shipping;
+            }
+            
+            // Update internal statuses if changed in orderUpdate
+            existingOrder.salesStatus = orderUpdate.salesStatus;
+            
+            // Prevent regression: If we are 'listo_para_entregar' internally, and MeLi says 'pendiente_preparacion' (ready_to_ship), keep our internal state.
+            // We only overwrite if MeLi advances to 'despachado_meli', 'entregado', or 'cancelado'.
+            if (existingOrder.logisticsStatus === 'listo_para_entregar' && orderUpdate.logisticsStatus === 'pendiente_preparacion') {
+                // Keep existing
+            } else {
+                existingOrder.logisticsStatus = orderUpdate.logisticsStatus;
+            }
+
+            await existingOrder.save();
+            console.log(`Order ${orderUpdate.meliId} updated.`);
+        } else {
+            // New Order
+            await Order.create(orderUpdate);
+            console.log(`Order ${orderUpdate.meliId} created.`);
+        }
+    } catch (e) {
+        console.error(`Error processing order ${orderData.id}:`, e);
+    }
+}
+
+export const syncRecentOrders = async (tenantId: string, clientId?: string, accessToken?: string, sellerId?: number) => {
+    if (!accessToken || !sellerId) return;
+    
+    console.log(`[Sync] Starting initial sync for Seller ${sellerId}`);
+    try {
+        // Fetch last 50 orders
+        const searchUrl = `/orders/search?seller=${sellerId}&sort=date_desc&limit=50`;
+        const result = await fetchMeliResource(searchUrl, accessToken);
+        
+        if (result && result.results) {
+            console.log(`[Sync] Found ${result.results.length} orders to sync.`);
+            for (const order of result.results) {
+                await processOrder(order, tenantId, clientId, accessToken);
+            }
+        }
+    } catch (e) {
+        console.error("[Sync] Error syncing recent orders:", e);
+    }
+}
+

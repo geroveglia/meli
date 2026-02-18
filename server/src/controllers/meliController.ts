@@ -107,8 +107,14 @@ export const callback = async (req: Request, res: Response) => {
                 }
             });
             console.log(`Linked MELI to Tenant: ${tenantId}`);
+            console.log(`Linked MELI to Tenant: ${tenantId}`);
         }
 
+        // Trigger initial sync of orders
+        // We don't await this to avoid blocking the user redirection
+        import("../services/meliService.js").then(({ syncRecentOrders }) => {
+            syncRecentOrders(tenantId, cuentaId, tokenData.accessToken, tokenData.sellerId);
+        });
         // Redirect to Frontend
         // Ideally, we redirect to a success page on the frontend
         // We know the frontend URL from CORS_ORIGIN or hardcoded
@@ -195,6 +201,48 @@ export const disconnect = async (req: Request, res: Response) => {
     } catch (e) {
         console.error("Error disconnecting MELI:", e);
         res.status(500).json({ error: "Failed to disconnect" });
+    }
+};
+
+export const sync = async (req: Request, res: Response) => {
+    const authReq = req as AuthenticatedRequest;
+    const tenantId = authReq.tenantId;
+    const { cuentaId } = req.body;
+
+    if (!tenantId) {
+        return res.status(400).json({ error: "Tenant ID required" });
+    }
+
+    try {
+        let accessToken;
+        let sellerId; 
+
+        if (cuentaId) {
+             const cuenta = await Cuenta.findOne({ _id: cuentaId, tenantId });
+             if (!cuenta || !cuenta.mercadolibre?.accessToken) {
+                 return res.status(404).json({ error: "Cuenta not connected" });
+             }
+             accessToken = cuenta.mercadolibre.accessToken;
+             sellerId = cuenta.mercadolibre.sellerId;
+        } else {
+            const tenant = await Tenant.findById(tenantId);
+             if (!tenant || !tenant.mercadolibre?.accessToken) {
+                 return res.status(404).json({ error: "Tenant not connected" });
+             }
+             accessToken = tenant.mercadolibre.accessToken;
+             sellerId = tenant.mercadolibre.sellerId;
+        }
+
+        // Trigger sync
+        import("../services/meliService.js").then(({ syncRecentOrders }) => {
+            syncRecentOrders(tenantId, cuentaId, accessToken, sellerId);
+        });
+
+        res.json({ message: "Sync started in background" });
+
+    } catch (e) {
+        console.error("Sync error:", e);
+        res.status(500).json({ error: "Failed to start sync" });
     }
 };
 
