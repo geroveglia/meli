@@ -124,6 +124,11 @@ const orderSchema = new Schema<IOrder>(
     },
 
     tags: [{ type: String }],
+    tagStatus: {
+      type: String,
+      enum: ["pendientes", "impresas", "error"],
+      default: "pendientes",
+    },
     isPackaged: { type: Boolean, default: false },
     invoiceId: { type: String },
   },

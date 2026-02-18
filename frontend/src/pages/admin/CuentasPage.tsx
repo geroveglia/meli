@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
-import { useLumbaStore } from "../../stores/lumbaStore";
 import { cuentasAPI, Cuenta, CuentaStatus, CreateCuentaData, UpdateCuentaData } from "../../api/cuentas";
-import { meliService } from "../../services/meliService";
 
 import { PageLayout } from "../../components/PageLayout";
 import { SearchAndFilters } from "../../components/SearchAndFilters";
@@ -16,6 +14,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBuilding, faEdit, faTrash, faPlus, faEnvelope, faMapMarkerAlt, faPlug } from "@fortawesome/free-solid-svg-icons";
 import { CuentaForm, CuentaFormData } from "../../components/cuentas/CuentaForm";
 import { CuentaDetails } from "../../components/cuentas/CuentaDetails";
+import { useMeliConnection } from "../../hooks/useMeliConnection";
+import { toast } from "sonner";
+import { useLocation } from "react-router-dom";
 
 /* ---------- Types ---------- */
 
@@ -49,85 +50,28 @@ const getStatusBadge = (status: CuentaStatus) => {
 
 /* ---------- Component ---------- */
 
-import Swal from "sweetalert2";
-
 export const CuentasPage: React.FC = () => {
   const { hasPermission } = useAuthStore();
- 
-  // const navigate = useNavigate(); // Unused
-  // const { setAccount, fetchAccounts: fetchStoreAccounts } = useLumbaStore(); // Unused in new flow
+  
+  const { connect: handleConnectMeli, disconnect: handleDisconnectMeli } = useMeliConnection(() => {
+    fetchCuentas({ silent: true });
+    emitCuentasChanged();
+  });
 
-  const handleConnectMeli = async (cuenta: Cuenta) => {
-      const result = await Swal.fire({
-          title: "Conectar con MercadoLibre",
-          html: `
-            <div class="text-sm text-gray-600">
-                <p class="mb-3">Serás redirigido a MercadoLibre para autorizar la conexión.</p>
-                <div class="bg-yellow-50 p-3 rounded-md border border-yellow-200 text-left mb-3">
-                    <p class="font-bold text-yellow-800 mb-1">⚠️ Importante:</p>
-                    <p class="mb-2">Si ya tienes una sesión iniciada en MercadoLibre en este navegador, se conectará automáticamente a esa cuenta.</p>
-                    <p>Si deseas conectar una cuenta diferente, <strong>primero cierra sesión en MercadoLibre</strong>.</p>
-                </div>
-                <a href="https://www.mercadolibre.com.ar" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline font-medium">
-                    Abrir MercadoLibre para cerrar sesión <i class="fas fa-external-link-alt ml-1"></i>
-                </a>
-            </div>
-          `,
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonColor: "#2563eb",
-          cancelButtonColor: "var(--accent-4)",
-          confirmButtonText: "Continuar a Conectar",
-          cancelButtonText: "Cancelar",
-          reverseButtons: true,
-      });
+  const location = useLocation();
 
-      if (!result.isConfirmed) return;
-
-      try {
-          // Direct API call to get auth URL for this specific account
-          const url = await meliService.getAuthUrl(cuenta._id);
-          window.location.href = url;
-      } catch (error) {
-          console.error("Error initiating MELI connection:", error);
-          sweetAlert.error("Error", "No se pudo iniciar la conexión con MercadoLibre");
-      }
-  };
-
-  const handleDisconnectMeli = async (cuenta: Cuenta) => {
-    const result = await sweetAlert.confirm(
-        "Desconectar MercadoLibre",
-        `¿Estás seguro de que deseas desconectar la cuenta de MercadoLibre para "${cuenta.name}"? Dejarás de recibir actualizaciones.`,
-        "warning",
-        "Desconectar",
-        "Cancelar"
-    );
-
-    if (!result.isConfirmed) return;
-
-    try {
-        // We need to temporarily set the account in store or pass ID to service if refactored
-        // Since we refactored service to check store, we might need to adjust service or set store
-        // BUT we refactored service to accept ID in disconnect? Let's check service.
-        // Service check: disconnect() reads store. We should update service to accept ID or set store.
-        
-        // Let's update meliService to accept ID first (it currently reads from store)
-        // OR simply set the store here briefly? No, that's hacky.
-        // Better to update meliService.disconnect to accept optional ID.
-        
-        // Assuming I update meliService in next step or previous step was not fully generic.
-        // Wait, I updated disconnect in Step 852 but it still checks store primarily?
-        // "if (typeof selectedAccount ... body.cuentaId = selectedAccount.id"
-        // I need to update meliService.disconnect to accept an argument.
-         await meliService.disconnect(cuenta._id);
-         
-         sweetAlert.success("Desconectado", "La cuenta se ha desconectado correctamente.");
-         fetchCuentas({ silent: true });
-    } catch (error) {
-        console.error("Error disconnecting MELI:", error);
-        sweetAlert.error("Error", "No se pudo desconectar la cuenta");
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const status = params.get("status");
+    if (status === "success") {
+      toast.success("¡Conexión con MercadoLibre exitosa!");
+      fetchCuentas();
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (status === "error") {
+      toast.error("Error al conectar con MercadoLibre.");
     }
-  };
+  }, [location]);
 
   // Data
   const [cuentas, setCuentas] = useState<Cuenta[]>([]);
@@ -402,7 +346,7 @@ export const CuentasPage: React.FC = () => {
             variant: "ghost" as const,
           },
         ],
-        content: viewCuenta ? <CuentaDetails cuenta={viewCuenta} /> : null,
+        content: viewCuenta ? <CuentaDetails cuenta={viewCuenta} onConnect={handleConnectMeli} onDisconnect={handleDisconnectMeli} /> : null,
       }}
       modal={{
         isOpen: showModal,

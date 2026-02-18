@@ -113,7 +113,11 @@ export const callback = async (req: Request, res: Response) => {
         // Ideally, we redirect to a success page on the frontend
         // We know the frontend URL from CORS_ORIGIN or hardcoded
         const frontendUrl = process.env.CORS_ORIGIN?.split(',')[0] || "http://localhost:5173";
-        res.redirect(`${frontendUrl}/admin/integrations?status=success`);
+        if (cuentaId) {
+            res.redirect(`${frontendUrl}/admin/cuentas/${cuentaId}?status=success`);
+        } else {
+            res.redirect(`${frontendUrl}/admin/cuentas?status=success`);
+        }
 
     } catch (e) {
         console.error("Error exchanging code:", e);

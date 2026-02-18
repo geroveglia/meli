@@ -6,18 +6,40 @@ import { faScissors, faHandshake } from "@fortawesome/free-solid-svg-icons";
 
 export const LabelPrint: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
-  const { orders } = useLumbaStore();
+  const { orders, fetchOrders, fetchAccounts } = useLumbaStore();
+  const [loading, setLoading] = React.useState(true);
 
   const orderIds = orderId ? orderId.split(",") : [];
+
+  useEffect(() => {
+    const loadData = async () => {
+      // Check if we have the orders
+      const hasAllOrders = orderIds.every((id) => orders.find((o) => o.id === id));
+      
+      if (!hasAllOrders) {
+        await fetchAccounts();
+        await fetchOrders();
+      }
+      setLoading(false);
+    };
+    loadData();
+  }, [orderId]); // Depend on orderId to reload if it changes
+
   const selectedOrders = orders.filter((o) => orderIds.includes(o.id));
 
   useEffect(() => {
-    // Auto-print when component mounts
-    const timer = setTimeout(() => {
-      window.print();
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!loading && selectedOrders.length > 0) {
+        // Auto-print when loaded
+        const timer = setTimeout(() => {
+        window.print();
+        }, 500);
+        return () => clearTimeout(timer);
+    }
+  }, [loading, selectedOrders]);
+
+  if (loading) {
+      return <div className="p-10 text-center">Cargando etiqueta...</div>;
+  }
 
   if (selectedOrders.length === 0) {
     return <div className="p-10 text-center">No se encontraron ordenes para imprimir.</div>;

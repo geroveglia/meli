@@ -245,7 +245,7 @@ export const useLumbaStore = create<LumbaState>()(
                               o.shipping?.status === 'delivered' ? 'delivered' : 
                               o.shipping?.status === 'cancelled' ? 'cancelled' : 'ready_to_ship',
                               
-                  tagStatus: "pendientes", // Default
+                  tagStatus: o.tagStatus || "pendientes",
                   // Preserve tagStatus if existing order
                   // tagStatus: currentOrders.find(co => co.id === (o.id || o._id))?.tagStatus || "pendientes",
                   

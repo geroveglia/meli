@@ -276,39 +276,44 @@ export const LogisticaPage: React.FC = () => {
 
         if (isBulk) {
           const ids = orderOrIds as string[];
-          ids.forEach((id) => executeAction(id, action));
-          // For bulk, we might need a zip? Or open multiple tabs? 
-          // Current backend endpoint is single order. 
-          // For now, let's just warn or handle single.
-          // Or loop open (popups might block).
-          // MeLi API supports multiple shipment_ids comma separated? YES.
-          // But our endpoint is /orders/:id/label.
-          // Let's iterate for now, user likely selects few.
-          ids.forEach(id => {
-             // We need to resolve order ID to get real ID if needed, 
-             // but here `id` is the internal ID which matches /orders/:id
-              window.open(`${apiUrl}/orders/${id}/label?token=${localStorage.getItem('token')}`, "_blank");
-          });
+          
+          // Check if we should use the fictitious label (frontend route)
+          // We use it if ALL selected orders are in 'pendiente_preparacion' OR if the active tab implies it.
+          // However, we only have IDs here. We need to look them up in `orders`.
+          const selectedOrders = orders.filter(o => ids.includes(o.id));
+          const allInPrep = selectedOrders.every(o => o.logisticsStatus === "pendiente_preparacion");
 
-          sweetAlert.success("Acción completada", `Se están generando ${count} etiquetas.`);
+          if (allInPrep) {
+             // Use Frontend Fictitious Label
+             const url = `/print-label/${ids.join(',')}`;
+             window.open(url, "_blank");
+             
+             // Mark as printed
+             ids.forEach(id => executeAction(id, action));
+             sweetAlert.success("Acción completada", `Se están generando ${count} etiquetas (Ficticias).`);
+          } else {
+             // Existing Backend Logic
+             ids.forEach((id) => executeAction(id, action));
+             ids.forEach(id => {
+                  window.open(`${apiUrl}/orders/${id}/label?token=${localStorage.getItem('token')}`, "_blank");
+             });
+             sweetAlert.success("Acción completada", `Se están generando ${count} etiquetas.`);
+          }
         } else {
-          const id = (orderOrIds as Order).id;
-          executeAction(id, action);
-          // Pass token in query param? standard fetch can't open in new tab easily with headers.
-          // We need to handle auth. 
-          // Option A: Cookie auth (not using).
-          // Option B: Query param token (simple, but expose token).
-          // Option C: Fetch blob and creating object URL (messy for "open in new tab").
-          // Let's allow query param auth in middleware or just do fetch-blob.
-          // The cleanest for a "Print" generic action is often window.open.
-          // Let's try query param if easy, or use a short-lived token?
-          // For MVP, passing token in URL is acceptable if HTTPS. Locahost is fine.
-          
-          // Wait, authenticateToken middleware might look for header only.
-          // Let's check middleware/auth.ts quickly? 
-          // Assuming I can pass it. If not, I'll fix middleware.
-          
-          window.open(`${apiUrl}/orders/${id}/label?token=${localStorage.getItem('token')}`, "_blank");
+          const order = orderOrIds as Order;
+          const id = order.id;
+
+          if (order.logisticsStatus === "pendiente_preparacion") {
+             // Use Frontend Fictitious Label
+             window.open(`/print-label/${id}`, "_blank");
+             executeAction(id, action);
+             sweetAlert.success("Acción completada", "La etiqueta ficticia se está generando.");
+          } else {
+             // Existing Backend Logic
+             executeAction(id, action);
+             window.open(`${apiUrl}/orders/${id}/label?token=${localStorage.getItem('token')}`, "_blank");
+             sweetAlert.success("Acción completada", "La etiqueta se está generando.");
+          }
         }
       }
       return;

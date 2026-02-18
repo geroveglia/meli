@@ -1,7 +1,9 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBuilding, faEdit, faTrash, faArrowLeft, faEnvelope, faMapMarkerAlt } from "@fortawesome/free-solid-svg-icons";
+import { faBuilding, faEdit, faTrash, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+
 import { useCuentaContextStore, useCuentaActions } from "../../stores/cuentaContextStore";
 import { useAuthStore } from "../../stores/authStore";
 import { PageLayout } from "../../components/PageLayout";
@@ -12,6 +14,7 @@ import { emitCuentasChanged } from "../../utils/navbarEvents";
 
 import { CuentaForm, CuentaFormData } from "../../components/cuentas/CuentaForm";
 import { CuentaDetails } from "../../components/cuentas/CuentaDetails";
+import { useMeliConnection } from "../../hooks/useMeliConnection";
 
 /* ---------- Types ---------- */
 
@@ -51,6 +54,31 @@ export const CuentaInfoPage = () => {
   const { setCuenta } = useCuentaActions();
   const { hasPermission } = useAuthStore();
   const navigate = useNavigate();
+  
+  const refreshCuenta = async () => {
+      if (selectedCuenta) {
+          try {
+              const fresh = await cuentasAPI.get(selectedCuenta._id);
+              setCuenta(fresh);
+              emitCuentasChanged();
+          } catch(e) { console.error("Error refreshing cuenta", e); }
+      }
+  };
+
+  const { connect: handleConnectMeli, disconnect: handleDisconnectMeli } = useMeliConnection(refreshCuenta);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const status = params.get("status");
+    if (status === "success") {
+      toast.success("¡Conexión con MercadoLibre exitosa!");
+      refreshCuenta();
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [location, selectedCuenta?._id]); // Add dependency on ID to ensure we refresh the right one if needed, though location change triggers it.
 
   const canManage = hasPermission("cuentas:view"); // Using same permission as CuentasPage for consistency
 
@@ -237,7 +265,7 @@ export const CuentaInfoPage = () => {
             variant: "ghost" as const,
           },
         ],
-        content: viewCuenta ? <CuentaDetails cuenta={viewCuenta} /> : null,
+        content: viewCuenta ? <CuentaDetails cuenta={viewCuenta} onConnect={handleConnectMeli} onDisconnect={handleDisconnectMeli} /> : null,
       }}
       modal={{
         isOpen: showModal,
@@ -306,18 +334,7 @@ export const CuentaInfoPage = () => {
               : undefined
           }
         >
-          <div className="text-sm text-accent-7 space-y-1">
-            <div className="flex items-center gap-2">
-              <FontAwesomeIcon icon={faEnvelope} className="h-3 w-3" />
-              <span className="truncate">{selectedCuenta.email}</span>
-            </div>
-            {selectedCuenta.address && (
-              <div className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faMapMarkerAlt} className="h-3 w-3" />
-                <span className="truncate">{selectedCuenta.address}</span>
-              </div>
-            )}
-          </div>
+          <CuentaDetails cuenta={selectedCuenta} onConnect={handleConnectMeli} onDisconnect={handleDisconnectMeli} />
         </Card>
       </div>
     </PageLayout>

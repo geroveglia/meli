@@ -5,7 +5,7 @@ import { useCuentaContextStore } from "../stores/cuentaContextStore";
 import { useLumbaStore } from "../stores/lumbaStore";
 import { Link, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faBars, faRightFromBracket, faHouse, faUserGear, faBuilding, faArrowUpRightFromSquare, faCog, faUser, faUserShield, faChevronDown, faUsersGear, faInfoCircle, faImages, faMoneyBillWave, faBell, faBook, faPlug } from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faBars, faRightFromBracket, faHouse, faUserGear, faBuilding, faArrowUpRightFromSquare, faCog, faUser, faUserShield, faChevronDown, faUsersGear, faInfoCircle, faImages, faMoneyBillWave, faBell, faBook } from "@fortawesome/free-solid-svg-icons";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 
 import axios from "../api/axiosConfig";
@@ -231,12 +231,7 @@ export const MobileNavbar: React.FC = () => {
 
 
 
-      base.push({
-        path: "/admin/integrations",
-        icon: faPlug,
-        label: "Integraciones",
-        scope: "global",
-      });
+
 
       base.push({
         path: "/admin/seo",
