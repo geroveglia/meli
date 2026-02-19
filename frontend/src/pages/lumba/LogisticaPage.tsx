@@ -10,7 +10,7 @@ import { Card } from "../../components/Card";
 import { PageLayout } from "../../components/PageLayout";
 import { SearchAndFilters } from "../../components/SearchAndFilters";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBox, faCheck, faEye, faTable, faGrip, faTruck, faPrint, faBoxOpen, faDownload } from "@fortawesome/free-solid-svg-icons";
+import { faBox, faCheck, faEye, faTable, faGrip, faTruck, faPrint, faBoxOpen, faDownload, faHome } from "@fortawesome/free-solid-svg-icons";
 
 import { Checkbox } from "../../components/Checkbox";
 import { Button } from "../../components/Button";
@@ -228,6 +228,9 @@ export const LogisticaPage: React.FC = () => {
       case "DESEMPAQUETAR":
         setOrderPackaged(orderId, false);
         break;
+      case "RETIRO_EN_LOCAL":
+        updateOrderLogisticsStatus(orderId, "retiro_local");
+        break;
     }
   };
 
@@ -360,6 +363,23 @@ export const LogisticaPage: React.FC = () => {
       return;
     }
 
+    if (action === "RETIRO_EN_LOCAL") {
+      const idsToUpdate = isBulk ? (orderOrIds as string[]) : [(orderOrIds as Order).id];
+      setExitingOrderIds((prev) => [...prev, ...idsToUpdate]);
+
+      setTimeout(() => {
+        if (isBulk) {
+          (orderOrIds as string[]).forEach((id) => executeAction(id, action));
+          sweetAlert.success("Acción completada", `Se actualizaron ${count} ordenes.`);
+        } else {
+          executeAction((orderOrIds as Order).id, action);
+          sweetAlert.success("Acción completada", "La orden ha sido movida a retiro en local.");
+        }
+        setExitingOrderIds((prev) => prev.filter((id) => !idsToUpdate.includes(id)));
+      }, 500);
+      return;
+    }
+
     if (action === "CANCELAR") {
       let title = "¿Cancelar Orden?";
       let text = "La orden pasará a la sección 'Cancelados' y se devolverá a stock.";
@@ -474,28 +494,42 @@ export const LogisticaPage: React.FC = () => {
         </Button>,
       );
 
-      // 2. Imprimir Etiqueta
-      buttons.push(
-        <Button key="print" onClick={() => handleAction(order, "IMPRIMIR_ETIQUETA")} variant={isLabeled ? "grey" : "blue"} size="sm" disabled={!isPackaged || isLabeled} className={`flex items-center gap-2`} title={!isPackaged ? "Primero debes empaquetar" : (isLabeled ? "Impresa" : "Imprimir Etiqueta")}>
-          <FontAwesomeIcon icon={isLabeled ? faCheck : faPrint} />
-        </Button>,
-      );
+      // 2. Imprimir Etiqueta -> Handled below with Local Pickup check
 
-      // 3. Listo para entregar
-      // Solo disponible si está todo listo (empaquetado y etiquetado)
-      buttons.push(
-        <Button
-          key="listo"
-          onClick={() => handleAction(order, "PASAR_A_LISTO")}
-          variant="blue"
-          size="sm"
-          disabled={!isLabeled || !isPackaged} // Strict dependency
-          className={`flex items-center gap-2 ${!isLabeled || !isPackaged ? "opacity-50 cursor-not-allowed" : ""}`}
-          title={!isLabeled ? "Falta imprimir etiqueta" : "Listo para entregar"}
-        >
-          <FontAwesomeIcon icon={faTruck} />
-        </Button>,
-      );
+      const isLocalPickup = order.tags?.includes("no_shipping");
+
+      // 2. Imprimir Etiqueta OR Retiro Local
+      if (!isLocalPickup) {
+        buttons.push(
+            <Button key="print" onClick={() => handleAction(order, "IMPRIMIR_ETIQUETA")} variant={isLabeled ? "grey" : "blue"} size="sm" disabled={!isPackaged || isLabeled} className={`flex items-center gap-2`} title={!isPackaged ? "Primero debes empaquetar" : (isLabeled ? "Impresa" : "Imprimir Etiqueta")}>
+            <FontAwesomeIcon icon={isLabeled ? faCheck : faPrint} />
+            </Button>,
+        );
+      } else {
+         // Local Pickup Button
+         buttons.push(
+            <Button key="local" onClick={() => handleAction(order, "RETIRO_EN_LOCAL")} variant="blue" size="sm" disabled={!isPackaged} className={`flex items-center gap-2`} title={!isPackaged ? "Primero debes empaquetar" : "Mover a Retiro en Local"}>
+            <FontAwesomeIcon icon={faHome} />
+            </Button>,
+        );
+      }
+
+      // 3. Listo para entregar (Only if not local pickup)
+      if (!isLocalPickup) {
+          buttons.push(
+            <Button
+            key="listo"
+            onClick={() => handleAction(order, "PASAR_A_LISTO")}
+            variant="blue"
+            size="sm"
+            disabled={!isLabeled || !isPackaged} // Strict dependency
+            className={`flex items-center gap-2 ${!isLabeled || !isPackaged ? "opacity-50 cursor-not-allowed" : ""}`}
+            title={!isLabeled ? "Falta imprimir etiqueta" : "Listo para entregar"}
+            >
+            <FontAwesomeIcon icon={faTruck} />
+            </Button>,
+        );
+      }
 
       // 4. Cancelar - REMOVED per user request
 
@@ -800,13 +834,7 @@ export const LogisticaPage: React.FC = () => {
                     Cuenta
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
-                    Comprador
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
-                    Id ML
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider w-[30%]">
-                    Publicación
+                    Pack ID
                   </th>
                   <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
                     Cantidad
@@ -867,14 +895,8 @@ export const LogisticaPage: React.FC = () => {
                       {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-medium">
                         {typeof order.account === 'string' ? order.account : order.account.name}
                       </td> */}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                        {order.clientName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-mono">{order.meliOrderId}</td>
-                      <td className="px-6 py-4">
-                        <div className="text-xs text-gray-900 dark:text-white line-clamp-2" title={order.items.length > 0 ? order.items[0].title : ""}>
-                          {order.items.length > 0 ? order.items[0].title : "-"}
-                        </div>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-mono">
+                          {order.packId || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center text-xs text-gray-500">{order.items.length > 0 ? order.items[0].quantity : 0}</td>
                       {activeTab === "DESEMPAQUETAR" && (

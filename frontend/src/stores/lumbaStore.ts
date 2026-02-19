@@ -66,6 +66,8 @@ export interface Order {
   tenantId: string; // New field for Tenant filtering
   sellerId?: number; // Raw Seller ID for dynamic mapping
   clientId?: string; // Raw Client ID for dynamic mapping
+  
+  tags: string[]; // MeLi tags
 }
 
 interface LumbaState {
@@ -259,7 +261,8 @@ export const useLumbaStore = create<LumbaState>()(
                   docNumber: null,
                   billingType: null,
                   packaged: o.isPackaged || false,
-                  tenantId: o.tenantId || ""
+                  tenantId: o.tenantId || "",
+                  tags: o.tags || []
               }));
 
               // Preserve local state (tagStatus)
