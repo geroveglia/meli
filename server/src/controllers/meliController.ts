@@ -21,7 +21,28 @@ const decodeState = (state: string) => {
     }
 };
 
-export const getAuth = (req: Request, res: Response) => {
+export const configureCredentials = async (req: Request, res: Response) => {
+    const authReq = req as AuthenticatedRequest;
+    const tenantId = authReq.tenantId;
+    const { appId, clientSecret } = req.body;
+
+    if (!tenantId) {
+        return res.status(400).json({ error: "Tenant ID required" });
+    }
+
+    try {
+        await Tenant.findByIdAndUpdate(tenantId, {
+            "mercadolibre.appId": appId,
+            "mercadolibre.clientSecret": clientSecret
+        });
+        res.json({ message: "Credentials updated successfully" });
+    } catch (e) {
+        console.error("Error updating credentials:", e);
+        res.status(500).json({ error: "Failed to update credentials" });
+    }
+};
+
+export const getAuth = async (req: Request, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const tenantId = authReq.tenantId; // Set by authenticateToken
     const cuentaId = req.query.cuentaId as string;
@@ -30,23 +51,28 @@ export const getAuth = (req: Request, res: Response) => {
         return res.status(400).json({ error: "Tenant ID not found in request" });
     }
 
-    // We use the tenantId in state to recover it during callback
-    // The redirect URI should point to our backend callback 
-    const callbackPath = "/api/v1/meli/callback"; 
-    // Construct full URL based on request host or env
-    // Assuming API_URL is set in env or we can infer it
-    const apiUrl = process.env.API_URL || `https://${req.get('host')}`;
-    const redirectUri = `${apiUrl}${callbackPath}`;
+    try {
+        // Fetch Tenant credentials
+        const tenant = await Tenant.findById(tenantId);
+        const appId = tenant?.mercadolibre?.appId;
 
-    const state = encodeState(tenantId, cuentaId);
-    
-    // Check if we need to persist redirectUri in session or just rely on env/params
-    // For now, we regenerate it in callback or pass it if needed, but MELI requires exact match.
-    // simpler to just call getAuthUrl with the computed redirectUri
-    
-    const url = getAuthUrl(redirectUri) + `&state=${state}`;
+        // We use the tenantId in state to recover it during callback
+        // The redirect URI should point to our backend callback 
+        const callbackPath = "/api/v1/meli/callback"; 
+        // Construct full URL based on request host or env
+        // Assuming API_URL is set in env or we can infer it
+        const apiUrl = process.env.API_URL || `https://${req.get('host')}`;
+        const redirectUri = `${apiUrl}${callbackPath}`;
 
-    res.json({ url });
+        const state = encodeState(tenantId, cuentaId);
+        
+        const url = getAuthUrl(redirectUri, appId) + `&state=${state}`;
+
+        res.json({ url });
+    } catch (e) {
+        console.error("Error initiating auth:", e);
+        res.status(500).json({ error: "Failed to initiate auth" });
+    }
 };
 
 export const callback = async (req: Request, res: Response) => {
@@ -76,7 +102,12 @@ export const callback = async (req: Request, res: Response) => {
         const apiUrl = process.env.API_URL || `https://${req.get('host')}`;
         const redirectUri = `${apiUrl}/api/v1/meli/callback`;
 
-        const tokenData = await authorize(code, redirectUri);
+        // Fetch Tenant credentials
+        const tenant = await Tenant.findById(tenantId);
+        const appId = tenant?.mercadolibre?.appId;
+        const clientSecret = tenant?.mercadolibre?.clientSecret;
+
+        const tokenData = await authorize(code, redirectUri, appId, clientSecret);
 
         if (cuentaId) {
              // Update specific Cuenta (Client)
@@ -100,6 +131,7 @@ export const callback = async (req: Request, res: Response) => {
             // Fallback: Update Tenant (Legacy / Single Account)
             await Tenant.findByIdAndUpdate(tenantId, {
                 mercadolibre: {
+                    ...tenant?.mercadolibre, // Keep existing credentials
                     accessToken: tokenData.accessToken,
                     refreshToken: tokenData.refreshToken,
                     expiresAt: tokenData.expiresAt,
@@ -107,7 +139,6 @@ export const callback = async (req: Request, res: Response) => {
                     nickname: tokenData.nickname
                 }
             });
-            console.log(`Linked MELI to Tenant: ${tenantId}`);
             console.log(`Linked MELI to Tenant: ${tenantId}`);
         }
 
@@ -123,7 +154,7 @@ export const callback = async (req: Request, res: Response) => {
         if (cuentaId) {
             res.redirect(`${frontendUrl}/admin/cuentas/${cuentaId}?status=success`);
         } else {
-            res.redirect(`${frontendUrl}/admin/cuentas?status=success`);
+            res.redirect(`${frontendUrl}/admin/integrations?status=success`);
         }
 
     } catch (e) {
@@ -193,9 +224,16 @@ export const disconnect = async (req: Request, res: Response) => {
                 await cuenta.save();
             }
         } else {
+            // Global Disconnect: Remove Tenant credentials AND disconnect all associated Cuentas
             await Tenant.findByIdAndUpdate(tenantId, {
                 $unset: { mercadolibre: 1 }
             });
+
+            // Disconnect all accounts associated with this tenant
+            await Cuenta.updateMany(
+                { tenantId: tenantId },
+                { $unset: { mercadolibre: 1 } }
+            );
         }
         
         res.json({ message: "Disconnected successfully" });

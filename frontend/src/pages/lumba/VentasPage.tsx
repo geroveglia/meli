@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useLumbaStore, Order, SalesState } from "../../stores/lumbaStore";
+import { meliService } from "../../services/meliService";
 import { OrderDetailModal } from "../../components/lumba/OrderDetailModal";
 import { PageLayout } from "../../components/PageLayout";
 import { SearchAndFilters } from "../../components/SearchAndFilters";
@@ -62,9 +63,27 @@ export const VentasPage: React.FC = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // --- Derived Data / Filtering ---
+  // --- Connection Status ---
+  const [isMeliConnected, setIsMeliConnected] = useState(true);
 
+  React.useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const status = await meliService.getConnectionStatus();
+        setIsMeliConnected(status.isConnected);
+      } catch (error) {
+        setIsMeliConnected(false);
+      }
+    };
+    checkConnection();
+  }, [selectedCuenta, selectedAccount]);
+
+  // --- Derived Data / Filtering ---
   const filteredOrders = useMemo(() => {
+    if (!isMeliConnected) {
+        return [];
+    }
+
     let result = orders;
 
     // 0. Filter by Client Context (Navbar Selection)
@@ -76,12 +95,19 @@ export const VentasPage: React.FC = () => {
        });
     }
 
-    // 1. Filter by Account (Page Filter)
+    // 1. Filter by Account
     if (selectedAccount !== "Todas") {
       result = result.filter((o) => {
-          if (typeof o.account === 'string') return false;
           if (typeof selectedAccount === 'string') return false; // Should not happen if not "Todas"
-          return o.account.id === selectedAccount.id;
+          
+          if (selectedAccount.type === 'tenant') {
+              // Tenant Filter: Match Tenant ID
+              return o.tenantId === selectedAccount.id;
+          } else {
+              // Account (Client) Filter: Match Client ID (Account ID)
+              if (typeof o.account === 'string') return false;
+              return o.account.id === selectedAccount.id;
+          }
       });
     }
 
@@ -99,6 +125,7 @@ export const VentasPage: React.FC = () => {
       result = result.filter((o) => new Date(o.date) <= new Date(dateTo));
     }
 
+
     // 4. Filter by Tab (State)
     const tabMap: Record<string, SalesState[]> = {
       PENDIENTE_FACTURACION: ["pendiente_facturacion"],
@@ -115,7 +142,7 @@ export const VentasPage: React.FC = () => {
     }
 
     return result;
-  }, [orders, selectedCuenta, selectedAccount, searchQuery, dateFrom, dateTo, activeTab]);
+  }, [orders, selectedCuenta, selectedAccount, searchQuery, dateFrom, dateTo, activeTab, isMeliConnected]);
 
   // --- Selection Logic ---
 

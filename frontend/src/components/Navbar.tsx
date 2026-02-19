@@ -5,10 +5,11 @@ import { useCuentaContextStore } from "../stores/cuentaContextStore";
 import { useLumbaStore } from "../stores/lumbaStore";
 import { Link, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faBars, faRightFromBracket, faHouse, faUserGear, faBuilding, faArrowUpRightFromSquare, faCog, faUser, faUserShield, faChevronDown, faUsersGear, faInfoCircle, faImages, faMoneyBillWave, faBell, faBook } from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faBars, faRightFromBracket, faHouse, faUserGear, faBuilding, faArrowUpRightFromSquare, faCog, faUser, faUserShield, faChevronDown, faUsersGear, faInfoCircle, faImages, faMoneyBillWave, faBell, faBook, faPlug } from "@fortawesome/free-solid-svg-icons";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 
 import axios from "../api/axiosConfig";
+import { meliService } from "../services/meliService";
 import { SettingsModal } from "./SettingsModal";
 import CuentaSelector from "./CuentaSelector";
 import { motion, AnimatePresence } from "framer-motion";
@@ -362,7 +363,23 @@ export const MobileNavbar: React.FC = () => {
     const isActive = (path: string) => location.pathname === path;
 
     // Calculate counts - filter by client if one is selected
+    const [isMeliConnected, setIsMeliConnected] = useState(true);
+
+    React.useEffect(() => {
+      const checkConnection = async () => {
+        try {
+          const status = await meliService.getConnectionStatus();
+          setIsMeliConnected(status.isConnected);
+        } catch (error) {
+          setIsMeliConnected(false);
+        }
+      };
+      checkConnection();
+    }, [selectedCuenta]);
+
     const getCount = (type: "logistics" | "sales", status: string) => {
+      if (!isMeliConnected) return 0;
+
       let filteredOrders = orders;
 
       // Filter by client if one is selected
@@ -552,9 +569,9 @@ export const MobileNavbar: React.FC = () => {
                           <div className="pl-2 pt-2 pb-1 text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">Anulaciones</div>
 
                           {[
-                            { label: "Desempaquetar", status: "DESEMPAQUETAR", count: orders.filter((o) => (selectedCuenta ? (typeof o.account !== 'string' && o.account.id === selectedCuenta._id) : true) && o.packaged && (o.logisticsStatus === "cancelado_vuelto_stock" || o.logisticsStatus === "devolucion_vuelto_stock")).length },
-                            { label: "Devolucion", status: "DEVOLUCION", count: orders.filter((o) => (selectedCuenta ? (typeof o.account !== 'string' && o.account.id === selectedCuenta._id) : true) && !o.packaged && o.logisticsStatus === "devolucion_vuelto_stock").length },
-                            { label: "Cancelados", status: "CANCELADOS", count: orders.filter((o) => (selectedCuenta ? (typeof o.account !== 'string' && o.account.id === selectedCuenta._id) : true) && !o.packaged && o.logisticsStatus === "cancelado_vuelto_stock").length },
+                            { label: "Desempaquetar", status: "DESEMPAQUETAR", count: isMeliConnected ? orders.filter((o) => (selectedCuenta ? (typeof o.account !== 'string' && o.account.id === selectedCuenta._id) : true) && o.packaged && (o.logisticsStatus === "cancelado_vuelto_stock" || o.logisticsStatus === "devolucion_vuelto_stock")).length : 0 },
+                            { label: "Devolucion", status: "DEVOLUCION", count: isMeliConnected ? orders.filter((o) => (selectedCuenta ? (typeof o.account !== 'string' && o.account.id === selectedCuenta._id) : true) && !o.packaged && o.logisticsStatus === "devolucion_vuelto_stock").length : 0 },
+                            { label: "Cancelados", status: "CANCELADOS", count: isMeliConnected ? orders.filter((o) => (selectedCuenta ? (typeof o.account !== 'string' && o.account.id === selectedCuenta._id) : true) && !o.packaged && o.logisticsStatus === "cancelado_vuelto_stock").length : 0 },
                           ].map((sub) => {
                             const hasNotification = notifications?.[sub.status];
                             return (
@@ -705,6 +722,30 @@ export const MobileNavbar: React.FC = () => {
                           <FontAwesomeIcon icon={faMoneyBillWave} className="h-4 w-4" />
                         </div>
                         <span className="font-medium truncate">Facturación</span>
+                      </div>
+                    </Link>
+
+                    {/* Integraciones */}
+                    <Link
+                      to="/admin/integrations"
+                      onClick={() => setOpen(false)}
+                      className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${
+                        isActive("/admin/integrations")
+                          ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm"
+                          : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
+                        <div
+                          className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${
+                            isActive("/admin/integrations")
+                              ? "bg-white text-blue-600"
+                              : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"
+                          }`}
+                        >
+                          <FontAwesomeIcon icon={faPlug} className="h-4 w-4" />
+                        </div>
+                        <span className="font-medium truncate">Integraciones</span>
                       </div>
                     </Link>
 

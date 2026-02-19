@@ -31,23 +31,23 @@ interface MeliUserResponse {
     email: string;
 }
 
-export const getAuthUrl = (redirectUri: string) => {
-  const appId = process.env.MELI_APP_ID;
-  if (!appId) throw new Error("MELI_APP_ID not defined");
+export const getAuthUrl = (redirectUri: string, appId?: string) => {
+  const finalAppId = appId || process.env.MELI_APP_ID;
+  if (!finalAppId) throw new Error("MELI_APP_ID not defined");
   
-  return `https://auth.mercadolibre.com.ar/authorization?response_type=code&client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+  return `https://auth.mercadolibre.com.ar/authorization?response_type=code&client_id=${finalAppId}&redirect_uri=${encodeURIComponent(redirectUri)}`;
 };
 
-export const authorize = async (code: string, redirectUri: string) => {
-  const appId = process.env.MELI_APP_ID;
-  const clientSecret = process.env.MELI_SECRET;
+export const authorize = async (code: string, redirectUri: string, appId?: string, clientSecret?: string) => {
+  const finalAppId = appId || process.env.MELI_APP_ID;
+  const finalSecret = clientSecret || process.env.MELI_SECRET;
 
-  if (!appId || !clientSecret) throw new Error("MELI_APP_ID or MELI_SECRET not defined");
+  if (!finalAppId || !finalSecret) throw new Error("MELI_APP_ID or MELI_SECRET not defined");
 
   const params = new URLSearchParams();
   params.append("grant_type", "authorization_code");
-  params.append("client_id", appId);
-  params.append("client_secret", clientSecret);
+  params.append("client_id", finalAppId);
+  params.append("client_secret", finalSecret);
   params.append("code", code);
   params.append("redirect_uri", redirectUri);
 
@@ -93,16 +93,16 @@ export const authorize = async (code: string, redirectUri: string) => {
   };
 };
 
-export const refreshAccessToken = async (refreshToken: string) => {
-    const appId = process.env.MELI_APP_ID;
-    const clientSecret = process.env.MELI_SECRET;
+export const refreshAccessToken = async (refreshToken: string, appId?: string, clientSecret?: string) => {
+    const finalAppId = appId || process.env.MELI_APP_ID;
+    const finalSecret = clientSecret || process.env.MELI_SECRET;
   
-    if (!appId || !clientSecret) throw new Error("MELI_APP_ID or MELI_SECRET not defined");
+    if (!finalAppId || !finalSecret) throw new Error("MELI_APP_ID or MELI_SECRET not defined");
   
     const params = new URLSearchParams();
     params.append("grant_type", "refresh_token");
-    params.append("client_id", appId);
-    params.append("client_secret", clientSecret);
+    params.append("client_id", finalAppId);
+    params.append("client_secret", finalSecret);
     params.append("refresh_token", refreshToken);
   
     const response = await fetch(`${MELI_API_URL}/oauth/token`, {

@@ -6,6 +6,8 @@ export interface MeliConnectionStatus {
     sellerId?: number;
     nickname?: string;
     expiresAt?: string;
+    appId?: string;
+    clientSecret?: string;
 }
 
 import { useLumbaStore } from "../stores/lumbaStore";
@@ -41,6 +43,10 @@ export const meliService = {
         }
 
         await axios.post('/meli/disconnect', body);
+    },
+
+    async configureCredentials(appId: string, clientSecret: string): Promise<void> {
+        await axios.post('/meli/credentials', { appId, clientSecret });
     },
 
     async getConnectionStatus(): Promise<MeliConnectionStatus> {

@@ -90,6 +90,8 @@ export interface ITenant extends Document {
     expiresAt: Date;
     sellerId: number;
     nickname: string;
+    appId?: string;
+    clientSecret?: string;
   };
   isActive: boolean;
   createdAt: Date;
@@ -226,6 +228,8 @@ const tenantSchema = new Schema<ITenant>(
       expiresAt: { type: Date },
       sellerId: { type: Number },
       nickname: { type: String },
+      appId: { type: String },
+      clientSecret: { type: String },
     },
 
     isActive: { type: Boolean, default: true },
