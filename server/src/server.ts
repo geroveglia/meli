@@ -19,6 +19,8 @@ import { seedOnStart, ensureSuperAdmin } from "./scripts/seedOnStart.js";
 import { ensureAllTenantsHaveDefaultRoles } from "./services/roleInitService.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { notFoundHandler } from "./middleware/notFoundHandler.js";
+import { runRecoverWebhooks } from "./scripts/recoverWebhooks.js";
+
 
 import { authRoutes } from "./routes/auth.js";
 import { secureRoutes } from "./routes/secure.js";
@@ -161,6 +163,16 @@ connectDB()
         } catch (error) {
           console.error("❌ Auto-seed failed:", error);
         }
+      }
+
+      // Recover Missed Feeds from MercadoLibre in background
+      try {
+        console.log("🔄 Starting missed feeds recovery process...");
+        runRecoverWebhooks().catch(err => {
+            console.error("Background webhook recovery failed:", err);
+        });
+      } catch (error) {
+        console.error("❌ Missed feeds recovery initialization failed:", error);
       }
     } else {
         console.log("[SERVER] Skipping Mongoose-specific seed scripts (Running in MySQL mode)");

@@ -523,3 +523,36 @@ export const syncRecentOrders = async (tenantId: string, clientId?: string, acce
     }
 }
 
+export const recoverMissedFeeds = async (tenantId: string, clientId: string | undefined, accessToken: string, appId: string) => {
+    try {
+        console.log(`[Missed Feeds] Checking for Tenant: ${tenantId}, Client: ${clientId || 'N/A'}`);
+        const response = await fetch(`${MELI_API_URL}/missed_feeds?app_id=${appId}`, {
+            headers: {
+                "Authorization": `Bearer ${accessToken}`
+            }
+        });
+
+        if (!response.ok) {
+            console.error(`[Missed Feeds] HTTP Error ${response.status}: ${response.statusText}`);
+            return;
+        }
+
+        const data = await response.json();
+        
+        if (data && data.messages && data.messages.length > 0) {
+            console.log(`[Missed Feeds] Found ${data.messages.length} missed notifications to recover.`);
+            for (const message of data.messages) {
+                // The missed feed structure usually contains the full topic and resource
+                const { topic, resource } = message;
+                if (topic && resource) {
+                    await handleNotification(topic, resource, tenantId, clientId);
+                }
+            }
+        } else {
+            console.log(`[Missed Feeds] No missed feeds right now.`);
+        }
+    } catch (e) {
+        console.error("[Missed Feeds] Error recovering missed feeds:", e);
+    }
+};
+
