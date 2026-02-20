@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { DocsLayout } from "../../components/docs/DocsLayout";
 import { MeliLogicDocs } from "./docs/MeliLogicDocs";
 import { ProjectStructureDocs } from "./docs/ProjectStructureDocs";
+import { WebhookRecoveryDocs } from "./docs/WebhookRecoveryDocs";
 import { DocTitle, DocSubtitle, DocText, DocH2, DocAlert } from "../../components/docs/DocContent";
 import { Link } from "react-router-dom";
 
@@ -31,6 +32,15 @@ const DocsHome: React.FC = () => (
           Explora la arquitectura Frontend/Backend, dependencias y organización del código.
         </p>
       </Link>
+
+      <Link to="/admin/doc/webhook-recovery" className="block p-6 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:shadow-md transition-all group">
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-blue-500 mb-2">
+          Recuperación de Webhooks
+        </h3>
+        <p className="text-gray-600 dark:text-gray-400">
+          Cómo el sistema recupera ventas y actualizaciones perdidas cuando el servidor está caído.
+        </p>
+      </Link>
     </div>
 
     <DocH2>Primeros Pasos</DocH2>
@@ -51,6 +61,7 @@ export const DocumentationPage: React.FC = () => {
         <Route index element={<DocsHome />} />
         <Route path="meli-logic" element={<MeliLogicDocs />} />
         <Route path="structure" element={<ProjectStructureDocs />} />
+        <Route path="webhook-recovery" element={<WebhookRecoveryDocs />} />
         <Route path="*" element={<Navigate to="/admin/doc" replace />} />
       </Routes>
     </DocsLayout>
