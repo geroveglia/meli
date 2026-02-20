@@ -156,11 +156,9 @@ async function ensureUser(params: { tenantId: Types.ObjectId; email: string; pas
       isModified = true;
     }
 
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      user.password = password;
-      isModified = true;
-    }
+    // NOTE: We intentionally do NOT reset the password here.
+    // If the user changed their password (e.g. via forgot-password),
+    // the seed should not overwrite it on every server restart.
 
     if (isModified) {
       await user.save();
