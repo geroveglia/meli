@@ -39,7 +39,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ isOpen, onCl
                             leaveFrom="opacity-100 scale-100"
                             leaveTo="opacity-0 scale-95"
                         >
-                            <Dialog.Panel className="w-full max-w-7xl transform overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-5 text-left align-middle shadow-xl transition-all">
+                            <Dialog.Panel id="printable-order-detail" className="w-full max-w-7xl transform overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-5 text-left align-middle shadow-xl transition-all">
                                 <Dialog.Title
                                     as="h3"
                                     className="text-lg font-medium leading-6 text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2 mb-4"

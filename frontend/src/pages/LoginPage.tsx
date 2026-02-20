@@ -4,12 +4,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslation } from "react-i18next";
-import { GoogleLogin } from "@react-oauth/google";
+// import { GoogleLogin } from "@react-oauth/google";
 
 
 
 import { useAuthStore } from "../stores/authStore";
-import { useThemeStore } from "../stores/themeStore";
+// import { useThemeStore } from "../stores/themeStore";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagicWandSparkles, faCheckCircle, faTimesCircle, faEye, faEyeSlash, faBuilding, faLayerGroup } from "@fortawesome/free-solid-svg-icons";
 
@@ -72,6 +72,10 @@ export const LoginPage: React.FC = () => {
   const [showCuentaSelector, setShowCuentaSelector] = useState(false);
   const [availableTenants, setAvailableTenants] = useState<TenantOption[]>([]);
   const [showTenantSelector, setShowTenantSelector] = useState(false);
+  
+  const [step, setStep] = useState<'login' | '2fa'>('login');
+  const [twoFactorEmail, setTwoFactorEmail] = useState("");
+  const [twoFactorCode, setTwoFactorCode] = useState("");
 
   const {
     register,
@@ -192,6 +196,13 @@ export const LoginPage: React.FC = () => {
     try {
       const result = await login(data.email, data.password, data.tenantSlug, data.cuentaId);
 
+      if (result?.requires2FA && result?.email) {
+        setTwoFactorEmail(result.email);
+        setStep('2fa');
+        setIsLoading(false);
+        return;
+      }
+
       if (result?.requiresTenantSelection && result.tenants) {
         setAvailableTenants(result.tenants);
         setShowTenantSelector(true);
@@ -252,6 +263,60 @@ export const LoginPage: React.FC = () => {
     }
   };
 
+  const handleVerify2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!twoFactorCode || twoFactorCode.length !== 6) {
+      setError("Por favor ingresa un código de 6 dígitos válido.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const result = await useAuthStore.getState().verify2FA(twoFactorEmail, twoFactorCode);
+
+      // Same routing logic from standard login
+      const isSuperAdmin = result?.user?.primaryRole?.toLowerCase() === "superadmin" || result?.user?.roles?.some((r) => r.toLowerCase() === "superadmin");
+      if (isSuperAdmin) {
+        navigate("/admin/dashboard");
+        return;
+      }
+
+      if (result?.redirectTo) {
+        navigate(result.redirectTo);
+        return;
+      }
+
+      const { hasPermission } = useAuthStore.getState();
+      const routes = [
+        { permission: "dashboard:view", path: "/ventas" },
+        { permission: "dashboard:view", path: "/admin/dashboard" },
+        { permission: "clients:view", path: "/admin/clients" },
+        { permission: "tenants:view", path: "/admin/tenants" },
+        { permission: "levels:view", path: "/admin/levels" },
+        { permission: "positions:view", path: "/admin/positions" },
+        { permission: "areas:view", path: "/admin/areas" },
+        { permission: "users:view", path: "/admin/users" },
+        { permission: "roles:view", path: "/admin/roles" },
+      ];
+
+      for (const route of routes) {
+        if (hasPermission(route.permission)) {
+          navigate(route.path);
+          return;
+        }
+      }
+
+      navigate("/admin/dashboard");
+    } catch (err: any) {
+      console.error("[verify2FA:error]", err);
+      setError(err.message || "Código de verificación inválido o expirado");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const autofill = (user: DemoUser) => {
     setValue("email", user.email, { shouldValidate: true });
 
@@ -303,6 +368,7 @@ export const LoginPage: React.FC = () => {
             </div>
           </div>
 
+          {step === 'login' && (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" autoComplete="off">
             {/* Tenant Selector - solo cuando hay múltiples tenants */}
             {showTenantSelector && availableTenants.length > 0 && (
@@ -345,6 +411,11 @@ export const LoginPage: React.FC = () => {
                 </button>
               </div>
               {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
+              <div className="flex justify-end mt-1">
+                <Link to="/forgot-password" className="text-xs font-medium text-blue-600 hover:text-blue-800 transition">
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </div>
             </div>
 
             {error && (
@@ -384,6 +455,7 @@ export const LoginPage: React.FC = () => {
                 {isLoading ? t("common.loading") : t("auth.signIn")}
                 </button>
 
+                {/* 
                 <div className="relative">
                     <div className="absolute inset-0 flex items-center">
                         <span className="w-full border-t border-gray-300 dark:border-gray-600" />
@@ -462,12 +534,57 @@ export const LoginPage: React.FC = () => {
                         theme="outline" 
                     />
                 </div>
+                */}
             </div>
-
-
           </form>
+          )}
+
+          {step === '2fa' && (
+            <form onSubmit={handleVerify2FA} className="space-y-6" autoComplete="off">
+              <div>
+                <label className="block text-sm font-medium text-accent-1 mb-2">Código de Verificación</label>
+                <input 
+                  type="text" 
+                  value={twoFactorCode}
+                  onChange={(e) => setTwoFactorCode(e.target.value.trim())}
+                  className="input-base text-center text-xl tracking-widest font-mono" 
+                  placeholder="000000" 
+                  maxLength={6}
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  Hemos enviado un código de 6 dígitos a <span className="font-semibold">{twoFactorEmail}</span>.
+                </p>
+              </div>
+
+              {error && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-800 dark:border-red-800 rounded-lg">
+                  <p className="text-red-600 dark:text-red-400 text-sm text-center">{error}</p>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-4">
+                <button type="submit" disabled={isLoading} className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed">
+                  {isLoading ? t("common.loading") : "Verificar Código"}
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setStep('login');
+                    setError('');
+                    setTwoFactorCode('');
+                  }} 
+                  disabled={isLoading} 
+                  className="w-full text-sm font-medium text-gray-500 hover:text-gray-700 transition"
+                >
+                  Volver al inicio de sesión
+                </button>
+              </div>
+            </form>
+          )}
 
           {/* --- Usuarios disponibles --- */}
+          {/* 
           <div className="mt-6">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               ¿No tienes cuenta?{" "}
@@ -476,6 +593,7 @@ export const LoginPage: React.FC = () => {
               </Link>
             </p>
           </div>
+          */}
 
           {/* Solo mostrar usuarios disponibles en modo development */}
           {import.meta.env.DEV && demoUsers.length > 0 && (

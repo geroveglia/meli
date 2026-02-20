@@ -22,7 +22,7 @@ const run = async () => {
 
         // Cache tokens
         const tokenCache: Record<string, string> = {};
-        const getToken = async (tenantId: string, clientId?: string) => {
+        const getToken = async (tenantId: string | mongoose.Types.ObjectId, clientId?: string | mongoose.Types.ObjectId) => {
             const key = `${tenantId}:${clientId || ''}`;
             if (tokenCache[key]) return tokenCache[key];
 

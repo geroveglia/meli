@@ -1,0 +1,19 @@
+﻿
+> api@1.0.0 build
+> tsc -p tsconfig.json
+
+src/middleware/permissions.ts(123,14): error TS2304: Cannot find name 'Brief'.
+src/middleware/permissions.ts(125,14): error TS2304: Cannot find name 'Campaign'.
+src/middleware/permissions.ts(129,14): error TS2304: Cannot find name 'Post'.
+src/middleware/permissions.ts(131,14): error TS2304: Cannot find name 'Project'.
+src/middleware/requireClientScope.ts(6,18): error TS2320: Interface 'ClientScopedRequest' cannot simultaneously extend types 'AuthenticatedRequest' and 'TenantRequest'.
+  Named property 'tenantObjectId' of types 'AuthenticatedRequest' and 'TenantRequest' are not identical.
+src/models/Cuenta.ts(91,5): error TS2353: Object literal may only specify known properties, and 'ownerUserId' does not exist in type '{ status?: SchemaDefinitionProperty<"active" | "inactive" | "lead", ICuenta, Document<unknown, {}, FlatRecord<ICuenta>, {}, ResolveSchemaOptions<DefaultSchemaOptions>> & FlatRecord<...> & Required<...> & { ...; }>; ... 13 more ...; usuarios?: SchemaDefinitionProperty<...>; }'.
+src/models/Order.ts(127,5): error TS2353: Object literal may only specify known properties, and 'tagStatus' does not exist in type '{ id?: SchemaDefinitionProperty<any, IOrder, Document<unknown, {}, FlatRecord<IOrder>, {}, ResolveSchemaOptions<DefaultSchemaOptions>> & FlatRecord<...> & Required<...> & { ...; }>; ... 16 more ...; invoiceId?: SchemaDefinitionProperty<...>; }'.
+src/routes/auth.ts(483,12): error TS2339: Property 'ownerUserId' does not exist on type 'Document<unknown, {}, ICuenta, {}, {}> & ICuenta & Required<{ _id: ObjectId; }> & { __v: number; }'.
+src/routes/platform.ts(35,9): error TS2304: Cannot find name 'Campaign'.
+src/routes/platform.ts(112,11): error TS2552: Cannot find name 'totalCuentas'. Did you mean 'totalClients'?
+src/routes/platform.ts(193,9): error TS2304: Cannot find name 'Campaign'.
+src/scripts/compare_all_orders.ts(44,48): error TS2345: Argument of type 'ObjectId' is not assignable to parameter of type 'string'.
+src/scripts/migrate_not_delivered.ts(21,17): error TS1117: An object literal cannot have multiple properties with the same name.
+src/types/channels.ts(1,50): error TS2307: Cannot find module '../models/Post.js' or its corresponding type declarations.

@@ -542,7 +542,7 @@ export const MobileNavbar: React.FC = () => {
                         <div className="py-1">
                           {[
                             { label: "En preparación", status: "PENDIENTE_PREPARACION", count: getCount("logistics", "pendiente_preparacion") },
-                            { label: "Listo para entregar", status: "LISTO_PARA_ENTREGAR", count: getCount("logistics", "listo_para_entregar") },
+                            { label: "Listo para entregar ML", status: "LISTO_PARA_ENTREGAR", count: getCount("logistics", "listo_para_entregar") },
                             { label: "Despachado ML", status: "DESPACHADO_MELI", count: getCount("logistics", "despachado_meli") },
                             { label: "Retiro en Local", status: "RETIRO_EN_LOCAL", count: getCount("logistics", "retiro_local") },
                             { label: "Entregados", status: "ENTREGADOS", count: getCount("logistics", "entregado") },

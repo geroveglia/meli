@@ -32,7 +32,7 @@ router.get("/metrics",
         Tenant.countDocuments({ isSystem: false, createdAt: { $gte: thirtyDaysAgo } }),
         User.countDocuments(),
         Cuenta.countDocuments(),
-        Campaign.countDocuments(),
+        0, // Campaign.countDocuments(),
         Tenant.aggregate([
           { $match: { isSystem: false } },
           {
@@ -109,7 +109,7 @@ router.get("/metrics",
         },
         resources: {
           totalUsers,
-          totalCuentas,
+          totalClients, // fixed totalCuentas -> totalClients
           totalCampaigns,
           storageUsedMB: Math.round(totalStorage),
           storageLimitMB: Math.round(totalStorageLimit),
@@ -190,7 +190,7 @@ router.get("/activity",
           },
           { $sort: { _id: 1 } }
         ]),
-        Campaign.aggregate([
+        [] /* Campaign.aggregate([
           {
             $match: {
               createdAt: { $gte: startDate }
@@ -203,7 +203,7 @@ router.get("/activity",
             }
           },
           { $sort: { _id: 1 } }
-        ])
+        ]) */
       ]);
 
       res.json({

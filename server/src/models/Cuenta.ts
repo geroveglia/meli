@@ -17,6 +17,7 @@ export interface ICuenta extends Document {
   createdAt: Date;
   updatedAt: Date;
   usuarios?: { userId: Types.ObjectId; permiso: "ver" | "editar" }[];
+  ownerUserId?: Types.ObjectId;
   mercadolibre?: {
     accessToken: string;
     refreshToken: string;

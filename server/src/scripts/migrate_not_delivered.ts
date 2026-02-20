@@ -14,13 +14,19 @@ const run = async () => {
 
         const result = await Order.updateMany(
             { 
-                $or: [
-                    { "shipping.status": "cancelled" },
-                    { "shipping.status": "not_delivered" }
-                ],
-                $or: [
-                    { salesStatus: { $ne: "venta_cancelada" } },
-                    { logisticsStatus: { $ne: "cancelado_vuelto_stock" } }
+                $and: [
+                    {
+                        $or: [
+                            { "shipping.status": "cancelled" },
+                            { "shipping.status": "not_delivered" }
+                        ]
+                    },
+                    {
+                        $or: [
+                            { salesStatus: { $ne: "venta_cancelada" } },
+                            { logisticsStatus: { $ne: "cancelado_vuelto_stock" } }
+                        ]
+                    }
                 ]
             },
             {

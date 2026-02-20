@@ -11,6 +11,8 @@ import { ComponentsLab } from "./pages/ComponentsLab";
 import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
 import { PricingPage } from "./pages/PricingPage";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 
 import { RolesPage } from "./pages/admin/RolesPage";
 import { PositionsPage } from "./pages/admin/PositionsPage";
@@ -44,11 +46,13 @@ import { PerfilPage } from "./pages/lumba/PerfilPage";
 // --- Layout público (sin Navbar) ---
 const PublicLayout: React.FC = () => {
   const location = useLocation();
-  const hideNavbarRoutes = ["/login", "/register"];
+  const hideNavbarRoutes = ["/login", "/register", "/forgot-password", "/reset-password"];
+
+  const shouldHideNavbar = hideNavbarRoutes.some(route => location.pathname.startsWith(route));
 
   return (
     <>
-      {!hideNavbarRoutes.includes(location.pathname) && <PublicNavbar />}
+      {!shouldHideNavbar && <PublicNavbar />}
       <Outlet />
     </>
   );
@@ -174,6 +178,8 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<SignupPage />} />
               <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
             </Route>
 
             {/* Rutas protegidas (CON MobileNavbar) - Prefijo /admin */}

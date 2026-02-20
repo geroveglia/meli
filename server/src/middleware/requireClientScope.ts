@@ -3,9 +3,9 @@ import { AuthenticatedRequest } from "./auth.js";
 import { TenantRequest } from "./tenant.js";
 import { Role } from "../models/Role.js";
 
-export interface ClientScopedRequest extends AuthenticatedRequest, TenantRequest {
+export type ClientScopedRequest = AuthenticatedRequest & TenantRequest & {
   allowedClientIds?: string[];
-}
+};
 
 export function requireClientScope(req: ClientScopedRequest, res: Response, next: NextFunction): void {
   const user = req.user;

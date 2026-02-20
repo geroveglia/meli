@@ -35,8 +35,11 @@ interface AuthState {
     phone?: string;
     password: string;
   }) => Promise<{ token: string; user: User; tenant: Tenant }>;
-  loginWithGoogle: (token: string) => Promise<{ requiresTenantSelection?: boolean; tenants?: Tenant[]; redirectTo?: string; user?: User }>;
-  login: (email: string, password: string, tenantSlug?: string, cuentaId?: string) => Promise<{ requiresTenantSelection?: boolean; tenants?: Tenant[]; redirectTo?: string; user?: User }>;
+  loginWithGoogle: (token: string) => Promise<{ requiresTenantSelection?: boolean; tenants?: Tenant[]; redirectTo?: string; user?: User; requires2FA?: boolean; email?: string }>;
+  login: (email: string, password: string, tenantSlug?: string, cuentaId?: string) => Promise<{ requiresTenantSelection?: boolean; tenants?: Tenant[]; redirectTo?: string; user?: User; requires2FA?: boolean; email?: string }>;
+  verify2FA: (email: string, code: string) => Promise<{ redirectTo?: string; user?: User }>;
+  forgotPassword: (email: string) => Promise<string>;
+  resetPassword: (token: string, newPassword: string) => Promise<void>;
   checkTenants: (email: string) => Promise<Tenant[]>;
   logout: () => void;
   setTenantId: (tenantId: string) => void;
@@ -278,7 +281,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         throw err;
       }
 
-      // Éxito
+      // 2FA Handle
+      if (data?.requires2FA) {
+        return {
+          requires2FA: true,
+          email: data.email,
+        };
+      }
+
+      // Éxito Normal
       const token = data?.token;
       const user = data?.user as User | undefined;
       const redirectTo = data?.redirectTo;
@@ -325,6 +336,109 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         data,
         message: error?.message || "Network error (¿CORS? ¿URL del API correcta? ¿Servidor caído?)",
       };
+    }
+  },
+
+  async verify2FA(email: string, code: string) {
+    const base = normalizeBaseUrl(import.meta.env.VITE_API_URL);
+    const url = `${base}/auth/verify-2fa`;
+    let data: any = null;
+    let res: Response | null = null;
+    
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code })
+      });
+      data = await parseResponseSafely(res);
+
+      if (!res.ok) {
+        throw {
+          __api: true,
+          status: res.status,
+          message: data?.error || data?.message || "Invalid verification code"
+        };
+      }
+
+      const token = data?.token;
+      const user = data?.user as User | undefined;
+      const redirectTo = data?.redirectTo;
+
+      if (!token || !user) {
+        throw new Error("Invalid response from verification");
+      }
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("tenantId", user?.tenantId || "");
+      if (user?.tenantSlug) {
+        localStorage.setItem("tenantSlug", user.tenantSlug);
+      }
+      localStorage.setItem("user", JSON.stringify(user));
+      
+      set({
+        token,
+        tenantId: user?.tenantId || "",
+        isAuthenticated: true,
+        user: user || null,
+      });
+
+      return { redirectTo, user };
+    } catch (error: any) {
+      if (error?.__api) throw error;
+      throw { message: error?.message || "Network error" };
+    }
+  },
+
+  async forgotPassword(email: string) {
+    const base = normalizeBaseUrl(import.meta.env.VITE_API_URL);
+    const url = `${base}/auth/forgot-password`;
+    
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+      const data = await parseResponseSafely(res);
+
+      if (!res.ok) {
+        throw {
+          __api: true,
+          status: res.status,
+          message: data?.error || data?.message || "Error al solicitar recuperación de contraseña"
+        };
+      }
+
+      return data?.message || "Enlace enviado";
+    } catch (error: any) {
+      if (error?.__api) throw error;
+      throw { message: error?.message || "Network error" };
+    }
+  },
+
+  async resetPassword(token: string, newPassword: string) {
+    const base = normalizeBaseUrl(import.meta.env.VITE_API_URL);
+    const url = `${base}/auth/reset-password`;
+    
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, newPassword })
+      });
+      const data = await parseResponseSafely(res);
+
+      if (!res.ok) {
+        throw {
+          __api: true,
+          status: res.status,
+          message: data?.error || data?.message || "Error al restablecer contraseña"
+        };
+      }
+    } catch (error: any) {
+      if (error?.__api) throw error;
+      throw { message: error?.message || "Network error" };
     }
   },
 

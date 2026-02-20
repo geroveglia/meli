@@ -249,6 +249,53 @@ export const LogisticaPage: React.FC = () => {
       return;
     }
 
+    if (action === "IMPRIMIR_DETALLE") {
+        const printContent = document.getElementById('printable-order-detail');
+        if (!printContent) return;
+
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+
+        const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+            .map(el => el.outerHTML)
+            .join('\n');
+
+        const order = !isBulk ? (orderOrIds as Order) : null;
+        const title = order ? `Detalle del Pedido #${order.meliOrderId}` : 'Detalle del Pedido';
+
+        const iframeDoc = iframe.contentWindow?.document;
+        if (iframeDoc) {
+            iframeDoc.open();
+            iframeDoc.write(`
+                <html>
+                    <head>
+                        <title>${title}</title>
+                        ${styles}
+                        <style>
+                            @media print {
+                                body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                            }
+                        </style>
+                    </head>
+                    <body class="bg-white dark:bg-gray-800 p-8">
+                        ${printContent.innerHTML}
+                    </body>
+                </html>
+            `);
+            iframeDoc.close();
+
+            iframe.contentWindow?.focus();
+            setTimeout(() => {
+                iframe.contentWindow?.print();
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                }, 1000);
+            }, 500);
+        }
+        return;
+    }
+
     if (action === "EMPAQUETAR") {
       if (isBulk) {
         (orderOrIds as string[]).forEach((id) => executeAction(id, action));
@@ -470,7 +517,7 @@ export const LogisticaPage: React.FC = () => {
       ) {
         // Show reprint button
         buttons.push(
-          <Button key="reprint" onClick={() => handleAction(order, "IMPRIMIR_ETIQUETA")} variant="blue" size="sm" className="flex items-center gap-2" title={!isCard ? "Reimprimir Etiqueta" : ""}>
+          <Button key="reprint" onClick={() => handleAction(order, "IMPRIMIR_DETALLE")} variant="blue" size="sm" className="flex items-center gap-2" title={!isCard ? "Imprimir Detalle" : ""}>
             <FontAwesomeIcon icon={faPrint} />
           </Button>,
         );
@@ -501,8 +548,8 @@ export const LogisticaPage: React.FC = () => {
       // 2. Imprimir Etiqueta OR Retiro Local
       if (!isLocalPickup) {
         buttons.push(
-            <Button key="print" onClick={() => handleAction(order, "IMPRIMIR_ETIQUETA")} variant={isLabeled ? "grey" : "blue"} size="sm" disabled={!isPackaged || isLabeled} className={`flex items-center gap-2`} title={!isPackaged ? "Primero debes empaquetar" : (isLabeled ? "Impresa" : "Imprimir Etiqueta")}>
-            <FontAwesomeIcon icon={isLabeled ? faCheck : faPrint} />
+            <Button key="print" onClick={() => handleAction(order, "IMPRIMIR_ETIQUETA")} variant="blue" size="sm" className={`flex items-center gap-2`} title="Imprimir Etiqueta">
+            <FontAwesomeIcon icon={faPrint} />
             </Button>,
         );
       } else {

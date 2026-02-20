@@ -14,6 +14,10 @@ export interface IUser extends Document {
   areaId?: Types.ObjectId;
   isActive: boolean;
   lastLoginAt?: Date;
+  twoFactorCode?: string;
+  twoFactorCodeExpires?: Date;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -41,6 +45,10 @@ const userSchema = new Schema<IUser>(
     areaId: { type: Schema.Types.ObjectId, ref: "Area" },
     isActive: { type: Boolean, default: true },
     lastLoginAt: { type: Date },
+    twoFactorCode: { type: String },
+    twoFactorCodeExpires: { type: Date },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
   },
   { timestamps: true }
 );

@@ -1,4 +1,7 @@
-import { PostType, SocialChannel, Channel } from "../models/Post.js";
+// Mocked types since Post model doesn't exist yet
+export type PostType = "social" | "email" | "push";
+export type Channel = string;
+export type SocialChannel = string;
 
 export interface ChannelMetadata {
   name: string;

@@ -51,6 +51,7 @@ export interface IOrder extends Document {
   
   // Metadata for internal logic
   tags: string[]; // e.g., "impresas"
+  tagStatus?: "pendientes" | "impresas" | "error";
   isPackaged: boolean;
   invoiceId?: string;
 }

@@ -119,17 +119,13 @@ export const canViewDocument = async (collection: string, docId: string, userId:
  */
 function getModelByCollection(collection: string) {
   switch (collection) {
-    case "briefs":
-      return Brief;
-    case "campaigns":
-      return Campaign;
     case "cuentas":
       return Cuenta;
+    case "briefs":
+    case "campaigns":
     case "posts":
-      return Post;
     case "projects":
-      return Project;
-
+      return null; // TODO: Implement models
     default:
       return null;
   }

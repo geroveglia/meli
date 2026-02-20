@@ -8,11 +8,14 @@ import { requireTenant, TenantRequest } from "../middleware/tenant.js";
 import { validate } from "../middleware/validate.js";
 import { registerSchema, loginSchema } from "../validators/authSchemas.js";
 import { register, checkEmailAvailability, loginWithGoogle } from "../controllers/authController.js";
-import { signJwt } from "../utils/jwt.js";
 import { addUserToClientUsuarios } from "../services/clientUsuarios.js";
 import { ensureDefaultRoles } from "../services/roleInitService.js";
 import { env } from "../config/env.js";
 import { z } from "zod";
+import { signJwt } from "../utils/jwt.js";
+import { send2FACodeEmail, sendPasswordResetEmail } from "../utils/email.js";
+import crypto from 'crypto';
+import bcrypt from "bcryptjs";
 import { Types } from "mongoose";
 import { authenticateToken, AuthenticatedRequest } from "../middleware/auth.js";
 
@@ -181,6 +184,97 @@ router.post("/login", validate(loginWithClientSchema), async (req, res) => {
       redirectTo = "/mobile";
     }
 
+    // ====== LOGIN SUCCESSFUL -> GENERATE 2FA CODE ======
+    const twoFactorCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
+    const twoFactorCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+
+    if (typeof user.save === 'function') {
+        user.twoFactorCode = twoFactorCode;
+        user.twoFactorCodeExpires = twoFactorCodeExpires;
+        await user.save();
+    } else {
+        await userRepository.update(user.id, { twoFactorCode, twoFactorCodeExpires } as any);
+    }
+
+    // Send email
+    await send2FACodeEmail(user.email, twoFactorCode);
+
+    res.json({
+        requires2FA: true,
+        email: user.email,
+        message: "A verification code has been sent to your email."
+    });
+    return;
+
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ error: "Internal server error" });
+    return;
+  }
+});
+
+// POST /auth/verify-2fa
+router.post("/verify-2fa", async (req, res) => {
+  try {
+    const { email, code, cuentaId } = req.body;
+
+    if (!email || !code) {
+      res.status(400).json({ error: "Email and code are required" });
+      return;
+    }
+
+    const users = await userRepository.findActiveByEmail(email);
+    if (users.length === 0) {
+      res.status(401).json({ error: "User not found" });
+      return;
+    }
+
+    // Assuming we pick the first user for now. 
+    // If multi-tenant login requires tenantSlug here, it should be passed from frontend.
+    // For simplicity, we just use the first match or require the frontend to send tenantSlug if relevant.
+    const user: any = users[0]; 
+
+    // Verify 2FA code
+    if (!user.twoFactorCode || user.twoFactorCode !== code) {
+      res.status(401).json({ error: "Invalid verification code" });
+      return;
+    }
+
+    // Verify expiration
+    if (!user.twoFactorCodeExpires || new Date() > new Date(user.twoFactorCodeExpires)) {
+      res.status(401).json({ error: "Verification code has expired" });
+      return;
+    }
+
+    // Code is valid. Clear it.
+    if (typeof user.save === 'function') {
+      user.twoFactorCode = undefined;
+      user.twoFactorCodeExpires = undefined;
+      await user.save();
+    } else {
+      await userRepository.update(user.id, { 
+        twoFactorCode: null, 
+        twoFactorCodeExpires: null 
+      } as any);
+    }
+
+    // Proceed to generate token (similar to original login logic)
+    const getTenant = (u: any) => u.tenantId && u.tenantId.name ? u.tenantId : u.Tenant;
+    const getRoles = (u: any) => u.roles || u.Roles || [];
+
+    const tenantObj = getTenant(user);
+    const tenantId = tenantObj._id || tenantObj.id;
+    const userRoles = getRoles(user);
+
+    const primaryRoleName = userRoles.length > 0 ? userRoles[0].name || "" : "";
+    const rolePermissions = userRoles.flatMap((role: any) => role.permissions || []);
+    const permissions = [...new Set(rolePermissions)];
+
+    let redirectTo: string | undefined;
+    if (permissions.includes("mobile:access")) {
+      redirectTo = "/mobile";
+    }
+
     const payload = {
       sub: String(user._id || user.id),
       email: user.email,
@@ -212,11 +306,10 @@ router.post("/login", validate(loginWithClientSchema), async (req, res) => {
         ...(cuentaId ? { clientId: cuentaId } : {}),
       },
     });
-    return;
-  } catch (err) {
-    console.error("Login error:", err);
+
+  } catch (error) {
+    console.error("Verify 2FA error:", error);
     res.status(500).json({ error: "Internal server error" });
-    return;
   }
 });
 
@@ -389,6 +482,7 @@ router.post("/register-client", requireTenant, validate(registerClientSchema), a
     });
 
     // Actualizar cliente con owner
+    // @ts-ignore - Pending to add ownerUserId to ICuenta interface if needed
     cuenta.ownerUserId = user._id as any;
     await cuenta.save();
 
@@ -694,6 +788,88 @@ router.post("/register-tenant", async (req, res) => {
       return;
     }
 
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// POST /auth/forgot-password
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      res.status(400).json({ error: "Email is required" });
+      return;
+    }
+
+    const user: any = await User.findOne({ email });
+    if (!user) {
+      // Return 200 even if user not found to prevent email enumeration
+      res.status(200).json({ message: "Si el correo está registrado, recibirás un enlace de recuperación." });
+      return;
+    }
+
+    // Generate token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenExpires = new Date(Date.now() + 3600000); // 1 hour
+
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = resetTokenExpires;
+    await user.save();
+
+    // Send email
+    // Front end URL format: http://localhost:5173/reset-password/:token
+    // In production, use the actual frontend URL domain from VITE_FRONTEND_URL or similar, fallback to origin.
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
+
+    await sendPasswordResetEmail(user.email, resetUrl);
+
+    res.status(200).json({ message: "Si el correo está registrado, recibirás un enlace de recuperación." });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// POST /auth/reset-password
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    
+    if (!token || !newPassword) {
+      res.status(400).json({ error: "Token and new password are required" });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      res.status(400).json({ error: "Password must be at least 6 characters long" });
+      return;
+    }
+
+    console.log("[Auth] Reset password attempt for token:", token);
+    
+    const user: any = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: new Date() },
+    });
+
+    if (!user) {
+      console.log("[Auth] Invalid token or expired. Token:", token);
+      console.log("[Auth] Current date:", new Date());
+      res.status(400).json({ error: "Invalid or expired reset token" });
+      return;
+    }
+
+    // Save new password - the pre-save hook in User model will hash it automatically
+    user.password = newPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    
+    await user.save();
+
+    res.status(200).json({ message: "Password has been successfully reset" });
+  } catch (error) {
+    console.error("Reset password error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
