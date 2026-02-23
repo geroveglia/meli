@@ -369,7 +369,7 @@ export const LoginPage: React.FC = () => {
           </div>
 
           {step === 'login' && (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" autoComplete="off">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Tenant Selector - solo cuando hay múltiples tenants */}
             {showTenantSelector && availableTenants.length > 0 && (
               <div>

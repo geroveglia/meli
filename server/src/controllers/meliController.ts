@@ -152,7 +152,7 @@ export const callback = async (req: Request, res: Response) => {
         // We know the frontend URL from CORS_ORIGIN or hardcoded
         const frontendUrl = process.env.CORS_ORIGIN?.split(',')[0] || "http://localhost:5173";
         if (cuentaId) {
-            res.redirect(`${frontendUrl}/admin/cuentas/${cuentaId}?status=success`);
+            res.redirect(`${frontendUrl}/admin/cuentas?status=success`);
         } else {
             res.redirect(`${frontendUrl}/admin/integrations?status=success`);
         }

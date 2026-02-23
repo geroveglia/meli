@@ -280,6 +280,11 @@ export const handleNotification = async (topic: string, resource: string, tenant
     let saveTokens: (newTokens: any) => Promise<void>;
     let tenantObjectId = tenantId;
 
+    // Obtener las credenciales de la App guardadas en la base de datos para no usar .env
+    const tenant = await Tenant.findById(tenantId);
+    const appId = tenant?.mercadolibre?.appId || process.env.MELI_APP_ID;
+    const clientSecret = tenant?.mercadolibre?.clientSecret || process.env.MELI_SECRET;
+
     if (clientId) {
         // --- Client (Cuenta) Logic ---
         const cuenta = await Cuenta.findOne({ _id: clientId, tenantId });
@@ -303,7 +308,6 @@ export const handleNotification = async (topic: string, resource: string, tenant
 
     } else {
         // --- Tenant Logic (Legacy) ---
-        const tenant = await Tenant.findById(tenantId);
         if(!tenant || !tenant.mercadolibre?.accessToken) {
             console.error(`Tenant ${tenantId} not found or not connected to MELI`);
             return;
@@ -327,7 +331,7 @@ export const handleNotification = async (topic: string, resource: string, tenant
     if(expiresAt && expiresAt.getTime() < Date.now()) {
          try {
             console.log("Refreshing expired token...");
-            const newTokens = await refreshAccessToken(refreshToken);
+            const newTokens = await refreshAccessToken(refreshToken, appId, clientSecret);
             await saveTokens(newTokens);
             accessToken = newTokens.accessToken;
          } catch (e) {

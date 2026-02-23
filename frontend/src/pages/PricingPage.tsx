@@ -1,22 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Footer } from "../components/Footer";
-import { brandingService, BrandingSettings } from "../services/brandingService";
 import { motion } from "framer-motion";
 
 export const PricingPage: React.FC = () => {
-  const [branding, setBranding] = useState<BrandingSettings | null>(null);
-
-  useEffect(() => {
-    brandingService.getBranding().then(setBranding).catch(console.error);
-  }, []);
-
   const plans = [
     {
       name: "Individual plan",
       price: "$0/month",
       badge: "Public preview",
       description: "A plan for anyone who wants to build.",
-      buttonText: "Download",
+      buttonText: "Get plan",
       buttonVariant: "dark", // dark background, white text
       features: [],
     },
@@ -25,8 +18,7 @@ export const PricingPage: React.FC = () => {
       subName: "via Google One",
       badge: "Recommended",
       description: "Leverage Antigravity as your daily driver via your Google AI Pro or Ultra subscription.",
-      buttonText: "Download",
-      secondaryButtonText: "Get plan",
+      buttonText: "Get plan",
       buttonVariant: "dark",
       features: [],
     },
@@ -35,8 +27,7 @@ export const PricingPage: React.FC = () => {
       subName: "via Google Workspace",
       badge: "Preview",
       description: "For software development teams, higher rate limits via Google Workspace AI Ultra for Business.",
-      buttonText: "Download",
-      secondaryButtonText: "Get plan",
+      buttonText: "Get plan",
       buttonVariant: "dark",
       features: [],
     },
@@ -104,17 +95,12 @@ export const PricingPage: React.FC = () => {
                 >
                   {plan.buttonText}
                 </button>
-                {plan.secondaryButtonText && (
-                  <button className="w-full py-3 px-6 rounded-full font-medium bg-gray-200 text-black hover:bg-gray-300 transition-colors">
-                    {plan.secondaryButtonText}
-                  </button>
-                )}
               </div>
             </motion.div>
           ))}
         </div>
 
-        <Footer branding={branding} />
+        <Footer />
       </main>
     </div>
   );

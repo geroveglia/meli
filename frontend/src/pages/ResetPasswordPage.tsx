@@ -86,7 +86,7 @@ export const ResetPasswordPage: React.FC = () => {
             <p className="text-accent-8 text-sm mt-2">Ingresa tu nueva contraseña para acceder a tu cuenta.</p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" autoComplete="off">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-accent-1 mb-2">Nueva Contraseña</label>
               <div className="relative">
@@ -95,6 +95,7 @@ export const ResetPasswordPage: React.FC = () => {
                   type={showPassword ? "text" : "password"} 
                   className="input-base pr-10" 
                   placeholder="••••••••" 
+                  autoComplete="new-password"
                 />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center">
                   <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} className="h-4 w-4 text-gray-400 hover:text-gray-600" />
@@ -111,6 +112,7 @@ export const ResetPasswordPage: React.FC = () => {
                   type={showConfirmPassword ? "text" : "password"} 
                   className="input-base pr-10" 
                   placeholder="••••••••" 
+                  autoComplete="new-password"
                 />
                 <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center">
                   <FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} className="h-4 w-4 text-gray-400 hover:text-gray-600" />

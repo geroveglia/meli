@@ -3,6 +3,7 @@ import { Footer } from "../components/Footer";
 import { ArrowUpRight, Box, Activity, Layers, Globe } from "lucide-react";
 import { motion, Variants } from "framer-motion";
 import { brandingService, BrandingSettings } from "../services/brandingService";
+import { useNavigate } from "react-router-dom";
 
 const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 30 },
@@ -25,6 +26,7 @@ const staggerContainer: Variants = {
 
 export const Home: React.FC = () => {
   const [branding, setBranding] = useState<BrandingSettings | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     brandingService.getBranding().then(setBranding).catch(console.error);
@@ -54,7 +56,7 @@ export const Home: React.FC = () => {
             </motion.p>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.6 }} className="flex items-center gap-4">
-              <button className="px-6 py-3 md:px-8 md:py-4 bg-accent-9 text-accent-2 font-bold rounded-full flex items-center gap-2 hover:opacity-90 hover:bg-accent-3 dark:hover:bg-accent-3 hover:text-accent-9 transition-colors text-sm md:text-base">
+              <button onClick={() => navigate("/login")} className="px-6 py-3 md:px-8 md:py-4 bg-accent-9 text-accent-2 font-bold rounded-full flex items-center gap-2 hover:opacity-90 hover:bg-accent-3 dark:hover:bg-accent-3 hover:text-accent-9 transition-colors text-sm md:text-base">
                 Comenzar Ahora <ArrowUpRight size={20} />
               </button>
               <div className="flex gap-1 px-4">
@@ -153,7 +155,7 @@ export const Home: React.FC = () => {
         </motion.div>
 
         {/* --- Footer --- */}
-        <Footer branding={branding} />
+        <Footer />
       </main>
     </div>
   );

@@ -228,7 +228,7 @@ export const IntegrationsPage: React.FC = () => {
                       <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md">
                           <p className="text-xs text-blue-800 dark:text-blue-300">
                               Asegúrate de que la <strong>Redirect URI</strong> en tu aplicación de MercadoLibre esté configurada como: <br/>
-                              <code className="bg-white dark:bg-gray-800 px-1 py-0.5 rounded mt-1 block w-fit">{window.location.protocol}//{window.location.hostname}/api/v1/meli/callback</code>
+                              <code className="bg-white dark:bg-gray-800 px-1 py-0.5 rounded mt-1 block w-fit">{(import.meta.env.VITE_API_URL || `${window.location.protocol}//${window.location.host}/api/v1`).replace('/api/v1', '')}/api/v1/meli/callback</code>
                           </p>
                       </div>
                   </div>

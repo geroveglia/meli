@@ -797,6 +797,7 @@ export const MobileNavbar: React.FC = () => {
                                <div className="pl-2 pt-2 pb-1 text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">Lumba (MercadoLibre)</div>
                                {[
                                   { label: "Lógica & Estados", path: "/admin/doc/meli-logic" },
+                                  { label: "Autenticación ML & OAuth", path: "/admin/doc/meli-auth" },
                                   { label: "Recuperación de Webhooks", path: "/admin/doc/webhook-recovery" },
                                ].map((sub) => (
                                   <Link
