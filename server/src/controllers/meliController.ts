@@ -6,6 +6,12 @@ import { Cuenta } from "../models/Cuenta.js";
 import { AuthenticatedRequest } from "../middleware/auth.js";
 import mongoose from "mongoose";
 import { Order } from "../models/Order.js";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Helper to encode state
 const encodeState = (tenantId: string, cuentaId?: string) => {
@@ -35,6 +41,41 @@ export const configureCredentials = async (req: Request, res: Response) => {
             "mercadolibre.appId": appId,
             "mercadolibre.clientSecret": clientSecret
         });
+
+        // Update .env file and process.env dynamically
+        try {
+            const envPath = path.resolve(__dirname, '../../.env');
+            if (fs.existsSync(envPath)) {
+                let envContent = fs.readFileSync(envPath, 'utf8');
+                
+                // Regex to find and replace or append
+                const appIdRegex = /^MELI_APP_ID=.*$/m;
+                const secretRegex = /^MELI_SECRET=.*$/m;
+
+                if (appIdRegex.test(envContent)) {
+                    envContent = envContent.replace(appIdRegex, `MELI_APP_ID=${appId}`);
+                } else {
+                    envContent += `\nMELI_APP_ID=${appId}`;
+                }
+
+                if (secretRegex.test(envContent)) {
+                    envContent = envContent.replace(secretRegex, `MELI_SECRET=${clientSecret}`);
+                } else {
+                    envContent += `\nMELI_SECRET=${clientSecret}`;
+                }
+
+                fs.writeFileSync(envPath, envContent, 'utf8');
+                
+                // Update active memory
+                process.env.MELI_APP_ID = appId.toString();
+                process.env.MELI_SECRET = clientSecret.toString();
+                console.log("Global .env credentials updated successfully.");
+            }
+        } catch (envError) {
+            console.error("Error writing to .env file:", envError);
+            // We don't throw here, as the DB update was successful.
+        }
+
         res.json({ message: "Credentials updated successfully" });
     } catch (e) {
         console.error("Error updating credentials:", e);
@@ -66,7 +107,8 @@ export const getAuth = async (req: Request, res: Response) => {
 
         const state = encodeState(tenantId, cuentaId);
         
-        const url = getAuthUrl(redirectUri, appId) + `&state=${state}`;
+        // Pass the state to getAuthUrl so it can store the PKCE verifier linked to this state
+        const url = getAuthUrl(redirectUri, appId, state) + `&state=${state}`;
 
         res.json({ url });
     } catch (e) {
@@ -107,7 +149,8 @@ export const callback = async (req: Request, res: Response) => {
         const appId = tenant?.mercadolibre?.appId;
         const clientSecret = tenant?.mercadolibre?.clientSecret;
 
-        const tokenData = await authorize(code, redirectUri, appId, clientSecret);
+        // Pass 'state' to authorize so it can retrieve the correct PKCE verifier
+        const tokenData = await authorize(code, redirectUri, appId, clientSecret, state as string);
 
         if (cuentaId) {
              // Update specific Cuenta (Client)
@@ -159,7 +202,7 @@ export const callback = async (req: Request, res: Response) => {
 
     } catch (e) {
         console.error("Error exchanging code:", e);
-        res.status(500).send("Error al conectar con MercadoLibre");
+        res.status(500).send(`Error al conectar con MercadoLibre: ${(e as Error).message}`);
     }
 };
 

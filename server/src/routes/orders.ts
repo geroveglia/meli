@@ -148,7 +148,7 @@ router.patch("/:id", authenticateToken, async (req: AuthenticatedRequest, res: R
         const updates = req.body;
 
         // Validation: Only allow specific fields to be updated manually
-        const allowedUpdates = ["logisticsStatus", "packaged", "tagStatus"];
+        const allowedUpdates = ["logisticsStatus", "packaged", "tagStatus", "salesStatus", "billingType"];
         const actualUpdates: any = {};
 
         // Filter updates

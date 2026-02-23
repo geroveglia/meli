@@ -358,22 +358,30 @@ export const useLumbaStore = create<LumbaState>()(
           }
       },
 
-      updateOrderSalesStatus: (orderId, status, billingType) =>
-        set((state) => {
-            // TODO: Call API to update status in backend
-          const statusToKey: Record<string, string> = {
-            pendiente_facturacion: "PENDIENTE_FACTURACION",
-            facturada: "FACTURADAS",
-            venta_cancelada: "VENTAS_CANCELADAS",
-            nota_credito: "NOTAS_DE_CREDITO",
-          };
-          const statusKey = statusToKey[status] || status.toUpperCase();
+      updateOrderSalesStatus: async (orderId, status, billingType) => {
+          // Optimistic Update
+          set((state) => {
+              const statusToKey: Record<string, string> = {
+                pendiente_facturacion: "PENDIENTE_FACTURACION",
+                facturada: "FACTURADAS",
+                venta_cancelada: "VENTAS_CANCELADAS",
+                nota_credito: "NOTAS_DE_CREDITO",
+              };
+              const statusKey = statusToKey[status] || status.toUpperCase();
 
-          return {
-            orders: state.orders.map((o) => (o.id === orderId ? { ...o, salesStatus: status, billingType: billingType || o.billingType } : o)),
-            notifications: { ...state.notifications, [statusKey]: true },
-          };
-        }),
+              return {
+                orders: state.orders.map((o) => (o.id === orderId ? { ...o, salesStatus: status, billingType: billingType || o.billingType } : o)),
+                notifications: { ...state.notifications, [statusKey]: true },
+              };
+          });
+
+          // API Call
+          try {
+              await api.patch(`/orders/${orderId}`, { salesStatus: status, billingType });
+          } catch (error) {
+              console.error("Failed to persist sales status:", error);
+          }
+      },
 
       updateOrderLogisticsStatus: async (orderId, status) => {
           // Optimistic Update

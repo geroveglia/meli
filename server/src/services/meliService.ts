@@ -1,8 +1,46 @@
-
 import { Tenant } from "../models/Tenant.js";
 import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
+
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const PKCE_FILE_PATH = path.resolve(__dirname, '../../storage/pkce.json');
+
+const getPkceStore = (): Record<string, { verifier: string; expiresAt: number }> => {
+    try {
+        if (fs.existsSync(PKCE_FILE_PATH)) {
+            const data = fs.readFileSync(PKCE_FILE_PATH, 'utf8');
+            return JSON.parse(data);
+        }
+    } catch (e) { console.error("Error reading PKCE store", e); }
+    return {};
+};
+
+const savePkceStore = (store: Record<string, { verifier: string; expiresAt: number }>) => {
+    try {
+        const dir = path.dirname(PKCE_FILE_PATH);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(PKCE_FILE_PATH, JSON.stringify(store), 'utf8');
+    } catch (e) { console.error("Error writing PKCE store", e); }
+};
+
+// Cleanup expired PKCE entries periodically
+setInterval(() => {
+    const store = getPkceStore();
+    const now = Date.now();
+    let changed = false;
+    for (const key of Object.keys(store)) {
+        if (store[key].expiresAt < now) {
+            delete store[key];
+            changed = true;
+        }
+    }
+    if (changed) savePkceStore(store);
+}, 1000 * 60 * 15); // Every 15 min
 
 const LOG_FILE = "C:\\wamp64\\www\\meli\\server\\server_debug.log";
 const logDebug = (msg: string) => {
@@ -31,14 +69,26 @@ interface MeliUserResponse {
     email: string;
 }
 
-export const getAuthUrl = (redirectUri: string, appId?: string) => {
+export const getAuthUrl = (redirectUri: string, appId?: string, state?: string) => {
   const finalAppId = appId || process.env.MELI_APP_ID;
   if (!finalAppId) throw new Error("MELI_APP_ID not defined");
   
-  return `https://auth.mercadolibre.com.ar/authorization?response_type=code&client_id=${finalAppId}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+  // -- PKCE Generation --
+  const verifier = crypto.randomBytes(32).toString('base64url');
+  const challenge = crypto.createHash('sha256').update(verifier).digest('base64url');
+  
+  if (state) {
+      // Store verifier for up to 15 minutes
+      const store = getPkceStore();
+      store[state] = { verifier, expiresAt: Date.now() + 15 * 60 * 1000 };
+      savePkceStore(store);
+  }
+
+  // MercadoLibre Requires PKCE
+  return `https://auth.mercadolibre.com.ar/authorization?response_type=code&client_id=${finalAppId}&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${challenge}&code_challenge_method=S256`;
 };
 
-export const authorize = async (code: string, redirectUri: string, appId?: string, clientSecret?: string) => {
+export const authorize = async (code: string, redirectUri: string, appId?: string, clientSecret?: string, state?: string) => {
   const finalAppId = appId || process.env.MELI_APP_ID;
   const finalSecret = clientSecret || process.env.MELI_SECRET;
 
@@ -51,6 +101,17 @@ export const authorize = async (code: string, redirectUri: string, appId?: strin
   params.append("code", code);
   params.append("redirect_uri", redirectUri);
 
+  // Retrieve PKCE verifier if available
+  if (state) {
+      const store = getPkceStore();
+      if (store[state]) {
+          const { verifier } = store[state];
+          params.append("code_verifier", verifier);
+          delete store[state]; // Clean up
+          savePkceStore(store);
+      }
+  }
+
   const response = await fetch(`${MELI_API_URL}/oauth/token`, {
     method: "POST",
     headers: {
@@ -62,8 +123,8 @@ export const authorize = async (code: string, redirectUri: string, appId?: strin
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("MELI Auth Error:", errorText);
-    throw new Error(`Failed to authorize with MercadoLibre: ${response.statusText}`);
+    console.error("MELI Auth Error Details:", errorText);
+    throw new Error(`Auth failed (${response.status}): ${errorText}`);
   }
 
   const data = (await response.json()) as MeliTokenResponse;
