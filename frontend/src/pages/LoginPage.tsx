@@ -212,10 +212,17 @@ export const LoginPage: React.FC = () => {
       }
 
       // === Redirección para Superadmin ===
-      const isSuperAdmin = result?.user?.primaryRole?.toLowerCase() === "superadmin" || result?.user?.roles?.some((r) => r.toLowerCase() === "superadmin");
+      const isSuperAdmin = result?.user?.primaryRole?.toLowerCase() === "superadmin" || result?.user?.roles?.some((r: any) => (r.name || r).toLowerCase() === "superadmin");
 
       if (isSuperAdmin) {
         navigate("/admin/dashboard");
+        return;
+      }
+
+      // === Redirección para Cliente ===
+      const isCliente = result?.user?.primaryRole?.toLowerCase() === "cliente" || result?.user?.roles?.some((r: any) => (r.name || r).toLowerCase() === "cliente");
+      if (isCliente) {
+        navigate("/admin/cuentas");
         return;
       }
 
@@ -277,9 +284,15 @@ export const LoginPage: React.FC = () => {
       const result = await useAuthStore.getState().verify2FA(twoFactorEmail, twoFactorCode);
 
       // Same routing logic from standard login
-      const isSuperAdmin = result?.user?.primaryRole?.toLowerCase() === "superadmin" || result?.user?.roles?.some((r) => r.toLowerCase() === "superadmin");
+      const isSuperAdmin = result?.user?.primaryRole?.toLowerCase() === "superadmin" || result?.user?.roles?.some((r: any) => (r.name || r).toLowerCase() === "superadmin");
       if (isSuperAdmin) {
         navigate("/admin/dashboard");
+        return;
+      }
+
+      const isCliente = result?.user?.primaryRole?.toLowerCase() === "cliente" || result?.user?.roles?.some((r: any) => (r.name || r).toLowerCase() === "cliente");
+      if (isCliente) {
+        navigate("/admin/cuentas");
         return;
       }
 

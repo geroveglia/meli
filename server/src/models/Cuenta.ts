@@ -18,6 +18,7 @@ export interface ICuenta extends Document {
   updatedAt: Date;
   usuarios?: { userId: Types.ObjectId; permiso: "ver" | "editar" }[];
   ownerUserId?: Types.ObjectId;
+  clienteId?: Types.ObjectId;
   mercadolibre?: {
     accessToken: string;
     refreshToken: string;
@@ -90,6 +91,7 @@ const cuentaSchema = new Schema<ICuenta>(
       },
     ],
     ownerUserId: { type: Schema.Types.ObjectId, ref: "User" },
+    clienteId: { type: Schema.Types.ObjectId, ref: "Client" },
   },
   { timestamps: true, collection: "clients" }
 );

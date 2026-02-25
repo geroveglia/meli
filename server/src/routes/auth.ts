@@ -184,25 +184,64 @@ router.post("/login", validate(loginWithClientSchema), async (req, res) => {
       redirectTo = "/mobile";
     }
 
-    // ====== LOGIN SUCCESSFUL -> GENERATE 2FA CODE ======
-    const twoFactorCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
-    const twoFactorCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+    // ====== LOGIN SUCCESSFUL ======
+    const isSuperAdmin = primaryRoleName.toLowerCase() === "superadmin" || userRoles.some((r: any) => (r.name || "").toLowerCase() === "superadmin");
 
-    if (typeof user.save === 'function') {
-        user.twoFactorCode = twoFactorCode;
-        user.twoFactorCodeExpires = twoFactorCodeExpires;
-        await user.save();
-    } else {
-        await userRepository.update(user.id, { twoFactorCode, twoFactorCodeExpires } as any);
+    if (!isSuperAdmin) {
+      // ====== GENERATE 2FA CODE ======
+      const twoFactorCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
+      const twoFactorCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+
+      if (typeof user.save === 'function') {
+          user.twoFactorCode = twoFactorCode;
+          user.twoFactorCodeExpires = twoFactorCodeExpires;
+          await user.save();
+      } else {
+          await userRepository.update(user.id, { twoFactorCode, twoFactorCodeExpires } as any);
+      }
+
+      // Send email
+      await send2FACodeEmail(user.email, twoFactorCode);
+
+      res.json({
+          requires2FA: true,
+          email: user.email,
+          message: "A verification code has been sent to your email."
+      });
+      return;
     }
 
-    // Send email
-    await send2FACodeEmail(user.email, twoFactorCode);
+    // ====== BYPASS 2FA FOR SUPERADMIN ======
+    const payload = {
+      sub: String(user._id || user.id),
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      primaryRole: primaryRoleName || null,
+      roles: userRoles.map((r: any) => r.name || "user"),
+      clientIds: user.clientIds ? user.clientIds.map((c: any) => c.toString()) : [],
+      tenantId: String(tenantId),
+      tenantSlug: tenantObj.slug,
+    };
+
+    const token = signJwt(payload);
 
     res.json({
-        requires2FA: true,
+      token,
+      redirectTo,
+      user: {
+        id: user._id || user.id,
         email: user.email,
-        message: "A verification code has been sent to your email."
+        firstName: user.firstName,
+        lastName: user.lastName,
+        roles: userRoles.map((r: any) => r.name || "user"),
+        primaryRole: primaryRoleName || null,
+        clientIds: user.clientIds ? user.clientIds.map((c: any) => c.toString()) : [],
+        permissions,
+        tenantId,
+        tenantSlug: tenantObj.slug,
+        ...(cuentaId ? { clientId: cuentaId } : {}),
+      },
     });
     return;
 

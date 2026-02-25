@@ -21,6 +21,7 @@ import { AreasPage } from "./pages/admin/AreasPage";
 import { UsersPage } from "./pages/admin/UsersPage";
 import { DashboardPage } from "./pages/admin/DashboardPage";
 import { CuentasPage } from "./pages/admin/CuentasPage";
+import { ClientesPage } from "./pages/admin/ClientesPage";
 import { CuentaInfoPage } from "./pages/admin/CuentaInfoPage";
 import { CarouselImagesPage } from "./pages/admin/CarouselImagesPage";
 import { TenantsPage } from "./pages/admin/TenantsPage";
@@ -248,6 +249,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <CuentasPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="clientes"
+                element={
+                  <ProtectedRoute>
+                    <ClientesPage />
                   </ProtectedRoute>
                 }
               />

@@ -38,6 +38,7 @@ import { cuentaRoutes } from "./routes/cuentas.js";
 import { tenantRoutes } from "./routes/tenants.js";
 import { meliRouter } from "./routes/meli.js";
 import { orderRouter } from "./routes/orders.js";
+import { clienteRoutes } from "./routes/clientes.js";
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -128,6 +129,7 @@ app.use("/api/v1/positions", positionRoutes);
 app.use("/api/v1/areas", areaRoutes);
 app.use("/api/v1/levels", levelRoutes);
 app.use("/api/v1/cuentas", cuentaRoutes);
+app.use("/api/v1/clientes", clienteRoutes);
 app.use("/api/v1/tenants", tenantRoutes);
 app.use("/api/v1/meli", meliRouter);
 app.use("/api/v1/orders", orderRouter);

@@ -5,7 +5,7 @@ import { useCuentaContextStore } from "../stores/cuentaContextStore";
 import { useLumbaStore } from "../stores/lumbaStore";
 import { Link, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faBars, faRightFromBracket, faHouse, faUserGear, faBuilding, faArrowUpRightFromSquare, faCog, faUser, faUserShield, faChevronDown, faUsersGear, faInfoCircle, faImages, faMoneyBillWave, faBell, faBook, faPlug } from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faBars, faRightFromBracket, faHouse, faUserGear, faBuilding, faArrowUpRightFromSquare, faCog, faUser, faUserShield, faChevronDown, faUsersGear, faInfoCircle, faImages, faMoneyBillWave, faBell, faBook, faPlug, faUsers } from "@fortawesome/free-solid-svg-icons";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 
 import axios from "../api/axiosConfig";
@@ -142,8 +142,11 @@ export const MobileNavbar: React.FC = () => {
     return user?.primaryRole ? [user.primaryRole] : [];
   }, [user?.roles, user?.primaryRole]);
 
+  const isSuperAdminTenant = user?.tenantSlug === "superadmin";
+  const userRoleNamesForCliente = user?.roles?.map((r: any) => (typeof r === 'string' ? r.toLowerCase() : (r.name || "").toLowerCase())) || [];
+  const isCliente = user?.primaryRole?.toLowerCase() === "cliente" || userRoleNamesForCliente.includes("cliente");
+
   const menuItems = useMemo(() => {
-    const isSuperAdminTenant = user?.tenantSlug === "superadmin";
 
     const base: Array<{
       path: string;
@@ -203,75 +206,71 @@ export const MobileNavbar: React.FC = () => {
         scope: "global",
       });
 
-      // --- LUMBA CONNECT ---
-      base.push({
-        path: "/ventas",
-        icon: faUsersGear,
-        label: "Lumba - Ventas",
-        scope: "global",
-        badge: "Nuevo",
-        badgeColor: "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100",
-      });
-      base.push({
-        path: "/logistica",
-        icon: faBuilding, // Using generic icon
-        label: "Lumba - Logistica",
-        scope: "global",
-      });
-
-      base.push({
-        path: "/admin/carousel-images",
-        icon: faImages,
-        label: "Carrusel",
-        scope: "global",
-      });
-      base.push({
-        path: "/admin/general",
-        icon: faCog,
-        label: "Logo",
-        scope: "global",
-      });
-
-
-
-
-
-      base.push({
-        path: "/admin/seo",
-        icon: faSearch,
-        label: "SEO",
-        scope: "global",
-      });
-      if (hasPermission("roles:view"))
+      if (isCliente) {
+        // --- LUMBA CONNECT (SOLO CLIENTES) ---
         base.push({
-          path: "/admin/roles",
-          icon: faUserShield,
-          label: "Roles",
+          path: "/ventas",
+          icon: faUsersGear,
+          label: "Lumba - Ventas",
           scope: "global",
-          count: adminCounts.roles,
-          badge: "",
+          badge: "Nuevo",
           badgeColor: "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100",
         });
+        base.push({
+          path: "/logistica",
+          icon: faBuilding, // Using generic icon
+          label: "Lumba - Logistica",
+          scope: "global",
+        });
 
-      if (hasPermission("users:view"))
-        base.push({
-          path: "/admin/users",
-          icon: faUserGear,
-          label: "Usuarios",
-          scope: "global",
-          count: adminCounts.users,
-          badge: "",
-          badgeColor: "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100",
-        });
-      if (hasPermission("cuentas:view"))
-        base.push({
-          path: "/admin/cuentas",
-          icon: faBuilding,
-          label: "Cuentas",
-          scope: "global",
-          badge: "",
-          badgeColor: "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100",
-        });
+        if (hasPermission("cuentas:view")) {
+          // El cliente gestiona sus propias Cuentas ML
+          base.push({
+            path: "/admin/cuentas",
+            icon: faBuilding,
+            label: "Cuentas",
+            scope: "global",
+            badge: "",
+            badgeColor: "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100",
+          });
+        }
+      } else {
+        // --- TENANT ADMIN ---
+        if (hasPermission("cuentas:view")) {
+          base.push({
+            path: "/admin/clientes",
+            icon: faUsers,
+            label: "Clientes",
+            scope: "global",
+            badge: "",
+            badgeColor: "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100",
+          });
+        }
+
+        if (hasPermission("roles:view")) {
+          base.push({
+            path: "/admin/roles",
+            icon: faUserShield,
+            label: "Roles",
+            scope: "global",
+            count: adminCounts.roles,
+            badge: "",
+            badgeColor: "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100",
+          });
+        }
+
+        if (hasPermission("users:view")) {
+          base.push({
+            path: "/admin/users",
+            icon: faUserGear,
+            label: "Usuarios",
+            scope: "global",
+            count: adminCounts.users,
+            badge: "",
+            badgeColor: "bg-gray-800 text-white dark:bg-gray-700 dark:text-gray-100",
+          });
+        }
+      }
     }
 
     return base;
@@ -405,6 +404,7 @@ export const MobileNavbar: React.FC = () => {
     // Items de Admin General (Dashboard + Clientes + Tenants para superadmin + SEO)
     const dashboardItem = menuItems.find((item) => item.path === "/admin/dashboard");
     const cuentaItem = menuItems.find((item) => item.path === "/admin/cuentas");
+    const clienteItem = menuItems.find((item) => item.path === "/admin/clientes");
     const tenantsItem = menuItems.find((item) => item.path === "/admin/tenants");
     const carouselItem = menuItems.find((item) => item.path === "/admin/carousel-images");
 
@@ -418,7 +418,7 @@ export const MobileNavbar: React.FC = () => {
     const logisticaItem = menuItems.find((item) => item.path === "/logistica");
 
     // Otros items que no pertenecen a ninguna sección
-    const otherAdminItems = menuItems.filter((item) => !userAdminItems.some((u) => u.path === item.path) && item.path !== "/admin/dashboard" && item.path !== "/admin/cuentas" && item.path !== "/admin/tenants" && item.path !== "/admin/carousel-images" && item.path !== "/admin/general" && item.path !== "/admin/seo" && item.path !== "/ventas" && item.path !== "/logistica");
+    const otherAdminItems = menuItems.filter((item) => !userAdminItems.some((u) => u.path === item.path) && item.path !== "/admin/dashboard" && item.path !== "/admin/clientes" && item.path !== "/admin/cuentas" && item.path !== "/admin/tenants" && item.path !== "/admin/carousel-images" && item.path !== "/admin/general" && item.path !== "/admin/seo" && item.path !== "/ventas" && item.path !== "/logistica");
 
     const renderMenuItem = (item: any) => {
       // Debug log to verify HMR
@@ -664,8 +664,8 @@ export const MobileNavbar: React.FC = () => {
 
         {cuentaItem && (dashboardItem || tenantsItem || userAdminItems.length > 0) && <div className="border-t border-gray-200 dark:border-gray-700 mx-4 my-3" />}
 
-        {/* ADMIN GENERAL - Dashboard, Tenants y Cuentas */}
-        {(dashboardItem || cuentaItem || tenantsItem) && (
+        {/* ADMIN GENERAL - Dashboard, Tenants, Clientes y Cuentas */}
+        {(dashboardItem || cuentaItem || clienteItem || tenantsItem) && (
           <div className="px-2 mb-2">
             <button onClick={() => toggleAdminSection("general")} className="w-full flex items-center justify-between text-sm font-medium text-neutral-500 dark:text-neutral-400 tracking-wider transition-colors pb-2 pt-2">
               <span>
@@ -698,60 +698,68 @@ export const MobileNavbar: React.FC = () => {
                     {/* Tenants (solo superadmin) */}
                     {tenantsItem && renderMenuItem(tenantsItem)}
 
+                    {/* Clientes (solo tenants) */}
+                    {clienteItem && renderMenuItem(clienteItem)}
+
                     {/* Cuentas */}
                     {cuentaItem && renderMenuItem(cuentaItem)}
 
                     {/* Configuración */}
-                    <Link
-                      to="/admin/configuracion"
-                      onClick={() => setOpen(false)}
-                      className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${
-                        isActive("/admin/configuracion")
-                          ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm"
-                          : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"
-                      }`}
-                    >
-                      <div className="flex items-center space-x-3 flex-1 min-w-0">
-                        <div
-                          className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${
-                            isActive("/admin/configuracion")
-                              ? "bg-white text-blue-600"
-                              : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"
-                          }`}
-                        >
-                          <FontAwesomeIcon icon={faMoneyBillWave} className="h-4 w-4" />
+                    {(isSuperAdminTenant || isCliente) && (
+                      <Link
+                        to="/admin/configuracion"
+                        onClick={() => setOpen(false)}
+                        className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${
+                          isActive("/admin/configuracion")
+                            ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm"
+                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3 flex-1 min-w-0">
+                          <div
+                            className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${
+                              isActive("/admin/configuracion")
+                                ? "bg-white text-blue-600"
+                                : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"
+                            }`}
+                          >
+                            <FontAwesomeIcon icon={faMoneyBillWave} className="h-4 w-4" />
+                          </div>
+                          <span className="font-medium truncate">Facturación</span>
                         </div>
-                        <span className="font-medium truncate">Facturación</span>
-                      </div>
-                    </Link>
+                      </Link>
+                    )}
 
                     {/* Integraciones */}
-                    <Link
-                      to="/admin/integrations"
-                      onClick={() => setOpen(false)}
-                      className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${
-                        isActive("/admin/integrations")
-                          ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm"
-                          : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"
-                      }`}
-                    >
-                      <div className="flex items-center space-x-3 flex-1 min-w-0">
-                        <div
-                          className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${
-                            isActive("/admin/integrations")
-                              ? "bg-white text-blue-600"
-                              : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"
-                          }`}
-                        >
-                          <FontAwesomeIcon icon={faPlug} className="h-4 w-4" />
+                    {isSuperAdminTenant && (
+                      <Link
+                        to="/admin/integrations"
+                        onClick={() => setOpen(false)}
+                        className={`group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${
+                          isActive("/admin/integrations")
+                            ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm"
+                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3 flex-1 min-w-0">
+                          <div
+                            className={`h-8 w-8 flex items-center justify-center rounded-md transition-colors ${
+                              isActive("/admin/integrations")
+                                ? "bg-white text-blue-600"
+                                : "bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500 group-hover:bg-white group-hover:text-blue-600"
+                            }`}
+                          >
+                            <FontAwesomeIcon icon={faPlug} className="h-4 w-4" />
+                          </div>
+                          <span className="font-medium truncate">Integraciones</span>
                         </div>
-                        <span className="font-medium truncate">Integraciones</span>
-                      </div>
-                    </Link>
+                      </Link>
+                    )}
 
                     {/* Documentación - Submenú */}
-                    <div>
-                      <button 
+                    {isSuperAdminTenant && (
+                      <div>
+                        <button 
                         onClick={() => setIsDocOpen(!isDocOpen)} 
                         className={`w-full group relative flex items-center justify-between px-2 py-2 rounded-lg transition-all ${location.pathname.startsWith("/admin/doc") ? "!bg-gray-100 !text-accent-1 border border-gray-200 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 border border-transparent"}`}
                       >
@@ -814,6 +822,7 @@ export const MobileNavbar: React.FC = () => {
                         )}
                       </AnimatePresence>
                     </div>
+                    )}
                   </div>
                 </motion.nav>
               )}

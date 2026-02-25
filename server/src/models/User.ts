@@ -12,6 +12,7 @@ export interface IUser extends Document {
   positionId?: Types.ObjectId;
   levelId?: Types.ObjectId;
   areaId?: Types.ObjectId;
+  clienteId?: Types.ObjectId;
   isActive: boolean;
   lastLoginAt?: Date;
   twoFactorCode?: string;
@@ -43,6 +44,7 @@ const userSchema = new Schema<IUser>(
     positionId: { type: Schema.Types.ObjectId, ref: "Position" },
     levelId: { type: Schema.Types.ObjectId, ref: "Level" },
     areaId: { type: Schema.Types.ObjectId, ref: "Area" },
+    clienteId: { type: Schema.Types.ObjectId, ref: "Client" },
     isActive: { type: Boolean, default: true },
     lastLoginAt: { type: Date },
     twoFactorCode: { type: String },

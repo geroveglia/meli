@@ -358,18 +358,6 @@ export const UsersPage: React.FC = () => {
             <FontAwesomeIcon icon={faUserShield} className="h-3 w-3 lg:h-4 lg:w-4" />
             <span className="hidden lg:block">Roles</span>
           </button>
-          <button onClick={() => navigate("/admin/positions")} className="px-4 py-2 rounded-lg bg-accent-9 text-accent-2 hover:bg-accent-8 transition-colors flex items-center gap-2 text-sm">
-            <FontAwesomeIcon icon={faUserTie} className="h-3 w-3 lg:h-4 lg:w-4" />
-            <span className="hidden lg:block">Cargos</span>
-          </button>
-          <button onClick={() => navigate("/admin/levels")} className="px-4 py-2 rounded-lg bg-accent-9 text-accent-2 hover:bg-accent-8 transition-colors flex items-center gap-2 text-sm">
-            <FontAwesomeIcon icon={faUserGraduate} className="h-3 w-3 lg:h-4 lg:w-4" />
-            <span className="hidden lg:block">Niveles</span>
-          </button>
-          <button onClick={() => navigate("/admin/areas")} className="px-4 py-2 rounded-lg bg-accent-9 text-accent-2 hover:bg-accent-8 transition-colors flex items-center gap-2 text-sm">
-            <FontAwesomeIcon icon={faLayerGroup} className="h-3 w-3 lg:h-4 lg:w-4" />
-            <span className="hidden lg:block">Areas</span>
-          </button>
         </div>
       }
       // Igual que RolesPage: SearchAndFilters directo (sin botón Buscar)
