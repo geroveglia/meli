@@ -145,6 +145,7 @@ export const MobileNavbar: React.FC = () => {
   const isSuperAdminTenant = user?.tenantSlug === "superadmin";
   const userRoleNamesForCliente = user?.roles?.map((r: any) => (typeof r === 'string' ? r.toLowerCase() : (r.name || "").toLowerCase())) || [];
   const isCliente = user?.primaryRole?.toLowerCase() === "cliente" || userRoleNamesForCliente.includes("cliente");
+  const isAdmin = user?.primaryRole?.toLowerCase() === "admin" || userRoleNamesForCliente.includes("admin");
 
   const menuItems = useMemo(() => {
 
@@ -198,13 +199,15 @@ export const MobileNavbar: React.FC = () => {
         },
       );
     } else {
-      // Dashboard siempre visible
-      base.push({
-        path: "/admin/dashboard",
-        icon: faHouse,
-        label: "Dashboard",
-        scope: "global",
-      });
+      // Dashboard visible unless the user is strictly an admin
+      if (!isAdmin) {
+        base.push({
+          path: "/admin/dashboard",
+          icon: faHouse,
+          label: "Dashboard",
+          scope: "global",
+        });
+      }
 
       if (isCliente) {
         // --- LUMBA CONNECT (SOLO CLIENTES) ---
@@ -247,7 +250,7 @@ export const MobileNavbar: React.FC = () => {
           });
         }
 
-        if (hasPermission("roles:view")) {
+        if (hasPermission("roles:view") && !isAdmin) {
           base.push({
             path: "/admin/roles",
             icon: faUserShield,
@@ -259,7 +262,7 @@ export const MobileNavbar: React.FC = () => {
           });
         }
 
-        if (hasPermission("users:view")) {
+        if (hasPermission("users:view") && !isAdmin) {
           base.push({
             path: "/admin/users",
             icon: faUserGear,
