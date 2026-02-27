@@ -111,6 +111,7 @@ export interface CreateTenantData {
   name: string;
   slug: string;
   domain?: string;
+  isActive?: boolean;
   company: {
     legalName: string;
     taxId?: string;

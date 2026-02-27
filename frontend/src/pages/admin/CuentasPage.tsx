@@ -63,13 +63,16 @@ export const CuentasPage: React.FC = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const status = params.get("status");
+    const errorMessage = params.get("error_message");
+    
     if (status === "success") {
       toast.success("¡Conexión con MercadoLibre exitosa!");
       fetchCuentas();
       // Clean URL
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (status === "error") {
-      toast.error("Error al conectar con MercadoLibre.");
+      toast.error(errorMessage || "Error al conectar con MercadoLibre.");
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [location]);
 

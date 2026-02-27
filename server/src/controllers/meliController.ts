@@ -154,6 +154,30 @@ export const callback = async (req: Request, res: Response) => {
 
         // Determine the effective tenantId for syncing
         let effectiveTenantId = tenantId;
+        
+        // --- GLOBAL UNIQUENESS CHECK ---
+        const frontendUrl = process.env.CORS_ORIGIN?.split(',')[0] || "http://localhost:5173";
+        const duplicateCuenta = await Cuenta.findOne({ 'mercadolibre.sellerId': tokenData.sellerId });
+        const duplicateTenant = await Tenant.findOne({ 'mercadolibre.sellerId': tokenData.sellerId });
+
+        // If linking a Cuenta, ensure no other Cuenta or Tenant has this sellerId
+        if (cuentaId) {
+            if (duplicateTenant) {
+               return res.redirect(`${frontendUrl}/admin/cuentas?status=error&error_message=Esta cuenta de MercadoLibre ya está vinculada a una organización principal en el sistema.`);
+            }
+            if (duplicateCuenta && String(duplicateCuenta._id) !== cuentaId) {
+               return res.redirect(`${frontendUrl}/admin/cuentas?status=error&error_message=Esta cuenta de MercadoLibre ya está vinculada a otro cliente.`);
+            }
+        } else {
+            // If linking a Tenant, ensure no other Tenant or Cuenta has this sellerId
+            if (duplicateCuenta) {
+               return res.redirect(`${frontendUrl}/admin/integrations?status=error&error_message=Esta cuenta de MercadoLibre ya está vinculada a un cliente específico en el sistema.`);
+            }
+            if (duplicateTenant && String(duplicateTenant._id) !== tenantId) {
+               return res.redirect(`${frontendUrl}/admin/integrations?status=error&error_message=Esta cuenta de MercadoLibre ya está vinculada a otra organización en el sistema.`);
+            }
+        }
+        // --- END GLOBAL UNIQUENESS CHECK ---
 
         if (cuentaId) {
              // Update specific Cuenta (Client)
@@ -199,9 +223,7 @@ export const callback = async (req: Request, res: Response) => {
             syncRecentOrders(effectiveTenantId, cuentaId, tokenData.accessToken, tokenData.sellerId);
         });
         // Redirect to Frontend
-        // Ideally, we redirect to a success page on the frontend
         // We know the frontend URL from CORS_ORIGIN or hardcoded
-        const frontendUrl = process.env.CORS_ORIGIN?.split(',')[0] || "http://localhost:5173";
         if (cuentaId) {
             res.redirect(`${frontendUrl}/admin/cuentas?status=success`);
         } else {
@@ -210,7 +232,9 @@ export const callback = async (req: Request, res: Response) => {
 
     } catch (e) {
         console.error("Error exchanging code:", e);
-        res.status(500).send(`Error al conectar con MercadoLibre: ${(e as Error).message}`);
+        const frontendUrl = process.env.CORS_ORIGIN?.split(',')[0] || "http://localhost:5173";
+        const errorMessage = encodeURIComponent(e instanceof Error ? e.message : 'Error desconocido');
+        res.redirect(`${frontendUrl}/admin/integrations?status=error&error_message=${errorMessage}`);
     }
 };
 

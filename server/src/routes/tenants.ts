@@ -54,6 +54,7 @@ const createTenantSchema = z.object({
     status: z.enum(["active", "suspended", "cancelled"]).default("active"),
     expiresAt: z.string().datetime().optional(),
   }).optional(),
+  isActive: z.boolean().optional().default(true),
 });
 
 const updateTenantSchema = createTenantSchema.partial().extend({

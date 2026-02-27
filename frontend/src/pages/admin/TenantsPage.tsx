@@ -48,6 +48,7 @@ interface TenantFormData {
     plan: SubscriptionPlan;
     status: SubscriptionStatus;
   };
+  isActive: boolean;
 }
 
 const initialFormData: TenantFormData = {
@@ -72,6 +73,7 @@ const initialFormData: TenantFormData = {
     plan: "free",
     status: "active",
   },
+  isActive: true,
 };
 
 /* ---------- Helpers ---------- */
@@ -218,6 +220,7 @@ export const TenantsPage: React.FC = () => {
         plan: tenant.subscription.plan,
         status: tenant.subscription.status,
       },
+      isActive: tenant.isActive,
     });
     setFormErrors({});
     setShowModal(true);
@@ -304,6 +307,7 @@ export const TenantsPage: React.FC = () => {
             position: formData.contact.position.trim() || undefined,
           },
           subscription: formData.subscription,
+          isActive: formData.isActive,
         };
         await tenantsAPI.update(editingTenant._id, updateData);
         sweetAlert.success("Tenant actualizado", "Los cambios se han guardado correctamente");
@@ -327,6 +331,7 @@ export const TenantsPage: React.FC = () => {
             position: formData.contact.position.trim() || undefined,
           },
           subscription: formData.subscription,
+          isActive: formData.isActive,
         };
         const result = await tenantsAPI.create(createData);
         if (result._generatedPassword) {
@@ -392,23 +397,6 @@ export const TenantsPage: React.FC = () => {
         const message = err.response?.data?.message || err.response?.data?.error || "Error al eliminar el tenant";
         sweetAlert.error("Error", message);
       }
-    }
-  };
-
-  /* ---------- Toggle Status ---------- */
-
-  const handleToggleStatus = async (tenant: Tenant, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (tenant.isSystem) {
-      sweetAlert.error("Error", "No se puede modificar el estado de un tenant del sistema");
-      return;
-    }
-    try {
-      await tenantsAPI.toggleStatus(tenant._id, !tenant.isActive);
-      fetchTenants({ silent: true });
-    } catch (error) {
-      console.error("Error toggling status:", error);
-      sweetAlert.error("Error", "No se pudo cambiar el estado del tenant");
     }
   };
 
@@ -743,6 +731,22 @@ export const TenantsPage: React.FC = () => {
                     {formErrors.slug && <p className="text-red-500 text-xs mt-1">{formErrors.slug}</p>}
                   </div>
                 </div>
+                
+                <div className="mt-4 flex items-center gap-3 bg-accent-2 p-4 rounded-lg border border-accent-3">
+                    <div>
+                        <Switch
+                            checked={formData.isActive}
+                            onChange={() => {
+                                setFormData((prev) => ({ ...prev, isActive: !prev.isActive }))
+                            }}
+                            disabled={editingTenant?.isSystem}
+                        />
+                    </div>
+                    <div>
+                        <h4 className="text-sm font-medium text-accent-9">Tenant Activo</h4>
+                        <p className="text-xs text-accent-6">Los tenants inactivos no pueden acceder a la plataforma.</p>
+                    </div>
+                </div>
               </div>
 
               {/* Empresa */}
@@ -947,11 +951,6 @@ export const TenantsPage: React.FC = () => {
                     ? {
                         leftContent: (
                           <div className="flex items-center gap-2">
-                              <Switch
-                                checked={tenant.isActive}
-                                onChange={() => handleToggleStatus(tenant, { stopPropagation: () => {} } as any)}
-                                disabled={tenant.isSystem}
-                              />
                             <span className="text-xs text-accent-5 dark:text-accent-4 flex items-center gap-1">
                               <FontAwesomeIcon icon={faUsers} className="h-3 w-3" />
                               {tenant.userCount ?? 0}

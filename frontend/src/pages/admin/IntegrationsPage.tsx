@@ -23,11 +23,14 @@ export const IntegrationsPage: React.FC = () => {
     fetchStatus();
     
     const urlStatus = searchParams.get("status");
+    const errorMessage = searchParams.get("error_message");
+    
     if (urlStatus === "success") {
         toast.success("¡Conexión con MercadoLibre exitosa!");
         window.history.replaceState({}, document.title, window.location.pathname);
     } else if (urlStatus === "error") {
-        toast.error("Error al conectar con MercadoLibre.");
+        toast.error(errorMessage || "Error al conectar con MercadoLibre.");
+        window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [searchParams]);
 
