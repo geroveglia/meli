@@ -315,6 +315,51 @@ router.patch(
   }
 );
 
+// PATCH /clientes/:id/reset-password
+router.patch(
+  "/:id/reset-password",
+  requireTenant,
+  authenticateToken,
+  requirePermission("cuentas:view"),
+  async (req: AuthenticatedRequest & TenantRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { newPassword } = req.body;
+
+      if (!isValidObjectId(id)) {
+        return res.status(400).json({ error: "Invalid cliente ID" });
+      }
+
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
+      }
+
+      const client = await Client.findOne({ _id: id, tenantId: req.tenantObjectId });
+      if (!client) {
+        return res.status(404).json({ error: "Cliente no encontrado" });
+      }
+
+      // Find user associated with this client
+      const user = await User.findOne({ 
+        tenantId: req.tenantObjectId, 
+        email: client.email 
+      });
+
+      if (!user) {
+        return res.status(404).json({ error: "No se encontró un usuario asociado a este cliente" });
+      }
+
+      user.password = newPassword;
+      await user.save();
+
+      res.json({ message: "Contraseña actualizada exitosamente" });
+    } catch (error) {
+      console.error("Reset client password error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
 // DELETE /clientes/:id
 router.delete(
   "/:id",

@@ -1,15 +1,22 @@
 import nodemailer from 'nodemailer';
 import fs from 'fs';
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false, // true for 465, false for other ports
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+let transporterInstance: nodemailer.Transporter | null = null;
+
+const getTransporter = () => {
+  if (!transporterInstance) {
+    transporterInstance = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: false, // true for 465, false for other ports
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+  }
+  return transporterInstance;
+};
 
 const emailWrapper = (content: string) => `
   <!DOCTYPE html>
@@ -91,7 +98,7 @@ export const send2FACodeEmail = async (to: string, code: string) => {
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await getTransporter().sendMail(mailOptions);
     console.log(`[Email] 2FA code sent to ${to}: ${info.messageId}`);
     return true;
   } catch (error) {
@@ -144,7 +151,7 @@ export const sendPasswordResetEmail = async (to: string, resetUrl: string) => {
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await getTransporter().sendMail(mailOptions);
     console.log(`[Email] Password reset link sent to ${to}: ${info.messageId}`);
     return true;
   } catch (error: any) {
@@ -195,7 +202,7 @@ export const sendClientWelcomeEmail = async (to: string, name: string, tempPassw
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await getTransporter().sendMail(mailOptions);
     console.log(`[Email] Welcome email sent to ${to}: ${info.messageId}`);
     return true;
   } catch (error: any) {
@@ -246,7 +253,7 @@ export const sendTenantWelcomeEmail = async (to: string, name: string, tenantNam
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await getTransporter().sendMail(mailOptions);
     console.log(`[Email] Tenant Welcome email sent to ${to}: ${info.messageId}`);
     return true;
   } catch (error: any) {

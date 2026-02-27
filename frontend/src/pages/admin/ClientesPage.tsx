@@ -11,6 +11,7 @@ import { sweetAlert } from "../../utils/sweetAlert";
 import { emitCuentasChanged } from "../../utils/navbarEvents";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUsers, faEdit, faTrash, faPlus, faEnvelope, faPhone } from "@fortawesome/free-solid-svg-icons";
+import Swal from "sweetalert2";
 import { ClienteForm, ClienteFormData } from "../../components/clientes/ClienteForm";
 import { ClienteDetails } from "../../components/clientes/ClienteDetails";
 
@@ -232,6 +233,38 @@ export const ClientesPage: React.FC = () => {
     }
   };
 
+  const handleResetPassword = async (cliente: Cliente) => {
+    const { value: newPassword } = await Swal.fire({
+      title: "Restablecer Contraseña",
+      text: `Ingresa una nueva contraseña para el cliente ${cliente.name}.`,
+      input: "password",
+      inputPlaceholder: "Nueva contraseña...",
+      showCancelButton: true,
+      confirmButtonText: "Restablecer",
+      cancelButtonText: "Cancelar",
+      inputValidator: (value: string) => {
+        if (!value) {
+          return "Debes ingresar una contraseña";
+        }
+        if (value.length < 6) {
+          return "La contraseña debe tener al menos 6 caracteres";
+        }
+        return null;
+      },
+    });
+
+    if (newPassword) {
+      try {
+        await clientesAPI.resetPassword(cliente._id, newPassword);
+        sweetAlert.success("Contraseña actualizada", "La contraseña del cliente ha sido modificada con éxito.");
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: { message?: string; error?: string } } };
+        const message = err.response?.data?.message || err.response?.data?.error || "Error al restablecer contraseña";
+        sweetAlert.error("Error", message);
+      }
+    }
+  };
+
   const handleDelete = async (cliente: Cliente) => {
     const result = await sweetAlert.confirm("¿Eliminar cliente?", `¿Estás seguro de que quieres eliminar a "${cliente.name}"? Se le revocará el acceso.`);
     if (result.isConfirmed) {
@@ -316,6 +349,13 @@ export const ClientesPage: React.FC = () => {
         subtitle: "Completa la información del cliente",
         size: "md",
         actions: [
+          ...(editingCliente ? [{
+            label: "Restablecer Contraseña",
+            onClick: () => {
+              if (editingCliente) handleResetPassword(editingCliente);
+            },
+            variant: "blue" as const,
+          }] : []),
           {
             label: editingCliente ? "Actualizar" : "Crear",
             onClick: () => {

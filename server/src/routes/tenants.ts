@@ -638,6 +638,68 @@ router.post(
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PATCH /tenants/:id/reset-admin-password - Restablecer contraseña del admin (Solo Superadmin)
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.patch(
+  "/:id/reset-admin-password",
+  authenticateToken,
+  requireSuperAdmin,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { newPassword } = req.body;
+
+      if (!isValidObjectId(id)) {
+        res.status(400).json({ error: "ID de tenant inválido" });
+        return;
+      }
+
+      if (!newPassword || newPassword.length < 6) {
+        res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
+        return;
+      }
+
+      const tenant = await Tenant.findById(id);
+      if (!tenant) {
+        res.status(404).json({ error: "Tenant no encontrado" });
+        return;
+      }
+
+      if (tenant.isSystem) {
+        res.status(403).json({ error: "No se puede modificar un tenant del sistema" });
+        return;
+      }
+
+      const Role = (await import("../models/Role.js")).Role;
+      const adminRole = await Role.findOne({ tenantId: tenant._id, name: { $regex: /^admin$/i } });
+      
+      let query: any = { tenantId: tenant._id };
+      if (adminRole) {
+        query.roles = adminRole._id;
+      }
+
+      const usersToUpdate = await User.find(query);
+      
+      if (usersToUpdate.length === 0) {
+        res.status(404).json({ error: "No se encontró un usuario administrador para este tenant" });
+        return;
+      }
+
+      for (const user of usersToUpdate) {
+        user.password = newPassword;
+        await user.save();
+      }
+
+      res.json({ message: "Contraseña de administrador actualizada exitosamente" });
+    } catch (error) {
+      console.error("Reset admin password error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PUT /tenants/:id - Actualizar tenant
 // ─────────────────────────────────────────────────────────────────────────────
 

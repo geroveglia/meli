@@ -154,6 +154,14 @@ class ClientesAPI {
       return data;
   }
 
+  async resetPassword(id: string, newPassword: string): Promise<void> {
+    await axios.patch(
+      `/clientes/${id}/reset-password`,
+      { newPassword },
+      { headers: this.getHeaders() }
+    );
+  }
+
   async remove(id: string): Promise<void> {
     await axios.delete(`/clientes/${id}`, {
       headers: this.getHeaders(),

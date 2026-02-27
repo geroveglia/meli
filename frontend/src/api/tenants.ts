@@ -296,6 +296,17 @@ class TenantsAPI {
   }
 
   /**
+   * Reset tenant admin password
+   */
+  async resetAdminPassword(id: string, newPassword: string): Promise<void> {
+    await axios.patch(
+      `/tenants/${id}/reset-admin-password`,
+      { newPassword },
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
    * Update tenant subscription
    */
   async updateSubscription(

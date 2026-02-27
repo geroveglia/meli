@@ -412,6 +412,43 @@ export const TenantsPage: React.FC = () => {
     }
   };
 
+  /* ---------- Reset Admin Password ---------- */
+
+  const handleResetAdminPassword = async (tenant: Tenant) => {
+    const { value: newPassword } = await Swal.fire({
+      title: "Restablecer Contraseña",
+      text: `Ingresa una nueva contraseña para el administrador del tenant ${tenant.name}.`,
+      input: "password",
+      inputPlaceholder: "Nueva contraseña...",
+      showCancelButton: true,
+      confirmButtonText: "Restablecer",
+      cancelButtonText: "Cancelar",
+      inputValidator: (value) => {
+        if (!value) {
+          return "Debes ingresar una contraseña";
+        }
+        if (value.length < 6) {
+          return "La contraseña debe tener al menos 6 caracteres";
+        }
+        return null;
+      },
+      background: "var(--accent-2)",
+      color: "var(--accent-1)",
+      confirmButtonColor: "#2563eb",
+    });
+
+    if (newPassword) {
+      try {
+        await tenantsAPI.resetAdminPassword(tenant._id, newPassword);
+        sweetAlert.success("Contraseña actualizada", "La contraseña del administrador ha sido modificada con éxito.");
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: { message?: string; error?: string } } };
+        const message = err.response?.data?.message || err.response?.data?.error || "Error al restablecer contraseña";
+        sweetAlert.error("Error", message);
+      }
+    }
+  };
+
   /* ---------- Render ---------- */
 
   if (!isSuperAdmin) {
@@ -832,6 +869,28 @@ export const TenantsPage: React.FC = () => {
 
                 </div>
               </div>
+
+              {/* Reset Password */}
+              {editingTenant && (
+                <div className="pt-4 border-t border-accent-3 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                  <div>
+                    <h4 className="text-sm font-semibold text-accent-9">Contraseña del Administrador</h4>
+                    <p className="text-xs text-accent-6">Cambia la contraseña de acceso del administrador principal de este tenant.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleResetAdminPassword(editingTenant);
+                    }}
+                    className="p-2 border border-blue-500 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-sm flex items-center justify-center gap-2 transition"
+                  >
+                    <FontAwesomeIcon icon={faShield} />
+                    Restablecer Contraseña
+                  </button>
+                </div>
+              )}
+
             </div>
           </form>
         ),
