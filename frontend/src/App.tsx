@@ -160,7 +160,7 @@ function App() {
       updateFavicon(faviconUrl);
     } else {
       // Reset to default
-      updateFavicon("/vite.svg");
+      updateFavicon("https://http2.mlstatic.com/frontend-assets/ui-navigation/5.19.5/mercadolibre/favicon.svg");
     }
 
     // Apply colors

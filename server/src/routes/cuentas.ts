@@ -91,6 +91,16 @@ router.get(
           // Global count
       }
 
+      // === Role Based Filtering ===
+      const isCliente = user.primaryRole === 'cliente' || user.roles?.includes('cliente');
+      if (isCliente) {
+         query.$or = [
+            { email: user.email },
+            ...(user.clientIds && user.clientIds.length > 0 ? [{ clienteId: { $in: user.clientIds } }] : []),
+            { ownerUserId: user.userId }
+         ];
+      }
+
       const count = await Cuenta.countDocuments(query);
       res.json({ count });
     } catch (error) {
@@ -169,14 +179,34 @@ router.get(
           // No filter -> All Cuentas (Global View)
       }
 
+      // === Role Based Filtering ===
+      const isCliente = user.primaryRole === 'cliente' || user.roles?.includes('cliente');
+      if (isCliente) {
+         filter.$or = [
+            ...(user.clientIds && user.clientIds.length > 0 ? [{ clienteId: { $in: user.clientIds } }] : []),
+            { ownerUserId: user.userId }
+         ];
+      }
+
       // Search by name, company, or email
       if (search && typeof search === "string" && search.trim()) {
         const searchRegex = { $regex: search.trim(), $options: "i" };
-        filter.$or = [
+        const searchConditions = [
           { name: searchRegex },
           { company: searchRegex },
           { email: searchRegex },
         ];
+        
+        // If we already have $or (e.g. from role filtering), we need to use $and
+        if (filter.$or) {
+            filter.$and = [
+                { $or: filter.$or },
+                { $or: searchConditions }
+            ];
+            delete filter.$or;
+        } else {
+            filter.$or = searchConditions;
+        }
       }
 
       // Filter by status
@@ -247,6 +277,8 @@ router.post(
       const cuenta = new Cuenta({
         ...data,
         tenantId: req.tenantObjectId,
+        ownerUserId: req.user?.userId,
+        ...(req.user?.clientIds?.length ? { clienteId: req.user.clientIds[0] } : {})
       });
 
       await cuenta.save();
@@ -293,6 +325,17 @@ router.get(
         res.status(404).json({ error: "Cuenta not found" });
         return;
       }
+      
+      const user = req.user!;
+      const isCliente = user.primaryRole === 'cliente' || user.roles?.includes('cliente');
+      if (isCliente) {
+         const hasAccess = (user.clientIds && cuenta.clienteId && user.clientIds.includes(cuenta.clienteId.toString())) ||
+                           (cuenta.ownerUserId && cuenta.ownerUserId.toString() === user.userId);
+         if (!hasAccess) {
+             res.status(403).json({ error: "No tienes permiso para ver esta cuenta" });
+             return;
+         }
+      }
 
       res.json(cuenta);
     } catch (error) {
@@ -331,6 +374,17 @@ router.put(
       if (!existingCuenta) {
         res.status(404).json({ error: "Cuenta not found" });
         return;
+      }
+
+      const user = req.user!;
+      const isCliente = user.primaryRole === 'cliente' || user.roles?.includes('cliente');
+      if (isCliente) {
+         const hasAccess = (user.clientIds && existingCuenta.clienteId && user.clientIds.includes(existingCuenta.clienteId.toString())) ||
+                           (existingCuenta.ownerUserId && existingCuenta.ownerUserId.toString() === user.userId);
+         if (!hasAccess) {
+             res.status(403).json({ error: "No tienes permiso para editar esta cuenta" });
+             return;
+         }
       }
 
       // If email is being changed, check for duplicates
@@ -418,6 +472,17 @@ router.patch(
         return;
       }
 
+      const user = req.user!;
+      const isCliente = user.primaryRole === 'cliente' || user.roles?.includes('cliente');
+      if (isCliente) {
+         const hasAccess = (user.clientIds && cuenta.clienteId && user.clientIds.includes(cuenta.clienteId.toString())) ||
+                           (cuenta.ownerUserId && cuenta.ownerUserId.toString() === user.userId);
+         if (!hasAccess) {
+             res.status(403).json({ error: "No tienes permiso para modificar esta cuenta" });
+             return;
+         }
+      }
+
       cuenta.isFavorite = !cuenta.isFavorite;
       await cuenta.save();
 
@@ -447,15 +512,28 @@ router.delete(
         return;
       }
 
-      const result = await Cuenta.findOneAndDelete({
+      const cuenta = await Cuenta.findOne({
         _id: id,
         tenantId: req.tenantObjectId,
       });
 
-      if (!result) {
+      if (!cuenta) {
         res.status(404).json({ error: "Cuenta not found" });
         return;
       }
+
+      const user = req.user!;
+      const isCliente = user.primaryRole === 'cliente' || user.roles?.includes('cliente');
+      if (isCliente) {
+         const hasAccess = (user.clientIds && cuenta.clienteId && user.clientIds.includes(cuenta.clienteId.toString())) ||
+                           (cuenta.ownerUserId && cuenta.ownerUserId.toString() === user.userId);
+         if (!hasAccess) {
+             res.status(403).json({ error: "No tienes permiso para eliminar esta cuenta" });
+             return;
+         }
+      }
+
+      await Cuenta.deleteOne({ _id: id });
 
       res.status(204).send();
     } catch (error) {

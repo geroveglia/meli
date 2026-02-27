@@ -53,10 +53,11 @@ export const ClienteDetails: React.FC<{ cliente: Cliente }> = ({ cliente }) => {
       {cliente._generatedPassword && (
         <div className="p-4 rounded-lg bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
           <h5 className="text-sm font-medium text-yellow-800 dark:text-yellow-400 mb-2">
-            Credenciales de Acceso
+            Credenciales de Acceso (Solo se muestra una vez)
           </h5>
           <p className="text-xs text-yellow-700 dark:text-yellow-500 mb-3">
             Comparte esta contraseña temporal con tu cliente. Deberá cambiarla al iniciar sesión por primera vez.
+            <br /><strong>NOTA: Por seguridad, esta contraseña no se guardada y desaparecerá si recargas la página.</strong>
           </p>
           <div className="flex items-center gap-3 bg-white dark:bg-black/40 border border-yellow-200 dark:border-yellow-800 rounded p-2">
             <code className="text-sm font-mono flex-1 text-gray-900 dark:text-white">

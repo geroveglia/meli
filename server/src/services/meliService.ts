@@ -571,20 +571,46 @@ export const processOrder = async (orderData: any, tenantId: string, clientId?: 
 export const syncRecentOrders = async (tenantId: string, clientId?: string, accessToken?: string, sellerId?: number) => {
     if (!accessToken || !sellerId) return;
     
-    console.log(`[Sync] Starting initial sync for Seller ${sellerId}`);
+    console.log(`[Sync] Starting full historical sync for Seller ${sellerId}`);
+    
+    const limit = 50;
+    let offset = 0;
+    let totalFetched = 0;
+    let totalAvailable = 0;
+
     try {
-        // Fetch last 50 orders
-        const searchUrl = `/orders/search?seller=${sellerId}&sort=date_desc&limit=50`;
-        const result = await fetchMeliResource(searchUrl, accessToken);
-        
-        if (result && result.results) {
-            console.log(`[Sync] Found ${result.results.length} orders to sync.`);
+        while (true) {
+            const searchUrl = `/orders/search?seller=${sellerId}&sort=date_desc&limit=${limit}&offset=${offset}`;
+            const result = await fetchMeliResource(searchUrl, accessToken);
+            
+            if (!result?.results?.length) {
+                console.log(`[Sync] No more orders found at offset ${offset}. Stopping.`);
+                break;
+            }
+
+            totalAvailable = result.paging?.total ?? 0;
+            console.log(`[Sync] Fetched ${result.results.length} orders (offset: ${offset}, total available: ${totalAvailable})`);
+
             for (const order of result.results) {
                 await processOrder(order, tenantId, clientId, accessToken);
             }
+
+            totalFetched += result.results.length;
+            offset += limit;
+
+            // MeLi API caps offset at 1000
+            if (totalFetched >= totalAvailable || offset >= 1000) {
+                console.log(`[Sync] Reached end of available orders or API offset limit.`);
+                break;
+            }
+
+            // Small delay between pages to avoid rate limiting
+            await new Promise(resolve => setTimeout(resolve, 200));
         }
+
+        console.log(`[Sync] ✅ Historical sync complete for Seller ${sellerId}. Total orders synced: ${totalFetched}/${totalAvailable}`);
     } catch (e) {
-        console.error("[Sync] Error syncing recent orders:", e);
+        console.error(`[Sync] Error syncing orders (fetched ${totalFetched} so far):`, e);
     }
 }
 

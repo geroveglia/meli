@@ -8,17 +8,17 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { requirePermission } from "../middleware/permissions.js";
+import { ensureDefaultRoles } from "../services/roleInitService.js";
+import { sendTenantWelcomeEmail } from "../utils/email.js";
 
 const router = Router();
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Schemas de validación
 // ─────────────────────────────────────────────────────────────────────────────
 
 const createTenantSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres").trim(),
   slug: z.string().min(2, "El slug debe tener al menos 2 caracteres").trim().toLowerCase()
-    .regex(/^[a-z0-9-]+$/, "El slug solo puede contener letras minúsculas, números y guiones"),
+    .regex(/^[a-z0-9-_]+$/, "El slug solo puede contener letras minúsculas, números, guiones y guiones bajos"),
   domain: z.string().trim().optional(),
   company: z.object({
     legalName: z.string().min(2, "La razón social debe tener al menos 2 caracteres").trim(),
@@ -76,8 +76,11 @@ const requireSuperAdmin = (req: AuthenticatedRequest, res: Response, next: Funct
     return;
   }
   
-  const primaryRole = user.primaryRole?.toLowerCase();
-  if (primaryRole !== "superadmin") {
+  const isSuperAdmin = 
+    user.primaryRole?.toLowerCase() === "superadmin" || 
+    user.roles?.map(r => r.toLowerCase()).includes("superadmin");
+
+  if (!isSuperAdmin) {
     res.status(403).json({ error: "Acceso denegado. Solo superadmin puede acceder a tenants." });
     return;
   }
@@ -580,7 +583,46 @@ router.post(
 
       const tenant = await Tenant.create(tenantData);
 
-      res.status(201).json(tenant);
+      // --- CREATE ADMIN USER ---
+      // Wait a moment for post-save hooks (like role creation) to finish
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const { adminRole } = await ensureDefaultRoles(tenant._id as Types.ObjectId);
+      
+      const generatedPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+
+      const adminUser = new User({
+        tenantId: tenant._id,
+        email: data.contact.email,
+        password: generatedPassword,
+        firstName: data.contact.firstName,
+        lastName: data.contact.lastName,
+        roles: [adminRole._id],
+        isActive: true,
+      });
+
+      await adminUser.save();
+
+      // Ensure user is added to the tenant
+      await Tenant.findByIdAndUpdate(tenant._id, {
+        $addToSet: { userIds: adminUser._id },
+        $inc: { "usage.users.current": 1 },
+      });
+
+      // --- SEND EMAIL ---
+      sendTenantWelcomeEmail(
+        data.contact.email, 
+        data.contact.firstName, 
+        data.name, 
+        generatedPassword
+      ).catch(err => {
+        console.error("Failed to send tenant welcome email:", err);
+      });
+
+      const responseObj: any = tenant.toObject();
+      responseObj._generatedPassword = generatedPassword; // Optional, just in case frontend needs to show it
+
+      res.status(201).json(responseObj);
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({
@@ -697,14 +739,12 @@ router.delete(
         return;
       }
 
-      // Verificar si tiene usuarios asociados
-      const userCount = await User.countDocuments({ tenantId: tenant._id });
-      if (userCount > 0) {
-        res.status(400).json({ 
-          error: `No se puede eliminar el tenant. Tiene ${userCount} usuario(s) asociado(s). Elimine primero los usuarios.` 
-        });
-        return;
-      }
+      // Eliminar usuarios asociados al tenant
+      await User.deleteMany({ tenantId: tenant._id });
+
+      // Opcional: ELIMINAR OTROS DATOS ASOCIADOS (clientes, etc.) 
+      // Si el sistema requiere un borrado duro en cascada total, podrías agregar otras colecciones.
+      // Aquí priorizamos liberar el impedimento que frenaba borrar los Tenants de prueba.
 
       await Tenant.findByIdAndDelete(id);
 

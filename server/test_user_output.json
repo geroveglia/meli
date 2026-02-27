@@ -1,0 +1,18 @@
+{
+  "id": "699f47f7cbbcc38c0fc760a0",
+  "email": "client_1772046327292@example.com",
+  "firstName": "Test Client 1772046327292",
+  "lastName": "Cliente",
+  "roles": [
+    "cliente"
+  ],
+  "primaryRole": "cliente",
+  "clientIds": [
+    "699f47f7cbbcc38c0fc7609c"
+  ],
+  "permissions": [
+    "cuentas:view"
+  ],
+  "tenantId": "697b6e8996d9378f31af93ca",
+  "tenantSlug": "superadmin"
+}

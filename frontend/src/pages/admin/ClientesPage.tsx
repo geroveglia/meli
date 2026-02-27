@@ -21,6 +21,8 @@ const initialFormData: ClienteFormData = {
   phone: "",
   address: "",
   status: "active",
+  createUser: true,
+  password: "",
 };
 
 const getStatusBadge = (status: ClienteStatus) => {
@@ -90,7 +92,14 @@ export const ClientesPage: React.FC = () => {
       const response = await clientesAPI.list(params);
 
       if (currentId === requestIdRef.current) {
-        setClientes(response.clientes);
+        setClientes((prev) => {
+          const pwdMap = new Map(
+            prev.filter(c => c._generatedPassword).map(c => [c._id, c._generatedPassword])
+          );
+          return response.clientes.map(c => 
+            pwdMap.has(c._id) ? { ...c, _generatedPassword: pwdMap.get(c._id) } : c
+          );
+        });
       }
     } catch (error) {
       console.error("Error fetching clientes:", error);
@@ -160,6 +169,7 @@ export const ClientesPage: React.FC = () => {
     if (!validateForm()) return;
 
     try {
+      let newCliente: Cliente | null = null;
       if (editingCliente) {
         const updateData: UpdateClienteData = {
           name: formData.name.trim(),
@@ -179,17 +189,37 @@ export const ClientesPage: React.FC = () => {
           phone: formData.phone.trim() || undefined,
           address: formData.address.trim() || undefined,
           status: formData.status,
+          createUser: formData.createUser,
+          password: formData.password || undefined,
         };
         const response = await clientesAPI.create(createData);
-        if (response._generatedPassword) {
-            sweetAlert.success("Cliente creado", `Se generó la contraseña temporal: ${response._generatedPassword} (También se debe enviar por correo).`);
+        newCliente = response;
+        if (createData.createUser) {
+            if (response._generatedPassword && !createData.password) {
+                sweetAlert.success("Cliente creado", `Se creó el usuario. Contraseña temporal: ${response._generatedPassword} (También se envió por correo).`);
+            } else {
+                sweetAlert.success("Cliente y Usuario creados", "El usuario puede ingresar con la contraseña configurada.");
+            }
         } else {
-            sweetAlert.success("Cliente creado", "Se ha enviado un correo con las credenciales de acceso.");
+            sweetAlert.success("Cliente creado", "El cliente fue guardado correctamente.");
         }
       }
       closeModal();
+      
+      if (newCliente) {
+        setClientes(prev => [newCliente!, ...prev]);
+      }
+      
       fetchClientes({ silent: true });
       emitCuentasChanged();
+      
+      if (newCliente && newCliente._generatedPassword) {
+        // Automatically open the view modal to show the generated password.
+        setTimeout(() => {
+          openView(newCliente!);
+        }, 500); // small delay to allow modal close animation and state to settle
+      }
+      
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string; error?: string } } };
       const message = err.response?.data?.message || err.response?.data?.error || "Error al guardar el cliente";

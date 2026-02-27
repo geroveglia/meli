@@ -37,6 +37,35 @@ router.get("/", authenticateToken, async (req: AuthenticatedRequest, res: Respon
         query.clientId = requestedClient;
     }
 
+    const isCliente = req.user?.primaryRole === 'cliente' || userRoles.includes('cliente');
+    if (isCliente && req.user) {
+        const { Cuenta } = await import("../models/Cuenta.js");
+
+        // Find all accounts owned by this cliente
+        const ownedCuentas = await Cuenta.find({
+            tenantId,
+            $or: [
+                { email: req.user.email },
+                ...(req.user.clientIds && req.user.clientIds.length > 0 ? [{ clienteId: { $in: req.user.clientIds } }] : []),
+                { ownerUserId: req.user.userId }
+            ]
+        }, '_id mercadolibre.sellerId').lean();
+
+        if (ownedCuentas.length === 0) {
+            return res.json([]); // Return empty array if they own no accounts
+        }
+
+        const allowedClientIds = ownedCuentas.map(acc => acc._id);
+        const allowedSellerIds = ownedCuentas
+            .map(acc => acc.mercadolibre?.sellerId)
+            .filter((id): id is number => id !== undefined && id !== null);
+
+        query.$or = [
+            { clientId: { $in: allowedClientIds } },
+            ...(allowedSellerIds.length > 0 ? [{ sellerId: { $in: allowedSellerIds } }] : [])
+        ];
+    }
+
     if (dateFrom && dateTo) {
       query.dateCreated = { 
         $gte: new Date(String(dateFrom)), 
@@ -48,10 +77,20 @@ router.get("/", authenticateToken, async (req: AuthenticatedRequest, res: Respon
         // Simple search by buyer nickname or ID
         // For mongo search, regex is options
         const searchStr = String(search);
-        query.$or = [
+        const searchConditions = [
             { meliId: { $regex: searchStr, $options: 'i' } },
             { "buyer.nickname": { $regex: searchStr, $options: 'i' } }
         ];
+
+        if (query.$or) {
+             query.$and = [
+                 { $or: query.$or },
+                 { $or: searchConditions }
+             ];
+             delete query.$or;
+        } else {
+             query.$or = searchConditions;
+        }
     }
     
     // Fetch orders

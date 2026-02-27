@@ -37,6 +37,8 @@ export interface CreateClienteData {
   address?: string;
   status?: ClienteStatus;
   isFavorite?: boolean;
+  createUser?: boolean;
+  password?: string;
 }
 
 export interface UpdateClienteData {

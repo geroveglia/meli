@@ -289,11 +289,12 @@ export async function seedOnStart() {
   try {
     console.log(`🌱 Ensuring seed data for tenant slug: ${tenantSlug}`);
 
-    // Remove all users except superadmin and seed admin
-    await User.deleteMany({
-      email: { $nin: ["superadmin@example.com", adminEmail, "gero.veglia@gmail.com"] }
-    });
-    console.log(`🧹 Cleaned up all users except superadmin@example.com, ${adminEmail} and gero.veglia@gmail.com`);
+    // [MODIFICADO] Ya no eliminamos a todos los usuarios para evitar que los clientes creados
+    // desde el panel se borren al reiniciar el servidor.
+    // await User.deleteMany({
+    //   email: { $nin: ["superadmin@example.com", adminEmail, "gero.veglia@gmail.com"] }
+    // });
+    // console.log(`🧹 Cleaned up all users except superadmin@example.com, ${adminEmail} and gero.veglia@gmail.com`);
 
     // TENANT
     const tenant = await ensureTenant({

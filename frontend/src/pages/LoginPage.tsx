@@ -211,11 +211,17 @@ export const LoginPage: React.FC = () => {
         return;
       }
 
-      // === Redirección para Superadmin ===
       const isSuperAdmin = result?.user?.primaryRole?.toLowerCase() === "superadmin" || result?.user?.roles?.some((r: any) => (r.name || r).toLowerCase() === "superadmin");
 
       if (isSuperAdmin) {
         navigate("/admin/dashboard");
+        return;
+      }
+
+      // === Redirección para Admin ===
+      const isAdmin = result?.user?.primaryRole?.toLowerCase() === "admin" || result?.user?.roles?.some((r: any) => (r.name || r).toLowerCase() === "admin");
+      if (isAdmin) {
+        navigate("/admin/clientes");
         return;
       }
 
@@ -287,6 +293,12 @@ export const LoginPage: React.FC = () => {
       const isSuperAdmin = result?.user?.primaryRole?.toLowerCase() === "superadmin" || result?.user?.roles?.some((r: any) => (r.name || r).toLowerCase() === "superadmin");
       if (isSuperAdmin) {
         navigate("/admin/dashboard");
+        return;
+      }
+
+      const isAdmin = result?.user?.primaryRole?.toLowerCase() === "admin" || result?.user?.roles?.some((r: any) => (r.name || r).toLowerCase() === "admin");
+      if (isAdmin) {
+        navigate("/admin/clientes");
         return;
       }
 

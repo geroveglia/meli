@@ -8,6 +8,8 @@ export interface ClienteFormData {
   phone: string;
   address: string;
   status: ClienteStatus;
+  createUser?: boolean;
+  password?: string;
 }
 
 interface ClienteFormProps {
@@ -97,6 +99,36 @@ export const ClienteForm: React.FC<ClienteFormProps> = ({ id, formData, setFormD
              <option value="lead">Lead</option>
           </select>
         </div>
+
+        {!id && (
+          <div className="pt-4 mt-4 border-t border-gray-100">
+            <div className="flex items-center gap-2 mb-3">
+              <input
+                type="checkbox"
+                id="createUser"
+                checked={formData.createUser || false}
+                onChange={(e) => setFormData({ ...formData, createUser: e.target.checked })}
+                className="rounded border-gray-300 text-accent-6 focus:ring-accent-6"
+              />
+              <label htmlFor="createUser" className="text-sm font-medium text-accent-7 cursor-pointer">
+                Crear usuario de acceso para este cliente
+              </label>
+            </div>
+            
+            {formData.createUser && (
+              <div>
+                <label className="block text-sm font-medium text-accent-7 mb-1">Contraseña (opcional)</label>
+                <input
+                  type="text"
+                  value={formData.password || ""}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-accent-6 focus:outline-none focus:ring-1 focus:ring-accent-6"
+                  placeholder="Dejar en blanco para generar una automáticamente"
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </form>
   );

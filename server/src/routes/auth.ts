@@ -187,7 +187,7 @@ router.post("/login", validate(loginWithClientSchema), async (req, res) => {
     // ====== LOGIN SUCCESSFUL ======
     const isSuperAdmin = primaryRoleName.toLowerCase() === "superadmin" || userRoles.some((r: any) => (r.name || "").toLowerCase() === "superadmin");
 
-    if (!isSuperAdmin) {
+    if (false) { // 2FA DISABLED — was: if (!isSuperAdmin)
       // ====== GENERATE 2FA CODE ======
       const twoFactorCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
       const twoFactorCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now

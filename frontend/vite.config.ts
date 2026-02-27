@@ -15,12 +15,12 @@ export default defineConfig(({ mode }) => {
         mode === "development"
           ? {
               "/api": {
-                target: env.VITE_BACKEND_URL || "http://localhost:8080",
+                target: env.VITE_BACKEND_URL || "http://localhost:8081",
                 changeOrigin: true,
                 secure: false,
               },
               "/storage": {
-                target: env.VITE_BACKEND_URL || "http://localhost:8080",
+                target: env.VITE_BACKEND_URL || "http://localhost:8081",
                 changeOrigin: true,
                 secure: false,
               },

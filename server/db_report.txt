@@ -1,0 +1,12 @@
+=== TENANTS ===
+  Platform Administration | superadmin | id:696e0afbee864e3d5ceec4e7 | meliSeller:none | meliNick:none
+  Demo Tenant | demo-tenant | id:696e0afdee864e3d5ceec539 | meliSeller:none | meliNick:none
+
+=== CUENTAS ===
+
+=== ORDERS (total: 5) ===
+  meliId:none | tenant:696e0afdee864e3d5ceec539 | client:none | seller:none | logistics:none
+  meliId:none | tenant:696e0afdee864e3d5ceec539 | client:none | seller:none | logistics:none
+  meliId:none | tenant:696e0afdee864e3d5ceec539 | client:none | seller:none | logistics:none
+  meliId:none | tenant:696e0afdee864e3d5ceec539 | client:none | seller:none | logistics:none
+  meliId:none | tenant:696e0afdee864e3d5ceec539 | client:none | seller:none | logistics:none

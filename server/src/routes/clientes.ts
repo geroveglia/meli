@@ -7,6 +7,7 @@ import { Role } from "../models/Role.js";
 import { authenticateToken, AuthenticatedRequest } from "../middleware/auth.js";
 import { requireTenant, TenantRequest } from "../middleware/tenant.js";
 import { requirePermission } from "../middleware/permissions.js";
+import { sendClientWelcomeEmail } from "../utils/email.js";
 
 const router = Router();
 
@@ -19,6 +20,8 @@ const createClientSchema = z.object({
   address: z.string().trim().optional(),
   status: z.enum(["active", "inactive", "lead"]).optional().default("active"),
   isFavorite: z.boolean().optional().default(false),
+  createUser: z.boolean().optional(),
+  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").optional(),
 });
 
 const updateClientSchema = z.object({
@@ -166,11 +169,10 @@ router.post(
       await client.save();
 
       // Check for user with that email
-      const { userRepository } = await import("../repository/index.js");
-      let existingUser = await userRepository.findByEmailAndTenantId(data.email, String(req.tenantObjectId));
+      let existingUser = await User.findOne({ email: data.email, tenantId: req.tenantObjectId });
 
       let generatedPassword = null;
-      if (!existingUser) {
+      if (data.createUser && !existingUser) {
         // Find or Create 'cliente' role
         let clienteRole = await Role.findOne({ tenantId: req.tenantObjectId, name: "cliente" });
         if (!clienteRole) {
@@ -184,23 +186,32 @@ router.post(
             await clienteRole.save();
         }
 
-        // Generate strong random password
-        generatedPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+        // Generate strong random password or use provided
+        generatedPassword = data.password || (Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8));
 
-        // Store it temporarily in the Client object so the frontend can display it
-        client._generatedPassword = generatedPassword;
-        await client.save();
+        // Create User directly using the User model (already imported)
+        try {
+            const newUser = await User.create({
+                firstName: data.name,
+                lastName: data.company || "Cliente",
+                email: data.email,
+                password: generatedPassword,
+                roles: [clienteRole._id],
+                tenantId: req.tenantObjectId,
+                isActive: true,
+                clienteId: client._id,
+                clientIds: [client._id],
+            });
+            console.log(`[Clientes] ✅ User created for client: ${data.email} (userId: ${newUser._id})`);
+        } catch (userError: any) {
+            console.error(`[Clientes] ❌ Failed to create user for client ${data.email}:`, userError);
+            // Don't fail the whole request — client is already created
+            generatedPassword = `ERROR_CREATING_USER: ${userError.message}`;
+        }
 
-        // Create User
-        await userRepository.create({
-            firstName: data.name,
-            lastName: data.company || "Cliente",
-            email: data.email,
-            password: generatedPassword,
-            roles: [clienteRole._id as any],
-            tenantId: req.tenantObjectId as any,
-            isActive: true,
-            clienteId: client._id as any
+        // Send welcome email with password asynchronously
+        sendClientWelcomeEmail(data.email, data.name, generatedPassword).catch(err => {
+            console.error("Failed to send welcome email:", err);
         });
       }
 
@@ -317,6 +328,9 @@ router.delete(
 
       const result = await Client.findOneAndDelete({ _id: id, tenantId: req.tenantObjectId });
       if (!result) return res.status(404).json({ error: "Cliente not found" });
+
+      // Also delete the associated User to revoke login access
+      await User.deleteOne({ email: result.email, tenantId: req.tenantObjectId });
 
       res.status(204).send();
     } catch (error) {

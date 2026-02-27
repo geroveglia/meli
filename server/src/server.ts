@@ -53,7 +53,6 @@ const USE_HTTPS = String(env.USE_HTTPS) === "true";
 // SOLUCIÓN AL ERROR: Le indica a Express que confíe en el encabezado X-Forwarded-For
 // enviado por el Proxy Inverso (Apache). '1' es el número de proxies a confiar.
 app.set("trust proxy", 1);
-// ───────────────── Middlewares base ─────────────────
 app.use(helmet({ crossOriginResourcePolicy: false }));
 
 // express.json() solo para rutas que NO son uploads de archivos

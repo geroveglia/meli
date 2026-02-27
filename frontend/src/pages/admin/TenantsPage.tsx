@@ -8,6 +8,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Card } from "../../components/Card";
 import { sweetAlert } from "../../utils/sweetAlert";
+import Swal from "sweetalert2";
 import { Switch } from "../../components/Switch";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -250,8 +251,8 @@ export const TenantsPage: React.FC = () => {
 
     if (!formData.slug.trim() || formData.slug.trim().length < 2) {
       errors.slug = "El slug debe tener al menos 2 caracteres";
-    } else if (!/^[a-z0-9-]+$/.test(formData.slug)) {
-      errors.slug = "El slug solo puede contener letras minúsculas, números y guiones";
+    } else if (!/^[a-z0-9-_]+$/.test(formData.slug)) {
+      errors.slug = "El slug solo puede contener letras minúsculas, números, guiones y guiones bajos";
     }
 
     if (!formData.company.legalName.trim() || formData.company.legalName.trim().length < 2) {
@@ -327,8 +328,28 @@ export const TenantsPage: React.FC = () => {
           },
           subscription: formData.subscription,
         };
-        await tenantsAPI.create(createData);
-        sweetAlert.success("Tenant creado", "El tenant se ha creado correctamente");
+        const result = await tenantsAPI.create(createData);
+        if (result._generatedPassword) {
+          Swal.fire({
+            title: "Tenant Creado Exitosamente",
+            html: `
+              <div style="text-align: left; background: #f8f9fa; padding: 16px; border-radius: 8px; margin-top: 10px; border: 1px solid #e9ecef;">
+                <p style="margin: 0 0 8px;"><strong>Email Admin:</strong> ${createData.contact.email}</p>
+                <p style="margin: 0; font-size: 1.1em;"><strong>Contraseña Temporal:</strong> <code style="background: #e9ecef; padding: 4px 8px; border-radius: 4px; color: #d63384;">${result._generatedPassword}</code></p>
+              </div>
+              <p style="margin-top: 16px; font-size: 0.9em; color: #6c757d;">
+                Asegúrate de copiar esta contraseña antes de cerrar este mensaje.
+              </p>
+            `,
+            icon: "success",
+            confirmButtonText: "Entendido",
+            background: "var(--accent-2)",
+            color: "var(--accent-1)",
+            confirmButtonColor: "#2563eb",
+          });
+        } else {
+          sweetAlert.success("Tenant creado", "El tenant se ha creado correctamente");
+        }
       }
       closeModal();
       fetchTenants({ silent: true });
@@ -655,7 +676,15 @@ export const TenantsPage: React.FC = () => {
                       type="text"
                       required
                       value={formData.name}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                      onChange={(e) => {
+                        const newName = e.target.value;
+                        const autoSlug = newName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, "") + (newName ? "_tenant" : "");
+                        setFormData((prev) => ({ 
+                          ...prev, 
+                          name: newName,
+                          slug: editingTenant ? prev.slug : autoSlug
+                        }));
+                      }}
                       className={`input-base ${formErrors.name ? "border-red-500 dark:border-red-500" : ""}`}
                       placeholder="Nombre del tenant"
                     />
@@ -670,24 +699,11 @@ export const TenantsPage: React.FC = () => {
                       type="text"
                       required
                       value={formData.slug}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") }))}
-                      className={`input-base ${formErrors.slug ? "border-red-500 dark:border-red-500" : ""}`}
-                      placeholder="slug-del-tenant"
+                      readOnly
+                      className={`input-base bg-accent-1 text-accent-6 cursor-not-allowed ${formErrors.slug ? "border-red-500 dark:border-red-500" : ""}`}
+                      placeholder="slug-auto-generado_tenant"
                     />
                     {formErrors.slug && <p className="text-red-500 text-xs mt-1">{formErrors.slug}</p>}
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-accent-7 mb-1">
-                      Dominio
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.domain}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, domain: e.target.value }))}
-                      className="input-base"
-                      placeholder="ejemplo.com"
-                    />
                   </div>
                 </div>
               </div>
@@ -814,55 +830,6 @@ export const TenantsPage: React.FC = () => {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Cargo
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.contact.position}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, contact: { ...prev.contact, position: e.target.value } }))}
-                      className="input-base"
-                      placeholder="CEO, CTO, etc."
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Suscripción */}
-              <div>
-                <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">Suscripción</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Plan
-                    </label>
-                    <select
-                      value={formData.subscription.plan}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, subscription: { ...prev.subscription, plan: e.target.value as SubscriptionPlan } }))}
-                      className="input-base"
-                    >
-                      <option value="free">Free</option>
-                      <option value="basic">Basic</option>
-                      <option value="pro">Pro</option>
-                      <option value="enterprise">Enterprise</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Estado
-                    </label>
-                    <select
-                      value={formData.subscription.status}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, subscription: { ...prev.subscription, status: e.target.value as SubscriptionStatus } }))}
-                      className="input-base"
-                    >
-                      <option value="active">Activo</option>
-                      <option value="suspended">Suspendido</option>
-                      <option value="cancelled">Cancelado</option>
-                    </select>
-                  </div>
                 </div>
               </div>
             </div>

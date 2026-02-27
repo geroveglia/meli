@@ -153,3 +153,106 @@ export const sendPasswordResetEmail = async (to: string, resetUrl: string) => {
     return false;
   }
 };
+
+export const sendClientWelcomeEmail = async (to: string, name: string, tempPassword: string) => {
+  const loginUrl = process.env.FRONTEND_URL || 'http://localhost:5173/login';
+
+  const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="display: inline-block; width: 64px; height: 64px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 50%; line-height: 64px; font-size: 28px;">
+        👋
+      </div>
+    </div>
+    <h2 style="margin: 0 0 8px; font-size: 22px; font-weight: 700; color: #1a1a2e; text-align: center;">
+      ¡Hola ${name}!
+    </h2>
+    <p style="margin: 0 0 16px; font-size: 15px; color: #6c757d; text-align: center; line-height: 1.6;">
+      Te damos la bienvenida a <strong style="color: #1a1a2e;">LumbaConnect</strong>. Tu cuenta ha sido creada exitosamente.
+    </p>
+    <p style="margin: 0 0 24px; font-size: 15px; color: #6c757d; text-align: center; line-height: 1.6;">
+      Puedes iniciar sesión usando tu correo electrónico (${to}) y la siguiente contraseña temporal:
+    </p>
+    <div style="background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%); border: 2px dashed #4facfe; padding: 16px; font-size: 24px; font-weight: 800; text-align: center; letter-spacing: 4px; border-radius: 12px; margin: 0 0 24px; color: #1a1a2e; font-family: 'Courier New', monospace;">
+      ${tempPassword}
+    </div>
+    <div style="text-align: center; margin: 0 0 28px;">
+      <a href="${loginUrl}" style="display: inline-block; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #ffffff; padding: 14px 40px; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 15px; letter-spacing: 0.5px; box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);">
+        Iniciar Sesión
+      </a>
+    </div>
+    <div style="background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 12px 16px; border-radius: 0 8px 8px 0; margin-bottom: 24px;">
+      <p style="margin: 0; font-size: 13px; color: #0d47a1;">
+        ℹ️ Te recomendamos cambiar esta contraseña desde tu perfil una vez que hayas iniciado sesión.
+      </p>
+    </div>
+  `;
+
+  const mailOptions = {
+    from: `"LumbaConnect" <${process.env.SMTP_USER}>`,
+    to,
+    subject: 'Bienvenido a LumbaConnect - Tus credenciales de acceso',
+    html: emailWrapper(content),
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[Email] Welcome email sent to ${to}: ${info.messageId}`);
+    return true;
+  } catch (error: any) {
+    console.error(`[Email] Error sending welcome email to ${to}:`, error);
+    fs.writeFileSync('nodemailer_error.json', JSON.stringify({ message: error.message, stack: error.stack, code: error.code }));
+    return false;
+  }
+};
+
+export const sendTenantWelcomeEmail = async (to: string, name: string, tenantName: string, tempPassword: string) => {
+  const loginUrl = process.env.FRONTEND_URL || 'http://localhost:5173/login';
+
+  const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="display: inline-block; width: 64px; height: 64px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 50%; line-height: 64px; font-size: 28px;">
+        🚀
+      </div>
+    </div>
+    <h2 style="margin: 0 0 8px; font-size: 22px; font-weight: 700; color: #1a1a2e; text-align: center;">
+      ¡Bienvenido a LumbaConnect, ${name}!
+    </h2>
+    <p style="margin: 0 0 16px; font-size: 15px; color: #6c757d; text-align: center; line-height: 1.6;">
+      Tu organización <strong style="color: #1a1a2e;">${tenantName}</strong> ha sido configurada exitosamente y está lista para ser utilizada.
+    </p>
+    <p style="margin: 0 0 24px; font-size: 15px; color: #6c757d; text-align: center; line-height: 1.6;">
+      Puedes iniciar sesión como <strong>Administrador</strong> usando tu correo electrónico (${to}) y esta contraseña temporal:
+    </p>
+    <div style="background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%); border: 2px dashed #4facfe; padding: 16px; font-size: 24px; font-weight: 800; text-align: center; letter-spacing: 4px; border-radius: 12px; margin: 0 0 24px; color: #1a1a2e; font-family: 'Courier New', monospace;">
+      ${tempPassword}
+    </div>
+    <div style="text-align: center; margin: 0 0 28px;">
+      <a href="${loginUrl}" style="display: inline-block; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #ffffff; padding: 14px 40px; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 15px; letter-spacing: 0.5px; box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);">
+        Ir a Mi Panel de Control
+      </a>
+    </div>
+    <div style="background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 12px 16px; border-radius: 0 8px 8px 0; margin-bottom: 24px;">
+      <p style="margin: 0; font-size: 13px; color: #0d47a1;">
+        ℹ️ Por motivos de seguridad, te recomendamos cambiar esta contraseña por una definitiva tras iniciar sesión.
+      </p>
+    </div>
+  `;
+
+  const mailOptions = {
+    from: `"LumbaConnect" <${process.env.SMTP_USER}>`,
+    to,
+    subject: `Bienvenido a LumbaConnect - Tus accesos para ${tenantName}`,
+    html: emailWrapper(content),
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[Email] Tenant Welcome email sent to ${to}: ${info.messageId}`);
+    return true;
+  } catch (error: any) {
+    console.error(`[Email] Error sending tenant welcome email to ${to}:`, error);
+    fs.writeFileSync('nodemailer_error.json', JSON.stringify({ message: error.message, stack: error.stack, code: error.code }));
+    return false;
+  }
+};
+

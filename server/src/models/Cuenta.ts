@@ -93,7 +93,7 @@ const cuentaSchema = new Schema<ICuenta>(
     ownerUserId: { type: Schema.Types.ObjectId, ref: "User" },
     clienteId: { type: Schema.Types.ObjectId, ref: "Client" },
   },
-  { timestamps: true, collection: "clients" }
+  { timestamps: true, collection: "cuentas" }
 );
 
 // Compound unique index: email unique per tenant

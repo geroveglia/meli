@@ -1,0 +1,9 @@
+=== USERS (3) ===
+  admin@example.com | firstName:Admin lastName:User | active:true | clientIds:[] | clienteId:none
+  gero.veglia@gmail.com | firstName:Gero lastName:Veglia | active:true | clientIds:[] | clienteId:none
+  superadmin@example.com | firstName:Super lastName:Admin | active:true | clientIds:[] | clienteId:none
+
+=== CLIENTES_PROFILES (3) ===
+  Fundacion | gero.veglia@outlook.com | id:699f13783a8a724e84b5c3f1 | tenant:699f12f13a8a724e84b5c379
+  tzedaka | vegliageronimo@gmail.com | id:699f25b2cacde6d9d9d95747 | tenant:699f1c38cacde6d9d9d95644
+  Meli1 | vegliageronimo@gmail.com | id:699f3325a7688befd1b9152f | tenant:697b6e8a96d9378f31af93fe

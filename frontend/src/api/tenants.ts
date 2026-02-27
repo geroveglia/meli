@@ -263,11 +263,14 @@ class TenantsAPI {
   /**
    * Create a new tenant
    */
-  async create(tenantData: CreateTenantData): Promise<Tenant> {
+  async create(tenantData: CreateTenantData): Promise<{ tenant: Tenant; _generatedPassword?: string }> {
     const { data } = await axios.post("/tenants", tenantData, {
       headers: this.getHeaders(),
     });
-    return normalizeTenant(data);
+    return {
+      tenant: normalizeTenant(data),
+      _generatedPassword: data._generatedPassword,
+    };
   }
 
   /**

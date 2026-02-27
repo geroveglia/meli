@@ -162,7 +162,7 @@ export const MobileNavbar: React.FC = () => {
       disabled?: boolean;
     }> = [];
 
-    if (isSuperAdminTenant) {
+    if (isSuperAdminTenant && !isCliente) {
       base.push(
         {
           path: "/admin/dashboard",
@@ -731,7 +731,7 @@ export const MobileNavbar: React.FC = () => {
                     )}
 
                     {/* Integraciones */}
-                    {isSuperAdminTenant && (
+                    {isSuperAdminTenant && !isCliente && (
                       <Link
                         to="/admin/integrations"
                         onClick={() => setOpen(false)}
@@ -757,7 +757,7 @@ export const MobileNavbar: React.FC = () => {
                     )}
 
                     {/* Documentación - Submenú */}
-                    {isSuperAdminTenant && (
+                    {isSuperAdminTenant && !isCliente && (
                       <div>
                         <button 
                         onClick={() => setIsDocOpen(!isDocOpen)} 
