@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useLumbaStore, Order, SalesState } from "../../stores/lumbaStore";
-import { meliService } from "../../services/meliService";
 import { OrderDetailModal } from "../../components/lumba/OrderDetailModal";
 import { PageLayout } from "../../components/PageLayout";
 import { SearchAndFilters } from "../../components/SearchAndFilters";
@@ -63,27 +62,8 @@ export const VentasPage: React.FC = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // --- Connection Status ---
-  const [isMeliConnected, setIsMeliConnected] = useState(true);
-
-  React.useEffect(() => {
-    const checkConnection = async () => {
-      try {
-        const status = await meliService.getConnectionStatus();
-        setIsMeliConnected(status.isConnected);
-      } catch (error) {
-        setIsMeliConnected(false);
-      }
-    };
-    checkConnection();
-  }, [selectedCuenta, selectedAccount]);
-
   // --- Derived Data / Filtering ---
   const filteredOrders = useMemo(() => {
-    if (!isMeliConnected) {
-        return [];
-    }
-
     let result = orders;
 
     // 0. Filter by Client Context (Navbar Selection)
@@ -142,7 +122,7 @@ export const VentasPage: React.FC = () => {
     }
 
     return result;
-  }, [orders, selectedCuenta, selectedAccount, searchQuery, dateFrom, dateTo, activeTab, isMeliConnected]);
+  }, [orders, selectedCuenta, selectedAccount, searchQuery, dateFrom, dateTo, activeTab]);
 
   // --- Selection Logic ---
 

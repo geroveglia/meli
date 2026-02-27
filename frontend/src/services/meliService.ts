@@ -52,21 +52,13 @@ export const meliService = {
     async getConnectionStatus(): Promise<MeliConnectionStatus> {
         const selectedAccount = useLumbaStore.getState().selectedAccount;
 
-        if (selectedAccount && typeof selectedAccount === 'object' && 'type' in selectedAccount && (selectedAccount as any).type === 'cuenta') {
+        // prioritize specific account if selected
+        if (selectedAccount && typeof selectedAccount === 'object' && 'id' in selectedAccount) {
              try {
-                const response = await axios.get(`/cuentas/${(selectedAccount as any).id}`);
-                const cuenta = response.data; // This might be wrapped in { cuenta: ... } depending on API? 
-                // Wait, api/cuentas.ts list returns { cuentas: [] }, get returns?
-                // Usually get returns the object directly or { data: object }. 
-                // Let's assume standard axios response.data is the payload.
-                // If it returns the normalized object from `api/cuentas.ts`, it has `mercadolibre` field.
+                const response = await axios.get(`/cuentas/${selectedAccount.id}`);
+                const cuenta = response.data.cuenta || response.data; // Handle both { cuenta: ... } and direct object
                 
-                // Correction: The API endpoint likely returns the Mongoose document. 
-                // We need to check if the backend normalizes it. 
-                // Usually `res.json(cuenta)`.
-                // Let's assume it returns the object with a `mercadolibre` property.
-                
-                if (cuenta.mercadolibre && (cuenta.mercadolibre.accessToken || cuenta.mercadolibre.isConnected)) {
+                if (cuenta.mercadolibre && (cuenta.mercadolibre.accessToken || cuenta.mercadolibre.sellerId)) {
                     return {
                         isConnected: true,
                         sellerId: cuenta.mercadolibre.sellerId,
@@ -75,25 +67,31 @@ export const meliService = {
                     };
                 }
              } catch (e) {
-                 console.error("Error fetching cuenta status", e);
+                 console.error("Error fetching account status", e);
              }
              return { isConnected: false };
 
         } else {
-            // Default: Tenant
-            const response = await axios.get("/tenants/current");
-            const tenant = response.data;
-            
-            if (tenant.mercadolibre && tenant.mercadolibre.accessToken) {
-                return {
-                    isConnected: true,
-                    sellerId: tenant.mercadolibre.sellerId,
-                    nickname: tenant.mercadolibre.nickname,
-                    expiresAt: tenant.mercadolibre.expiresAt
-                };
+            // Default: Check current tenant
+            try {
+                const response = await axios.get("/tenants/current");
+                const tenant = response.data;
+                
+                if (tenant.mercadolibre && tenant.mercadolibre.accessToken) {
+                    return {
+                        isConnected: true,
+                        sellerId: tenant.mercadolibre.sellerId,
+                        nickname: tenant.mercadolibre.nickname,
+                        expiresAt: tenant.mercadolibre.expiresAt
+                    };
+                }
+            } catch (e) {
+                console.error("Error fetching tenant status", e);
             }
             
-            return { isConnected: false };
+            // If selecting "Todas", we might want to return true if at least one account is connected,
+            // or just let the orders show up regardless of this status flag.
+            return { isConnected: selectedAccount === "Todas" }; 
         }
     },
 };

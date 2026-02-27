@@ -152,12 +152,20 @@ export const callback = async (req: Request, res: Response) => {
         // Pass 'state' to authorize so it can retrieve the correct PKCE verifier
         const tokenData = await authorize(code, redirectUri, appId, clientSecret, state as string);
 
+        // Determine the effective tenantId for syncing
+        let effectiveTenantId = tenantId;
+
         if (cuentaId) {
              // Update specific Cuenta (Client)
-             const cuenta = await Cuenta.findOne({ _id: cuentaId, tenantId });
+             // Find by _id only (globally unique) — the decoded tenantId may be the superadmin's,
+             // not the Cuenta's actual tenant, so we don't filter by tenantId here.
+             const cuenta = await Cuenta.findById(cuentaId);
              if (!cuenta) {
                  return res.status(404).send("Cuenta no encontrada para vincular");
              }
+             
+             // Use the Cuenta's own tenantId for syncing orders
+             effectiveTenantId = String(cuenta.tenantId);
              
              cuenta.mercadolibre = {
                 accessToken: tokenData.accessToken,
@@ -168,7 +176,7 @@ export const callback = async (req: Request, res: Response) => {
                 userId: String(tokenData.sellerId) // Mapping sellerId to userId field for consistency
              };
              await cuenta.save();
-             console.log(`Linked MELI to Cuenta: ${cuenta.name} (${cuenta._id})`);
+             console.log(`Linked MELI to Cuenta: ${cuenta.name} (${cuenta._id}), Tenant: ${effectiveTenantId}`);
 
         } else {
             // Fallback: Update Tenant (Legacy / Single Account)
@@ -188,7 +196,7 @@ export const callback = async (req: Request, res: Response) => {
         // Trigger initial sync of orders
         // We don't await this to avoid blocking the user redirection
         import("../services/meliService.js").then(({ syncRecentOrders }) => {
-            syncRecentOrders(tenantId, cuentaId, tokenData.accessToken, tokenData.sellerId);
+            syncRecentOrders(effectiveTenantId, cuentaId, tokenData.accessToken, tokenData.sellerId);
         });
         // Redirect to Frontend
         // Ideally, we redirect to a success page on the frontend
@@ -261,7 +269,8 @@ export const disconnect = async (req: Request, res: Response) => {
 
     try {
         if (cuentaId) {
-            const cuenta = await Cuenta.findOne({ _id: cuentaId, tenantId });
+            // Find by _id only — tenantId in JWT may not match the Cuenta's tenant
+            const cuenta = await Cuenta.findById(cuentaId);
             if (cuenta) {
                 cuenta.mercadolibre = undefined;
                 await cuenta.save();
@@ -288,7 +297,7 @@ export const disconnect = async (req: Request, res: Response) => {
 
 export const sync = async (req: Request, res: Response) => {
     const authReq = req as AuthenticatedRequest;
-    const tenantId = authReq.tenantId;
+    let tenantId = authReq.tenantId;
     const { cuentaId } = req.body;
 
     if (!tenantId) {
@@ -300,12 +309,15 @@ export const sync = async (req: Request, res: Response) => {
         let sellerId; 
 
         if (cuentaId) {
-             const cuenta = await Cuenta.findOne({ _id: cuentaId, tenantId });
+             // Find by _id only — tenantId in JWT may not match the Cuenta's tenant
+             const cuenta = await Cuenta.findById(cuentaId);
              if (!cuenta || !cuenta.mercadolibre?.accessToken) {
                  return res.status(404).json({ error: "Cuenta not connected" });
              }
              accessToken = cuenta.mercadolibre.accessToken;
              sellerId = cuenta.mercadolibre.sellerId;
+             // Use the Cuenta's own tenantId for syncing
+             tenantId = String(cuenta.tenantId);
         } else {
             const tenant = await Tenant.findById(tenantId);
              if (!tenant || !tenant.mercadolibre?.accessToken) {

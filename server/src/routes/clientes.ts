@@ -331,6 +331,10 @@ router.delete(
 
       // Also delete the associated User to revoke login access
       await User.deleteOne({ email: result.email, tenantId: req.tenantObjectId });
+      
+      // Delete any Cuentas associated with this client to prevent dangling MeLi connections
+      const { Cuenta } = await import("../models/Cuenta.js");
+      await Cuenta.deleteMany({ clienteId: id, tenantId: req.tenantObjectId });
 
       res.status(204).send();
     } catch (error) {

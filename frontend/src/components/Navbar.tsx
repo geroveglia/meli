@@ -9,7 +9,6 @@ import { faXmark, faBars, faRightFromBracket, faHouse, faUserGear, faBuilding, f
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 
 import axios from "../api/axiosConfig";
-import { meliService } from "../services/meliService";
 import { SettingsModal } from "./SettingsModal";
 import CuentaSelector from "./CuentaSelector";
 import { motion, AnimatePresence } from "framer-motion";
@@ -365,23 +364,8 @@ export const MobileNavbar: React.FC = () => {
     const isActive = (path: string) => location.pathname === path;
 
     // Calculate counts - filter by client if one is selected
-    const [isMeliConnected, setIsMeliConnected] = useState(true);
-
-    React.useEffect(() => {
-      const checkConnection = async () => {
-        try {
-          const status = await meliService.getConnectionStatus();
-          setIsMeliConnected(status.isConnected);
-        } catch (error) {
-          setIsMeliConnected(false);
-        }
-      };
-      checkConnection();
-    }, [selectedCuenta]);
 
     const getCount = (type: "logistics" | "sales", status: string) => {
-      if (!isMeliConnected) return 0;
-
       let filteredOrders = orders;
 
       // Filter by client if one is selected
@@ -572,9 +556,9 @@ export const MobileNavbar: React.FC = () => {
                           <div className="pl-2 pt-2 pb-1 text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">Anulaciones</div>
 
                           {[
-                            { label: "Desempaquetar", status: "DESEMPAQUETAR", count: isMeliConnected ? orders.filter((o) => (selectedCuenta ? (typeof o.account !== 'string' && o.account.id === selectedCuenta._id) : true) && o.packaged && (o.logisticsStatus === "cancelado_vuelto_stock" || o.logisticsStatus === "devolucion_vuelto_stock")).length : 0 },
-                            { label: "Devolucion", status: "DEVOLUCION", count: isMeliConnected ? orders.filter((o) => (selectedCuenta ? (typeof o.account !== 'string' && o.account.id === selectedCuenta._id) : true) && !o.packaged && o.logisticsStatus === "devolucion_vuelto_stock").length : 0 },
-                            { label: "Cancelados", status: "CANCELADOS", count: isMeliConnected ? orders.filter((o) => (selectedCuenta ? (typeof o.account !== 'string' && o.account.id === selectedCuenta._id) : true) && !o.packaged && o.logisticsStatus === "cancelado_vuelto_stock").length : 0 },
+                            { label: "Desempaquetar", status: "DESEMPAQUETAR", count: orders.filter((o) => (selectedCuenta ? (typeof o.account !== 'string' && o.account.id === selectedCuenta._id) : true) && o.packaged && (o.logisticsStatus === "cancelado_vuelto_stock" || o.logisticsStatus === "devolucion_vuelto_stock")).length },
+                            { label: "Devolucion", status: "DEVOLUCION", count: orders.filter((o) => (selectedCuenta ? (typeof o.account !== 'string' && o.account.id === selectedCuenta._id) : true) && !o.packaged && o.logisticsStatus === "devolucion_vuelto_stock").length },
+                            { label: "Cancelados", status: "CANCELADOS", count: orders.filter((o) => (selectedCuenta ? (typeof o.account !== 'string' && o.account.id === selectedCuenta._id) : true) && !o.packaged && o.logisticsStatus === "cancelado_vuelto_stock").length },
                           ].map((sub) => {
                             const hasNotification = notifications?.[sub.status];
                             return (

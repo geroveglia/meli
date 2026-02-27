@@ -2,7 +2,6 @@ import React, { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { renderToStaticMarkup } from "react-dom/server";
 import { useLumbaStore, Order, LogisticsState } from "../../stores/lumbaStore";
-import { meliService } from "../../services/meliService";
 import { OrderDetailModal } from "../../components/lumba/OrderDetailModal";
 import { toast } from "sonner";
 import { sweetAlert } from "../../utils/sweetAlert";
@@ -90,27 +89,8 @@ export const LogisticaPage: React.FC = () => {
       }
   }, [selectedCuenta, selectedAccount, setAccount]);
 
-  // --- Connection Status ---
-  const [isMeliConnected, setIsMeliConnected] = useState(true);
-
-  React.useEffect(() => {
-    const checkConnection = async () => {
-      try {
-        const status = await meliService.getConnectionStatus();
-        setIsMeliConnected(status.isConnected);
-      } catch (error) {
-        setIsMeliConnected(false);
-      }
-    };
-    checkConnection();
-  }, [selectedCuenta, selectedAccount]);
-
   // --- Derived Data / Filtering ---
   const filteredOrders = useMemo(() => {
-    if (!isMeliConnected) {
-        return [];
-    }
-
     let result = orders;
 
     // 0. Filter by Client Context (Navbar Selection)
@@ -178,7 +158,7 @@ export const LogisticaPage: React.FC = () => {
     }
 
     return result;
-  }, [orders, selectedCuenta, selectedAccount, searchQuery, dateFrom, dateTo, activeTab, isMeliConnected]);
+  }, [orders, selectedCuenta, selectedAccount, searchQuery, dateFrom, dateTo, activeTab]);
 
   // --- Selection Logic ---
 

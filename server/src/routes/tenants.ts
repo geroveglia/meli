@@ -742,9 +742,18 @@ router.delete(
       // Eliminar usuarios asociados al tenant
       await User.deleteMany({ tenantId: tenant._id });
 
-      // Opcional: ELIMINAR OTROS DATOS ASOCIADOS (clientes, etc.) 
+      // Eliminar clientes y cuentas asociados (para limpiar conexiones de MeLi)
+      const { Client } = await import("../models/Client.js");
+      const { Cuenta } = await import("../models/Cuenta.js");
+      await Client.deleteMany({ tenantId: tenant._id });
+      await Cuenta.deleteMany({ tenantId: tenant._id });
+
+      // Eliminar órdenes
+      const { Order } = await import("../models/Order.js");
+      await Order.deleteMany({ tenantId: tenant._id });
+
+      // Opcional: ELIMINAR OTROS DATOS ASOCIADOS (facturas, productos, etc.) 
       // Si el sistema requiere un borrado duro en cascada total, podrías agregar otras colecciones.
-      // Aquí priorizamos liberar el impedimento que frenaba borrar los Tenants de prueba.
 
       await Tenant.findByIdAndDelete(id);
 

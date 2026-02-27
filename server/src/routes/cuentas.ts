@@ -533,6 +533,9 @@ router.delete(
          }
       }
 
+      // Note: Orders associated with this Cuenta will remain, 
+      // but they won't be accessible by clients as the Cuenta is gone.
+      // Alternatively, we could delete orders here if business logic requires.
       await Cuenta.deleteOne({ _id: id });
 
       res.status(204).send();
