@@ -292,9 +292,9 @@ export async function seedOnStart() {
     // [MODIFICADO] Ya no eliminamos a todos los usuarios para evitar que los clientes creados
     // desde el panel se borren al reiniciar el servidor.
     // await User.deleteMany({
-    //   email: { $nin: ["superadmin@example.com", adminEmail, "gero.veglia@gmail.com"] }
+    //   email: { $nin: ["superadmin@example.com", adminEmail] }
     // });
-    // console.log(`🧹 Cleaned up all users except superadmin@example.com, ${adminEmail} and gero.veglia@gmail.com`);
+    // console.log(`🧹 Cleaned up all users except superadmin@example.com and ${adminEmail}`);
 
     // TENANT
     const tenant = await ensureTenant({
@@ -448,22 +448,7 @@ export async function seedOnStart() {
       areaId: areaMap["Administración"],
     });
 
-    // ---- GERO USER (DEV) ----
-    await ensureUser({
-      tenantId,
-      email: "gero.veglia@gmail.com",
-      password: "password123", // Dummy password, will use Google Login
-      roleName: "admin",
-      firstName: "Gero",
-      lastName: "Veglia",
-      isActive: true,
-      positionId: positionDirector._id as Types.ObjectId,
-      levelId: levelSenior._id as Types.ObjectId,
-      areaId: areaMap["Administración"],
-    });
-
     console.log(`👤 Admin assigned: Position=${positionDirector.name}, Level=${levelSenior.name}, Area=Administración`);
-    console.log(`👤 Dev User assigned: gero.veglia@gmail.com`);
 
     console.log("🎉 Seed completed successfully!");
     console.log(`👤 Admin: ${adminEmail} / ${adminPassword}`);

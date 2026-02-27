@@ -37,7 +37,7 @@ export const ForgotPasswordPage: React.FC = () => {
 
     try {
       const resultMessage = await forgotPassword(data.email);
-      setMessage(resultMessage || "Si el correo está registrado, recibirás un enlace de recuperación.");
+      setMessage(resultMessage || "Se ha enviado un enlace de recuperación a tu correo.");
     } catch (err: any) {
       console.error("[forgot-password:error]", err);
       // We generally want to show the same message even on error to prevent email enumeration,
@@ -45,7 +45,7 @@ export const ForgotPasswordPage: React.FC = () => {
       if (err.message && err.message.toLowerCase().includes("network")) {
         setError("Error de red. Por favor intenta más tarde.");
       } else {
-        setMessage("Si el correo está registrado, recibirás un enlace de recuperación.");
+        setError(err.message || "Error al solicitar recuperación de contraseña.");
       }
     } finally {
       setIsLoading(false);

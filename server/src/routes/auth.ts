@@ -842,8 +842,7 @@ router.post("/forgot-password", async (req, res) => {
 
     const user: any = await User.findOne({ email });
     if (!user) {
-      // Return 200 even if user not found to prevent email enumeration
-      res.status(200).json({ message: "Si el correo está registrado, recibirás un enlace de recuperación." });
+      res.status(404).json({ error: "El correo electrónico no existe en el sistema." });
       return;
     }
 
