@@ -343,19 +343,24 @@ export const sync = async (req: Request, res: Response) => {
 export const getDashboardStats = async (req: Request, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const tenantId = authReq.tenantId;
+    const { clientId } = req.query;
 
     if (!tenantId) {
         return res.status(400).json({ error: "Tenant ID required" });
     }
 
     try {
+        const matchStage: any = { 
+            tenantId: new mongoose.Types.ObjectId(tenantId) 
+        };
+        
+        if (clientId && typeof clientId === 'string' && mongoose.Types.ObjectId.isValid(clientId)) {
+            matchStage.clientId = new mongoose.Types.ObjectId(clientId);
+        }
+
         // Aggregation for Total Orders and Revenue
         const totalStats = await Order.aggregate([
-            { $match: { 
-                tenantId: new mongoose.Types.ObjectId(tenantId),
-                // Exclude cancelled sales from even counting? Maybe. 
-                // Usually dashboard shows Volume. Let's keep it simple.
-            }},
+            { $match: matchStage },
             {
                 $group: {
                     _id: null,
@@ -373,7 +378,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
         // Aggregation for Logistics Status
         const statusStats = await Order.aggregate([
-            { $match: { tenantId: new mongoose.Types.ObjectId(tenantId) } },
+            { $match: matchStage },
             {
                 $group: {
                     _id: "$logisticsStatus",
@@ -389,7 +394,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
         const salesHistory = await Order.aggregate([
             { $match: { 
-                tenantId: new mongoose.Types.ObjectId(tenantId),
+                ...matchStage,
                 dateCreated: { $gte: sevenDaysAgo }
             }},
             {

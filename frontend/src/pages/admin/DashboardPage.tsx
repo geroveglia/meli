@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuthStore } from "../../stores/authStore";
+import { useCuentaContextStore } from "../../stores/cuentaContextStore";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChartBar,
@@ -72,6 +73,8 @@ const StatCard: React.FC<{
 export const DashboardPage: React.FC = () => {
   const { theme } = useThemeStore();
   const { user } = useAuthStore(); // Obtener usuario para chequear rol
+  const { selectedCuenta } = useCuentaContextStore();
+
   const [stats, setStats] = useState<DashboardStats>({
     meliOrders: 0,
     meliRevenue: 0,
@@ -80,7 +83,6 @@ export const DashboardPage: React.FC = () => {
     statusDistribution: [],
   });
 
-
   const [loading, setLoading] = useState(true);
 
   const isDark = theme === "dark";
@@ -88,19 +90,19 @@ export const DashboardPage: React.FC = () => {
 
   const [isInfoOpen, setIsInfoOpen] = useState(false);
 
-
-
-
-
   useEffect(() => {
     const fetchStats = async () => {
       try {
         setLoading(true);
         
-        
+        const params = new URLSearchParams();
+        if (selectedCuenta?._id) {
+          params.append("clientId", selectedCuenta._id);
+        }
+
         const promises: Promise<any>[] = [
           // Fetch MeLi Stats
-          axios.get("/meli/dashboard-stats").catch(() => ({ data: { 
+          axios.get(`/meli/dashboard-stats?${params.toString()}`).catch(() => ({ data: { 
             orders: { total: 0, revenue: 0 }, 
             statusDistribution: [],
             salesHistory: []
@@ -129,7 +131,7 @@ export const DashboardPage: React.FC = () => {
     };
 
     fetchStats();
-  }, [user]); // Agregar user como dependencia
+  }, [user, selectedCuenta]); // Agregar user y selectedCuenta como dependencia
 
 
 
