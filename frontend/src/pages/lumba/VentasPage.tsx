@@ -5,7 +5,7 @@ import { OrderDetailModal } from "../../components/lumba/OrderDetailModal";
 import { PageLayout } from "../../components/PageLayout";
 import { SearchAndFilters } from "../../components/SearchAndFilters";
 import { useSearchParams } from "react-router-dom";
-import { faFile, faBan, faFileInvoiceDollar, faUsersGear, faEye, faTable, faGrip } from "@fortawesome/free-solid-svg-icons";
+import { faFile, faFileInvoiceDollar, faUsersGear, faEye, faTable, faGrip } from "@fortawesome/free-solid-svg-icons";
 import { Checkbox } from "../../components/Checkbox";
 import { Button } from "../../components/Button";
 import { sweetAlert } from "../../utils/sweetAlert";
@@ -148,9 +148,7 @@ export const VentasPage: React.FC = () => {
       case "FACTURAR_MANUAL":
         updateOrderSalesStatus(orderId, "facturada", "manual");
         break;
-      case "CANCELAR":
-        updateOrderSalesStatus(orderId, "venta_cancelada");
-        break;
+
       case "GENERAR_NC":
         updateOrderSalesStatus(orderId, "nota_credito");
         break;
@@ -175,11 +173,7 @@ export const VentasPage: React.FC = () => {
         title = count > 1 ? "Facturar Pedidos" : "Facturar Pedido";
         confirmText = "Facturar";
         break;
-      case "CANCELAR":
-        title = count > 1 ? "Cancelar Ventas" : "Cancelar Venta";
-        confirmText = "Cancelar";
-        icon = "warning";
-        break;
+
       case "GENERAR_NC":
         title = "Generar Nota de Crédito";
         confirmText = "Generar NC";
@@ -229,13 +223,7 @@ export const VentasPage: React.FC = () => {
     }
 
     // 3. Destructive/Cancel - Right (Last)
-    if (order.salesStatus === "pendiente_facturacion") {
-      buttons.push(
-        <Button key="cancel" onClick={() => handleAction(order, "CANCELAR")} variant="danger" size="sm" className={`flex items-center gap-2`} title={!isCard ? "Cancelar" : ""}>
-          <FontAwesomeIcon icon={faBan} />
-        </Button>,
-      );
-    }
+    // Cancel action removed per user request
 
     return (
       <div className={`flex gap-2 flex-nowrap w-full items-center ${isCard ? "justify-end" : "justify-center"}`} onClick={(e) => e.stopPropagation()}>
@@ -307,9 +295,7 @@ export const VentasPage: React.FC = () => {
         <li>
           <strong>NC:</strong> Genera una Nota de Crédito para la orden facturada.
         </li>
-        <li>
-          <strong>Cancelar:</strong> Cancela la orden de venta (Solo si no está facturada).
-        </li>
+
         <li>
           <strong>Ver detalle:</strong> Muestra toda la información detallada de la orden.
         </li>
@@ -377,10 +363,6 @@ export const VentasPage: React.FC = () => {
                   <Button onClick={() => handleAction(selectedOrderIds, "FACTURAR_MANUAL")} variant="blue" size="sm" disabled={selectedOrderIds.length === 0} className="flex items-center gap-2">
                     <FontAwesomeIcon icon={faFile} />
                     Facturar
-                  </Button>
-                  <Button onClick={() => handleAction(selectedOrderIds, "CANCELAR")} variant="danger" size="sm" disabled={selectedOrderIds.length === 0} className="flex items-center gap-2">
-                    <FontAwesomeIcon icon={faBan} />
-                    Cancelar
                   </Button>
                 </>
               )}

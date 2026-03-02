@@ -15,6 +15,13 @@ const logDebug = (msg: string) => {
     } catch (e) { console.error("Log failed", e); }
 };
 
+// Transforma una fecha en formato UTC a un string ISO local para Argentina (-03:00) 
+function formatToArgISO(date: Date): string {
+    const tzOffset = -3; 
+    const localDate = new Date(date.getTime() + tzOffset * 3600 * 1000);
+    return localDate.toISOString().replace('Z', '-03:00');
+}
+
 export interface ItemVenta {
   producto_titulo: string;
   precio_producto: number;
@@ -32,7 +39,8 @@ export interface VentaDatos {
 }
 
 export interface ClienteDatos {
-  id_lumba: string | number;
+  nombre_carpeta: string;
+  id_lumba: string;
   codigo_cliente_rotsis: string;
   tipo_comprobante: string;
   codigo_vendedor: string;
@@ -77,7 +85,9 @@ export class ComprobanteGeneratorService {
     
     // File format as requested
     const filename = `pedidos_${venta.id}_${formatedDate}.csv`;
-    const comprobantesDir = path.join(basePath, String(cliente.id_lumba), 'comprobantes');
+    const clienteDir = path.join(basePath, String(cliente.nombre_carpeta));
+    const comprobantesDir = path.join(clienteDir, 'comprobantes');
+    const procesadosDir = path.join(clienteDir, 'procesados');
     const filePath = path.join(comprobantesDir, filename);
 
     const titulos = [
@@ -94,10 +104,9 @@ export class ComprobanteGeneratorService {
     
     let csvContent = serializeRow(titulos) + '\r\n';
 
-    // Parse 'YYYY-MM-DDTHH:MM:SS...' to 'YYYY-MM-DD' if there's a space/T depending on format. 
-    // The previous PHP split by space, but TS ISO dates have 'T'. We'll handle both.
-    const dateSplitChar = venta.fecha_creacion.includes('T') ? 'T' : ' ';
-    const fechaManejo = venta.fecha_creacion.split(dateSplitChar)[0]; 
+    // The previous PHP output raw ISO strings: 2026-02-26T18:49:11.000-04:00
+    // We pass the Date ISO string through directly.
+    const fechaManejo = venta.fecha_creacion;
     const docFormatted = this.formatDocument(venta.tipo_doc, venta.dni);
 
     for (const item of venta.items) {
@@ -144,7 +153,10 @@ export class ComprobanteGeneratorService {
       csvContent += serializeRow(row) + '\r\n';
     }
 
+    // Ensure both directories exist
     await fsPromises.mkdir(comprobantesDir, { recursive: true });
+    await fsPromises.mkdir(procesadosDir, { recursive: true });
+    
     await fsPromises.writeFile(filePath, csvContent, { encoding: 'utf8' });
 
     return filePath;
@@ -183,6 +195,7 @@ export const comprobanteGeneratorService = new ComprobanteGeneratorService();
 import { Order, IOrder } from '../models/Order.js';
 import { Tenant, ITenant } from '../models/Tenant.js';
 import { Cuenta } from '../models/Cuenta.js';
+import { Counter } from '../models/Counter.js';
 
 /**
  * Función principal para despachar la facturación manual o automática.
@@ -216,12 +229,27 @@ export async function processInvoice(orderId: string | mongoose.Types.ObjectId) 
       logDebug(`No clientId on order, skipping Cuenta check`);
     }
 
+    // --- INCREMENTAL ID GENERATION ---
+    let invoiceNumber = order.invoiceNumber;
+    if (!invoiceNumber) {
+      logDebug(`Order ${orderId} has no invoiceNumber, generating new one...`);
+      const counterId = `invoice_tenant_${tenant._id.toString()}`;
+      const counter = await Counter.findByIdAndUpdate(
+        counterId,
+        { $inc: { sequenceValue: 1 } },
+        { new: true, upsert: true }
+      );
+      invoiceNumber = counter.sequenceValue;
+      order.invoiceNumber = invoiceNumber;
+      logDebug(`Generated new invoiceNumber: ${invoiceNumber}`);
+    }
+
     const ventaPayload: VentaDatos = {
-      id: order._id.toString(),
+      id: invoiceNumber.toString(),
       venta_id_ml: order.meliId,
-      fecha_creacion: order.dateCreated ? order.dateCreated.toISOString() : new Date().toISOString(),
-      tipo_doc: 'DNI', 
-      dni: order.buyer?.id ? order.buyer.id.toString() : '0', 
+      fecha_creacion: order.dateCreated ? formatToArgISO(order.dateCreated) : formatToArgISO(new Date()),
+      tipo_doc: order.buyer?.billingInfo?.docType || 'DNI', 
+      dni: order.buyer?.billingInfo?.docNumber || (order.buyer?.id ? order.buyer.id.toString() : '0'), 
       items: (order.items || []).map(item => ({
         producto_titulo: item.title || 'Unknown',
         precio_producto: item.unitPrice || 0,
@@ -230,13 +258,26 @@ export async function processInvoice(orderId: string | mongoose.Types.ObjectId) 
       }))
     };
 
+    // Generar el nombre de carpeta "limpio" (Slug)
+    // El usuario solicito que las carpetas tengan su ID de Cliente (Cuenta)
+    // Si la orden no tiene un cliente (Cuenta) asociado, crearemos una carpeta genérica o usaremos el tenantId de respaldo
+    let clientIdFolder = "Sin-Cliente-Asignado";
+    if (cuenta && cuenta._id) {
+        clientIdFolder = cuenta._id.toString();
+    } else if (order.clientId) {
+        clientIdFolder = order.clientId.toString();
+    }
+
+    const cleanFolderName = clientIdFolder;
+
     const clientePayload: ClienteDatos = {
+      nombre_carpeta: cleanFolderName,
       id_lumba: order.clientId ? order.clientId.toString() : tenant._id.toString(),
-      codigo_cliente_rotsis: '698',
-      tipo_comprobante: '1',
-      codigo_vendedor: 'ML',
-      codigo_sucursal: '0',
-      codigo_lista_precios: '1'
+      codigo_cliente_rotsis: clientIdFolder,
+      tipo_comprobante: cuenta?.rotsisConfig?.tipo_comprobante || '1',
+      codigo_vendedor: cuenta?.rotsisConfig?.codigo_vendedor || 'ML',
+      codigo_sucursal: cuenta?.rotsisConfig?.codigo_sucursal || '0',
+      codigo_lista_precios: cuenta?.rotsisConfig?.codigo_lista_precios || '1'
     };
 
     const storePath = path.resolve(__dirname, '../../archivos_test');

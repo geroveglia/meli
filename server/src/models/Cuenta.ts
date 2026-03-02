@@ -27,6 +27,12 @@ export interface ICuenta extends Document {
     nickname: string;
     sellerId: number;
   };
+  rotsisConfig?: {
+    tipo_comprobante: string;
+    codigo_vendedor: string;
+    codigo_sucursal: string;
+    codigo_lista_precios: string;
+  };
 }
 
 const cuentaSchema = new Schema<ICuenta>(
@@ -92,6 +98,12 @@ const cuentaSchema = new Schema<ICuenta>(
     ],
     ownerUserId: { type: Schema.Types.ObjectId, ref: "User" },
     clienteId: { type: Schema.Types.ObjectId, ref: "Client" },
+    rotsisConfig: {
+      tipo_comprobante: { type: String, default: "1" },
+      codigo_vendedor: { type: String, default: "ML" },
+      codigo_sucursal: { type: String, default: "0" },
+      codigo_lista_precios: { type: String, default: "1" },
+    }
   },
   { timestamps: true, collection: "cuentas" }
 );

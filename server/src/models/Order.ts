@@ -14,6 +14,10 @@ export interface IOrder extends Document {
     nickname: string;
     firstName?: string;
     lastName?: string;
+    billingInfo?: {
+      docType: string;
+      docNumber: string;
+    };
   };
 
   items: {
@@ -54,6 +58,7 @@ export interface IOrder extends Document {
   tagStatus?: "pendientes" | "impresas" | "error";
   isPackaged: boolean;
   invoiceId?: string;
+  invoiceNumber?: number;
 }
 
 const orderSchema = new Schema<IOrder>(
@@ -71,6 +76,10 @@ const orderSchema = new Schema<IOrder>(
       nickname: { type: String },
       firstName: { type: String },
       lastName: { type: String },
+      billingInfo: {
+        docType: { type: String },
+        docNumber: { type: String }
+      }
     },
 
     items: [
@@ -132,6 +141,7 @@ const orderSchema = new Schema<IOrder>(
     },
     isPackaged: { type: Boolean, default: false },
     invoiceId: { type: String },
+    invoiceNumber: { type: Number },
   },
   { timestamps: true }
 );

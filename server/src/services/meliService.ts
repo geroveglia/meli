@@ -463,6 +463,10 @@ export const processOrder = async (orderData: any, tenantId: string, clientId?: 
                 nickname: orderData.buyer.nickname,
                 firstName: orderData.buyer.first_name,
                 lastName: orderData.buyer.last_name,
+                billingInfo: orderData.buyer.billing_info ? {
+                    docType: orderData.buyer.billing_info.doc_type,
+                    docNumber: orderData.buyer.billing_info.doc_number
+                } : undefined
             },
 
             items: orderData.order_items.map((item: any) => ({
