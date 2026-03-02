@@ -13,7 +13,7 @@ const run = async () => {
         await mongoose.connect(uri);
         console.log('Connected to DB');
 
-        const orderId = "2000015136780804";
+        const orderId = "2000015360333956";
         const order = await Order.findOne({ meliId: orderId });
         
         if (!order) throw new Error("Order not found");

@@ -1,6 +1,15 @@
 import { Router, Response } from "express";
 import { Order } from "../models/Order.js";
 import { authenticateToken, AuthenticatedRequest } from "../middleware/auth.js";
+import { processInvoice } from "../services/billingService.js";
+import fs from "fs";
+
+const LOG_FILE = "C:\\wamp64\\www\\meli\\server\\server_debug.log";
+const logDebug = (msg: string) => {
+    try {
+        fs.appendFileSync(LOG_FILE, `[OrdersRoute] [${new Date().toISOString()}] ${msg}\n`);
+    } catch (e) { }
+};
 
 const router = Router();
 
@@ -185,6 +194,8 @@ router.patch("/:id", authenticateToken, async (req: AuthenticatedRequest, res: R
         const { id } = req.params;
         const tenantId = req.tenantId; // Ensure tenant isolation if applicable
         const updates = req.body;
+        
+        logDebug(`PATCH /api/v1/orders/${id} called with body: ${JSON.stringify(updates)}`);
 
         // Validation: Only allow specific fields to be updated manually
         const allowedUpdates = ["logisticsStatus", "packaged", "tagStatus", "salesStatus", "billingType"];
@@ -204,8 +215,11 @@ router.patch("/:id", authenticateToken, async (req: AuthenticatedRequest, res: R
         }
 
         if (Object.keys(actualUpdates).length === 0) {
+            logDebug(`No valid fields. actualUpdates: ${JSON.stringify(actualUpdates)}`);
             return res.status(400).json({ error: "No valid fields to update" });
         }
+
+        logDebug(`actualUpdates applied: ${JSON.stringify(actualUpdates)}`);
 
         // Add lastUpdated timestamp
         actualUpdates.lastUpdated = new Date();
@@ -224,9 +238,27 @@ router.patch("/:id", authenticateToken, async (req: AuthenticatedRequest, res: R
         );
 
         if (!order) {
+            logDebug(`Order ${id} not found in DB during PATCH.`);
             return res.status(404).json({ error: "Order not found" });
         }
 
+        // --- MANUAL INVOICE INTEGRATION ---
+        logDebug(`Evaluating manual invoice integration for order ${id}. salesStatus in payload = ${actualUpdates.salesStatus}`);
+        if (actualUpdates.salesStatus === 'facturada') {
+            try {
+                // Generar y almacenar el CSV
+                logDebug(`Triggering processInvoice for order ${order.id}`);
+                await processInvoice(order.id);
+                logDebug(`processInvoice completed for order ${order.id}`);
+            } catch (err: any) {
+                logDebug(`Failed processInvoice error caught in route: ${err.message}`);
+                console.error("Failed to process manual invoice CSV", err);
+                // Return 207 or 500? Best to return 200 with error info since the DB order was technically updated
+                return res.status(200).json({ ...order.toObject(), _invoiceError: err.message });
+            }
+        }
+
+        logDebug(`PATCH complete for order ${id}. Sending response.`);
         res.json(order);
 
     } catch (error) {

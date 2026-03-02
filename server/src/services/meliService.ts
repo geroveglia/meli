@@ -188,6 +188,7 @@ export const refreshAccessToken = async (refreshToken: string, appId?: string, c
 };
 
 import { Order } from "../models/Order.js";
+import { processInvoice } from "./billingService.js";
 
 // Helper to fetch any resource from MELI
 const fetchMeliResource = async (resource: string, accessToken: string) => {
@@ -419,6 +420,10 @@ export const processOrder = async (orderData: any, tenantId: string, clientId?: 
     try {
         logDebug(`Processing Order: ${orderData.id}`);
 
+        const tenant = await Tenant.findById(tenantId);
+        const autoBilling = tenant?.billing?.settings?.autoBilling;
+        const triggerStage = tenant?.billing?.settings?.triggerStage;
+
         // Fetch Shipping info if available
         let shippingData = null;
         if (orderData.shipping && orderData.shipping.id && accessToken) {
@@ -436,9 +441,11 @@ export const processOrder = async (orderData: any, tenantId: string, clientId?: 
         if (shippingData) {
             if (shippingData.status === 'delivered') computedLogisticsStatus = 'entregado';
             else if (shippingData.status === 'shipped') computedLogisticsStatus = 'despachado_meli';
-        } else {
-            // If no shipping (e.g. pickup), check if fulfilled
-            if (orderData.fulfilled) computedLogisticsStatus = 'entregado';
+        }
+        
+        // Always check fulfilled flag (pickup orders may have a shipping ID but rely on fulfilled for delivery)
+        if (orderData.fulfilled && computedLogisticsStatus !== 'entregado') {
+            computedLogisticsStatus = 'entregado';
         }
 
         // Map to our Order Model
@@ -522,6 +529,32 @@ export const processOrder = async (orderData: any, tenantId: string, clientId?: 
             orderUpdate.logisticsStatus = 'cancelado_vuelto_stock'; 
         }
 
+        // --- AUTOMATIC BILLING EVALUATION ---
+        let shouldAutoInvoice = false;
+        
+        // Prevent auto-invoicing if already cancelled
+        if (autoBilling && orderUpdate.salesStatus !== 'venta_cancelada') {
+            const isPaid = orderUpdate.payment.status === 'paid' || orderUpdate.payment.status === 'approved';
+            const isShipped = orderUpdate.logisticsStatus === 'despachado_meli' || orderUpdate.logisticsStatus === 'entregado' || (orderUpdate.shipping && orderUpdate.shipping.status === 'shipped');
+            const isDelivered = orderUpdate.logisticsStatus === 'entregado' || (orderUpdate.shipping && orderUpdate.shipping.status === 'delivered');
+
+            switch(triggerStage) {
+                case "order_created": 
+                    // Any valid order
+                    shouldAutoInvoice = true; 
+                    break;
+                case "order_paid":
+                    if(isPaid) shouldAutoInvoice = true;
+                    break;
+                case "order_shipped":
+                    if(isShipped || isDelivered) shouldAutoInvoice = true;
+                    break;
+                case "order_delivered":
+                    if(isDelivered) shouldAutoInvoice = true;
+                    break;
+            }
+        }
+
         // Upsert Order
         const existingOrder = await Order.findOne({ meliId: orderUpdate.meliId });
         
@@ -556,12 +589,30 @@ export const processOrder = async (orderData: any, tenantId: string, clientId?: 
                 existingOrder.logisticsStatus = orderUpdate.logisticsStatus;
             }
 
+            // Only auto-invoice if it was actually pending.
+            if (shouldAutoInvoice && existingOrder.salesStatus === 'pendiente_facturacion') {
+                 existingOrder.salesStatus = 'facturada';
+            }
+
             await existingOrder.save();
             console.log(`Order ${orderUpdate.meliId} updated.`);
+            
+            if (shouldAutoInvoice && existingOrder.salesStatus === 'facturada') {
+                 // Trigger background invoice creation synchronously to avoid leaking unhandled promises
+                 try { await processInvoice(existingOrder._id); } catch(e) { console.error("Auto-Invoice Failed", e); }
+            }
         } else {
             // New Order
-            await Order.create(orderUpdate);
+            if (shouldAutoInvoice) {
+                 orderUpdate.salesStatus = 'facturada';
+            }
+
+            const newOrder = await Order.create(orderUpdate);
             console.log(`Order ${orderUpdate.meliId} created.`);
+            
+            if (shouldAutoInvoice) {
+                 try { await processInvoice(newOrder._id); } catch(e) { console.error("Auto-Invoice Failed", e); }
+            }
         }
     } catch (e) {
         console.error(`Error processing order ${orderData.id}:`, e);
