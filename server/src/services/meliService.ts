@@ -188,7 +188,7 @@ export const refreshAccessToken = async (refreshToken: string, appId?: string, c
 };
 
 import { Order } from "../models/Order.js";
-import { processInvoice } from "./billingService.js";
+import { processInvoice, processCreditNote } from "./billingService.js";
 
 // Helper to fetch any resource from MELI
 const fetchMeliResource = async (resource: string, accessToken: string) => {
@@ -583,6 +583,15 @@ export const processOrder = async (orderData: any, tenantId: string, clientId?: 
             }
             
             // Update internal statuses if changed in orderUpdate
+            // Determine if we need to auto-generate a credit note
+            let shouldAutoCreditNote = false;
+            
+            if (existingOrder.salesStatus === 'facturada' && orderUpdate.salesStatus === 'venta_cancelada') {
+                 // Convert cancellation of billed order into credit note
+                 orderUpdate.salesStatus = 'nota_credito';
+                 shouldAutoCreditNote = true;
+            }
+
             existingOrder.salesStatus = orderUpdate.salesStatus;
             
             // Prevent regression: If we are 'listo_para_entregar' internally, and MeLi says 'pendiente_preparacion' (ready_to_ship), keep our internal state.
@@ -604,6 +613,10 @@ export const processOrder = async (orderData: any, tenantId: string, clientId?: 
             if (shouldAutoInvoice && existingOrder.salesStatus === 'facturada') {
                  // Trigger background invoice creation synchronously to avoid leaking unhandled promises
                  try { await processInvoice(existingOrder._id); } catch(e) { console.error("Auto-Invoice Failed", e); }
+            }
+
+            if (shouldAutoCreditNote && existingOrder.salesStatus === 'nota_credito') {
+                 try { await processCreditNote(existingOrder._id); } catch(e) { console.error("Auto-Credit Note Failed", e); }
             }
         } else {
             // New Order

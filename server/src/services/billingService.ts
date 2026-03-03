@@ -76,7 +76,8 @@ export class ComprobanteGeneratorService {
   async generateComprobanteCsv(
     basePath: string,
     venta: VentaDatos,
-    cliente: ClienteDatos
+    cliente: ClienteDatos,
+    isCreditNote: boolean = false
   ): Promise<string> {
     
     const now = new Date();
@@ -86,7 +87,7 @@ export class ComprobanteGeneratorService {
     // File format as requested
     const filename = `pedidos_${venta.id}_${formatedDate}.csv`;
     const clienteDir = path.join(basePath, String(cliente.nombre_carpeta));
-    const comprobantesDir = path.join(clienteDir, 'comprobantes');
+    const comprobantesDir = path.join(clienteDir, isCreditNote ? 'notas de credito' : 'comprobantes');
     const procesadosDir = path.join(clienteDir, 'procesados');
     const filePath = path.join(comprobantesDir, filename);
 
@@ -113,9 +114,13 @@ export class ComprobanteGeneratorService {
       const titleCleaned = this.cleanProductTitle(item.producto_titulo);
       const codigo_rotsis = item.aux1 && item.aux1.trim() !== "" ? item.aux1 : 'SIN-CODIGO';
 
-      const precioFormatted = Number(item.precio_producto).toFixed(2);
+      const sign = isCreditNote ? -1 : 1;
+      const precioUnitario = item.precio_producto * sign;
+      const totalItem = (item.precio_producto * item.cantidad) * sign;
+
+      const precioFormatted = Number(precioUnitario).toFixed(2);
       const cantidadFormatted = Number(item.cantidad).toFixed(2);
-      const total = item.precio_producto * item.cantidad; 
+      const totalFormatted = Number(totalItem).toFixed(2);
       
       const row = [
         venta.id, // Id interno venta
@@ -131,7 +136,7 @@ export class ComprobanteGeneratorService {
         "0.00",
         "0.00",
         "0.00",
-        total.toString(),
+        totalFormatted,
         "0.00",
         "0.00",
         codigo_rotsis,
@@ -298,6 +303,111 @@ export async function processInvoice(orderId: string | mongoose.Types.ObjectId) 
   } catch (err: any) {
     logDebug(`Failed to process invoice for order ${orderId}: ${err.message}`);
     console.error(`[Invoice Generator] Failed to process invoice for order ${orderId}:`, err);
+    throw err;
+  }
+}
+
+/**
+ * Función principal para despachar la nota de credito automática.
+ * Lee de la base de datos la Orden y el Tenant/Cuenta para generar el CSV local.
+ */
+export async function processCreditNote(orderId: string | mongoose.Types.ObjectId) {
+  try {
+    logDebug(`Starting credit note process for order ID: ${orderId}`);
+    
+    const order = await Order.findById(orderId);
+    if (!order) {
+      logDebug(`Order ${orderId} not found in DB`);
+      throw new Error(`Order ${orderId} not found`);
+    }
+
+    logDebug(`Order found: ${order.meliId}`);
+
+    const tenant = await Tenant.findById(order.tenantId);
+    if (!tenant) {
+      logDebug(`Tenant ${order.tenantId} not found`);
+      throw new Error(`Tenant for order ${orderId} not found`);
+    }
+
+    logDebug(`Tenant found: ${tenant.name}`);
+
+    let cuenta = null;
+    if (order.clientId) {
+      cuenta = await Cuenta.findById(order.clientId);
+      logDebug(`Cuenta found: ${cuenta?.name}`);
+    } else {
+      logDebug(`No clientId on order, skipping Cuenta check`);
+    }
+
+    // --- INCREMENTAL ID GENERATION ---
+    let invoiceNumber = order.invoiceNumber;
+    if (!invoiceNumber) {
+      logDebug(`Order ${orderId} has no invoiceNumber, generating new one for credit note...`);
+      const counterId = `invoice_tenant_${tenant._id.toString()}`;
+      const counter = await Counter.findByIdAndUpdate(
+        counterId,
+        { $inc: { sequenceValue: 1 } },
+        { new: true, upsert: true }
+      );
+      invoiceNumber = counter.sequenceValue;
+      order.invoiceNumber = invoiceNumber;
+      logDebug(`Generated new invoiceNumber: ${invoiceNumber}`);
+    }
+
+    const ventaPayload: VentaDatos = {
+      id: invoiceNumber.toString(),
+      venta_id_ml: order.meliId,
+      fecha_creacion: order.dateCreated ? formatToArgISO(order.dateCreated) : formatToArgISO(new Date()),
+      tipo_doc: order.buyer?.billingInfo?.docType || 'DNI', 
+      dni: order.buyer?.billingInfo?.docNumber || (order.buyer?.id ? order.buyer.id.toString() : '0'), 
+      items: (order.items || []).map(item => ({
+        producto_titulo: item.title || 'Unknown',
+        precio_producto: item.unitPrice || 0,
+        cantidad: item.quantity || 1,
+        aux1: item.id
+      }))
+    };
+
+    // Generar el nombre de carpeta "limpio" (Slug)
+    let clientIdFolder = "Sin-Cliente-Asignado";
+    if (cuenta && cuenta._id) {
+        clientIdFolder = cuenta._id.toString();
+    } else if (order.clientId) {
+        clientIdFolder = order.clientId.toString();
+    }
+
+    const cleanFolderName = clientIdFolder;
+
+    const clientePayload: ClienteDatos = {
+      nombre_carpeta: cleanFolderName,
+      id_lumba: order.clientId ? order.clientId.toString() : tenant._id.toString(),
+      codigo_cliente_rotsis: clientIdFolder,
+      tipo_comprobante: cuenta?.rotsisConfig?.tipo_comprobante || '1',
+      codigo_vendedor: cuenta?.rotsisConfig?.codigo_vendedor || 'ML',
+      codigo_sucursal: cuenta?.rotsisConfig?.codigo_sucursal || '0',
+      codigo_lista_precios: cuenta?.rotsisConfig?.codigo_lista_precios || '1'
+    };
+
+    const storePath = path.resolve(__dirname, '../../archivos_test');
+    logDebug(`Saving CSV to base path: ${storePath}`);
+    
+    const csvPath = await comprobanteGeneratorService.generateComprobanteCsv(
+      storePath, 
+      ventaPayload, 
+      clientePayload,
+      true // isCreditNote
+    );
+    
+    logDebug(`✅ Created credit note CSV for order ${order.meliId} at ${csvPath}`);
+
+    // Update state to nota_credito explicitly in DB
+    order.salesStatus = 'nota_credito';
+    await order.save();
+
+    return csvPath;
+  } catch (err: any) {
+    logDebug(`Failed to process credit note for order ${orderId}: ${err.message}`);
+    console.error(`[Invoice Generator] Failed to process credit note for order ${orderId}:`, err);
     throw err;
   }
 }
