@@ -75,13 +75,15 @@ export const DashboardPage: React.FC = () => {
   const { user } = useAuthStore(); // Obtener usuario para chequear rol
   const { selectedCuenta } = useCuentaContextStore();
 
-  const [stats, setStats] = useState<DashboardStats>({
+  const INITIAL_DASHBOARD_STATS: DashboardStats = {
     meliOrders: 0,
     meliRevenue: 0,
     meliPending: 0,
     salesHistory: [],
     statusDistribution: [],
-  });
+  };
+
+  const [stats, setStats] = useState<DashboardStats>(INITIAL_DASHBOARD_STATS);
 
   const [loading, setLoading] = useState(true);
 
@@ -90,27 +92,21 @@ export const DashboardPage: React.FC = () => {
 
   const [isInfoOpen, setIsInfoOpen] = useState(false);
 
+  const selectedClientId = selectedCuenta?._id?.trim() || undefined;
+
   useEffect(() => {
+    let isActive = true;
+
     const fetchStats = async () => {
       try {
         setLoading(true);
-        
-        const params = new URLSearchParams();
-        if (selectedCuenta?._id) {
-          params.append("clientId", selectedCuenta._id);
-        }
 
-        const promises: Promise<any>[] = [
-          // Fetch MeLi Stats
-          axios.get(`/meli/dashboard-stats?${params.toString()}`).catch(() => ({ data: { 
-            orders: { total: 0, revenue: 0 }, 
-            statusDistribution: [],
-            salesHistory: []
-          }})),
-        ];
+        const meliStatsRes = await axios.get("/meli/dashboard-stats", {
+          params: selectedClientId ? { clientId: selectedClientId } : undefined,
+        });
 
-        const [meliStatsRes] = await Promise.all(promises);
-        
+        if (!isActive) return;
+
         const meliData = meliStatsRes.data || {};
         const meliOrders = meliData.orders?.total || 0;
         const meliRevenue = meliData.orders?.revenue || 0;
@@ -124,18 +120,27 @@ export const DashboardPage: React.FC = () => {
           statusDistribution: meliData.statusDistribution || [],
         });
       } catch (error) {
-        console.error("Error fetching dashboard stats:", error);
+        if (!isActive) return;
+
+        const err = error as { code?: string };
+        if (err?.code !== "ERR_CANCELED") {
+          console.error("Error fetching dashboard stats:", error);
+        }
+
+        setStats(INITIAL_DASHBOARD_STATS);
       } finally {
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
       }
     };
 
     fetchStats();
-  }, [user, selectedCuenta]); // Agregar user y selectedCuenta como dependencia
 
-
-
-
+    return () => {
+      isActive = false;
+    };
+  }, [user?.tenantId, selectedClientId]);
 
   const formatStatus = (status: string | undefined) => {
     if (!status) return "";
@@ -324,3 +329,4 @@ export const DashboardPage: React.FC = () => {
     </PageLayout>
   );
 };
+

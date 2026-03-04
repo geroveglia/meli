@@ -374,12 +374,56 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     }
 
     try {
-        const matchStage: any = { 
-            tenantId: new mongoose.Types.ObjectId(tenantId) 
+        const emptyStatsResponse = {
+            orders: {
+                total: 0,
+                revenue: 0,
+                average: 0
+            },
+            statusDistribution: [],
+            salesHistory: []
         };
-        
-        if (clientId && typeof clientId === 'string' && mongoose.Types.ObjectId.isValid(clientId)) {
-            matchStage.clientId = new mongoose.Types.ObjectId(clientId);
+
+        const tenantObjectId = new mongoose.Types.ObjectId(tenantId);
+        const matchStage: any = { 
+            tenantId: tenantObjectId 
+        };
+
+        const rawClientId = Array.isArray(clientId) ? clientId[0] : clientId;
+
+        // Strict behavior: if clientId is present but invalid, return empty stats instead of global data.
+        if (rawClientId !== undefined) {
+            if (typeof rawClientId !== "string") {
+                return res.json(emptyStatsResponse);
+            }
+
+            const normalizedClientId = rawClientId.trim();
+            if (!normalizedClientId || !mongoose.Types.ObjectId.isValid(normalizedClientId)) {
+                return res.json(emptyStatsResponse);
+            }
+
+            const clientObjectId = new mongoose.Types.ObjectId(normalizedClientId);
+            const cuenta = await Cuenta.findOne(
+                { _id: clientObjectId, tenantId: tenantObjectId },
+                { mercadolibre: 1 }
+            ).lean();
+
+            // If selected client does not exist in this tenant, return empty stats.
+            if (!cuenta) {
+                return res.json(emptyStatsResponse);
+            }
+
+            const sellerId = cuenta.mercadolibre?.sellerId;
+
+            // Match same semantics as /orders: allow legacy orders linked by sellerId.
+            if (typeof sellerId === "number") {
+                matchStage.$or = [
+                    { clientId: clientObjectId },
+                    { sellerId }
+                ];
+            } else {
+                matchStage.clientId = clientObjectId;
+            }
         }
 
         // Aggregation for Total Orders and Revenue
@@ -460,5 +504,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         res.status(500).json({ error: "Failed to fetch stats" });
     }
 };
+
+
 
 
