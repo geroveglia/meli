@@ -13,7 +13,7 @@ const run = async () => {
         await mongoose.connect(uri);
         console.log('Connected to DB');
 
-        const orderId = "2000015109753534";
+        const orderId = "2000015397632216";
         const order = await Order.findOne({ meliId: orderId });
         
         if (!order) throw new Error("Order not found");
@@ -39,6 +39,8 @@ const run = async () => {
              console.log(`Shipping ID: ${updatedOrder.shipping?.id}`);
              console.log(`Sales Status: ${updatedOrder.salesStatus}`);
              console.log(`Logistics Status: ${updatedOrder.logisticsStatus}`);
+             console.log(`Shipping Mode: ${updatedOrder.shippingMode}`);
+             console.log(`Tags: ${updatedOrder.tags?.join(', ')}`);
         }
 
     } catch (e) {

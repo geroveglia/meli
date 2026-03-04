@@ -198,7 +198,7 @@ router.patch("/:id", authenticateToken, async (req: AuthenticatedRequest, res: R
         logDebug(`PATCH /api/v1/orders/${id} called with body: ${JSON.stringify(updates)}`);
 
         // Validation: Only allow specific fields to be updated manually
-        const allowedUpdates = ["logisticsStatus", "packaged", "tagStatus", "salesStatus", "billingType"];
+        const allowedUpdates = ["logisticsStatus", "packaged", "tagStatus", "salesStatus", "billingType", "pendingDestination"];
         const actualUpdates: any = {};
 
         // Filter updates

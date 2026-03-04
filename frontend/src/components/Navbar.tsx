@@ -41,9 +41,8 @@ export const MobileNavbar: React.FC = () => {
   const notificationMap: Record<string, { label: string; path: string }> = {
     // Logistica
     PENDIENTE_PREPARACION: { label: "Nuevos pedidos en preparación", path: "/logistica?status=PENDIENTE_PREPARACION" },
-    LISTO_PARA_ENTREGAR: { label: "Pedidos listos para entregar", path: "/logistica?status=LISTO_PARA_ENTREGAR" },
-    DESPACHADO_MELI: { label: "Pedidos despachados", path: "/logistica?status=DESPACHADO_MELI" },
-    RETIRO_EN_LOCAL: { label: "Retiros en local", path: "/logistica?status=RETIRO_EN_LOCAL" },
+    ACUERDO_VENDEDOR: { label: "Acuerdo vendedor", path: "/logistica?status=ACUERDO_VENDEDOR" },
+    ENVIO_VENDEDOR: { label: "Despachado vendedor", path: "/logistica?status=ENVIO_VENDEDOR" },
     ENTREGADOS: { label: "Pedidos entregados", path: "/logistica?status=ENTREGADOS" },
     DESEMPAQUETAR: { label: "Pedidos para desempaquetar", path: "/logistica?status=DESEMPAQUETAR" },
     DEVOLUCION: { label: "Devoluciones", path: "/logistica?status=DEVOLUCION" },
@@ -528,9 +527,11 @@ export const MobileNavbar: React.FC = () => {
                       >
                         <div className="py-1">
                           {[
+                            { label: "Acuerdo Vendedor", status: "ACUERDO_VENDEDOR", count: getCount("logistics", "acuerdo_vendedor") },
                             { label: "En preparación", status: "PENDIENTE_PREPARACION", count: getCount("logistics", "pendiente_preparacion") },
-                            { label: "Listo para entregar ML", status: "LISTO_PARA_ENTREGAR", count: getCount("logistics", "listo_para_entregar") },
+                            { label: "Listo para entregar", status: "LISTO_PARA_ENTREGAR", count: getCount("logistics", "listo_para_entregar") },
                             { label: "Despachado ML", status: "DESPACHADO_MELI", count: getCount("logistics", "despachado_meli") },
+                            { label: "Despachado Vendedor", status: "ENVIO_VENDEDOR", count: getCount("logistics", "envio_vendedor") },
                             { label: "Retiro en Local", status: "RETIRO_EN_LOCAL", count: getCount("logistics", "retiro_local") },
                             { label: "Entregados", status: "ENTREGADOS", count: getCount("logistics", "entregado") },
                           ].map((sub) => {

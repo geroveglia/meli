@@ -438,14 +438,32 @@ export const processOrder = async (orderData: any, tenantId: string, clientId?: 
         // Map to our Order Model
         // Logic for internal status mappings
         let computedLogisticsStatus = 'pendiente_preparacion';
+        console.log("Fetched Shipping Data from ML:", JSON.stringify(shippingData, null, 2));
+        const shippingMode = shippingData?.mode || orderData.shipping?.shipping_mode || null;
         if (shippingData) {
-            if (shippingData.status === 'delivered') computedLogisticsStatus = 'entregado';
-            else if (shippingData.status === 'shipped') computedLogisticsStatus = 'despachado_meli';
+            if (shippingData.status === 'delivered') {
+                computedLogisticsStatus = 'entregado';
+            } else if (shippingData.status === 'shipped') {
+                if (shippingMode === 'custom' || shippingMode === 'not_specified') {
+                    computedLogisticsStatus = 'envio_vendedor';
+                } else {
+                    computedLogisticsStatus = 'despachado_meli';
+                }
+            }
         }
         
         // Always check fulfilled flag (pickup orders may have a shipping ID but rely on fulfilled for delivery)
         if (orderData.fulfilled && computedLogisticsStatus !== 'entregado') {
             computedLogisticsStatus = 'entregado';
+        }
+
+        // Route no_shipping orders to acuerdo_vendedor
+        const orderTags = orderData.tags || [];
+        if (computedLogisticsStatus === 'pendiente_preparacion') {
+            if (orderTags.includes('no_shipping') || shippingMode === 'not_specified') {
+                computedLogisticsStatus = 'acuerdo_vendedor'; // Acuerdo con el vendedor (espera)
+            }
+            // Note: shippingMode === 'custom' implicitly remains in 'pendiente_preparacion'
         }
 
         // Map to our Order Model
@@ -501,6 +519,7 @@ export const processOrder = async (orderData: any, tenantId: string, clientId?: 
             salesStatus: 'pendiente_facturacion' as any,
             logisticsStatus: computedLogisticsStatus as any,
             tags: orderData.tags || [], // Map tags
+            shippingMode: shippingMode, // Capture MeLi shipping mode
         };
 
         // Automations based on Computed Logistics Status (Checking fulfilled or shipping status)
@@ -581,6 +600,13 @@ export const processOrder = async (orderData: any, tenantId: string, clientId?: 
             if (orderUpdate.shipping) {
                 existingOrder.shipping = orderUpdate.shipping;
             }
+
+            if (orderUpdate.shippingMode !== undefined) {
+                existingOrder.shippingMode = orderUpdate.shippingMode;
+            }
+            if (orderUpdate.tags) {
+                existingOrder.tags = orderUpdate.tags;
+            }
             
             // Update internal statuses if changed in orderUpdate
             // Determine if we need to auto-generate a credit note
@@ -594,10 +620,24 @@ export const processOrder = async (orderData: any, tenantId: string, clientId?: 
 
             existingOrder.salesStatus = orderUpdate.salesStatus;
             
-            // Prevent regression: If we are 'listo_para_entregar' internally, and MeLi says 'pendiente_preparacion' (ready_to_ship), keep our internal state.
-            // We only overwrite if MeLi advances to 'despachado_meli', 'entregado', or 'cancelado'.
-            if (existingOrder.logisticsStatus === 'listo_para_entregar' && orderUpdate.logisticsStatus === 'pendiente_preparacion') {
-                // Keep existing
+            // Prevent regression: If we are in an advanced internal state, don't go back.
+            const statusRank: Record<string, number> = {
+                'acuerdo_vendedor': 0,
+                'pendiente_preparacion': 1,
+                'listo_para_entregar': 2,
+                'retiro_local': 3,
+                'envio_vendedor': 3,
+                'despachado_meli': 3,
+                'entregado': 4,
+                'cancelado_vuelto_stock': 99,
+                'devolucion_vuelto_stock': 99
+            };
+
+            const existingRank = statusRank[existingOrder.logisticsStatus as string] ?? 0;
+            const newRank = statusRank[orderUpdate.logisticsStatus as string] ?? 0;
+
+            if (newRank < existingRank) {
+                // Keep existing - prevent regression backwards in the logistics flow
             } else {
                 existingOrder.logisticsStatus = orderUpdate.logisticsStatus;
             }

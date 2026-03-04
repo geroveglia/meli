@@ -1,0 +1,160 @@
+{
+  "snapshot_packing": {
+    "snapshot_id": null,
+    "pack_hash": "0"
+  },
+  "threshold_cancellation": null,
+  "receiver_id": 3211752312,
+  "base_cost": 1,
+  "status_history": {
+    "date_shipped": null,
+    "date_delivered": null
+  },
+  "type": "forward",
+  "return_details": null,
+  "sender_id": 3211752314,
+  "mode": "custom",
+  "order_cost": 1111,
+  "carrier_id": null,
+  "priority_class": {
+    "id": "50"
+  },
+  "service_id": null,
+  "shipping_items": [
+    {
+      "domain_id": null,
+      "item_ponderation": null,
+      "quantity": 1,
+      "measurable_picked_quantity": null,
+      "dimensions_source": null,
+      "description": "Item De Prueba - No Ofertar 2",
+      "id": "MLA2890721208",
+      "bundle": null,
+      "user_product_id": "MLAU3807056598",
+      "sender_id": 3211752314,
+      "dimensions": null
+    }
+  ],
+  "tracking_number": null,
+  "cost_components": {
+    "special_discount": 0
+  },
+  "id": 46583873968,
+  "tracking_method": null,
+  "last_updated": "2026-03-04T14:32:27.369-04:00",
+  "items_types": [],
+  "comments": null,
+  "substatus": null,
+  "date_created": "2026-03-04T14:32:26.066-04:00",
+  "date_first_printed": null,
+  "created_by": "receiver",
+  "shipping_option": {
+    "cost": 1,
+    "name": "prueba",
+    "id": "10",
+    "list_cost": 1,
+    "currency_id": "ARS",
+    "speed": null
+  },
+  "tags": [
+    "test_shipment"
+  ],
+  "sender_address": {
+    "country": {
+      "id": "AR",
+      "name": "Argentina"
+    },
+    "address_line": "XXXXXXX",
+    "types": [
+      "billing",
+      "default_return_address",
+      "default_selling_address",
+      "shipping"
+    ],
+    "scoring": 0,
+    "agency": null,
+    "city": {
+      "id": null,
+      "name": "Buenos Aires"
+    },
+    "geolocation_type": "APPROXIMATE",
+    "latitude": 0,
+    "municipality": {
+      "id": null,
+      "name": null
+    },
+    "version": "AR-242e33aeb58b32edda8a473cffd6498a",
+    "location_id": null,
+    "street_name": "XXXXXXX",
+    "zip_code": "XXXXXXX",
+    "geolocation_source": "map-verified",
+    "node": null,
+    "intersection": null,
+    "street_number": "XXXXXXX",
+    "comment": null,
+    "id": 1581032750,
+    "state": {
+      "id": "AR-B",
+      "name": "Buenos Aires"
+    },
+    "neighborhood": {
+      "id": null,
+      "name": null
+    },
+    "geolocation_last_updated": "2026-02-18T13:51:22.94Z",
+    "longitude": 0
+  },
+  "return_tracking_number": null,
+  "site_id": "MLA",
+  "carrier_info": null,
+  "market_place": "MELI",
+  "receiver_address": {
+    "country": {
+      "id": "AR",
+      "name": "Argentina"
+    },
+    "city": {
+      "id": null,
+      "name": "La Lucila"
+    },
+    "geolocation_type": "ROOFTOP",
+    "latitude": -34.4922905,
+    "municipality": {
+      "id": null,
+      "name": null
+    },
+    "location_id": 76382554,
+    "street_name": "Calle Vicente Lopez y Planes",
+    "zip_code": "1637",
+    "intersection": null,
+    "receiver_name": "geronimo vegia",
+    "id": 1572485593,
+    "state": {
+      "id": "AR-B",
+      "name": "Buenos Aires"
+    },
+    "longitude": -58.4846246,
+    "address_line": "Calle Vicente Lopez y Planes 281",
+    "types": [
+      "default_buying_address"
+    ],
+    "scoring": 0,
+    "agency": null,
+    "version": "AR-e53f400774c48fddd0bbff8f6b1910ae",
+    "geolocation_source": "google-maps",
+    "delivery_preference": "residential",
+    "node": null,
+    "street_number": "281",
+    "comment": "Referencia: rrrrrrr",
+    "neighborhood": {
+      "id": null,
+      "name": "La Lucila"
+    },
+    "geolocation_last_updated": "2026-02-20T17:11:09.05Z",
+    "receiver_phone": "1168408383"
+  },
+  "customer_id": null,
+  "order_id": 2000015397632216,
+  "quotation": null,
+  "status": "pending"
+}

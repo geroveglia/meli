@@ -51,7 +51,9 @@ export interface IOrder extends Document {
 
   // Internal Statuses
   salesStatus: "pendiente_facturacion" | "facturada" | "venta_cancelada" | "nota_credito";
-  logisticsStatus: "pendiente_preparacion" | "listo_para_entregar" | "despachado_meli" | "retiro_local" | "entregado" | "cancelado_vuelto_stock" | "devolucion_vuelto_stock";
+  logisticsStatus: "pendiente_preparacion" | "listo_para_entregar" | "despachado_meli" | "retiro_local" | "acuerdo_vendedor" | "envio_vendedor" | "entregado" | "cancelado_vuelto_stock" | "devolucion_vuelto_stock";
+  shippingMode?: string; // me2, me1, custom, not_specified
+  pendingDestination?: "retiro_local" | "envio_vendedor";
   
   // Metadata for internal logic
   tags: string[]; // e.g., "impresas"
@@ -126,11 +128,18 @@ const orderSchema = new Schema<IOrder>(
         "listo_para_entregar",
         "despachado_meli",
         "retiro_local",
+        "acuerdo_vendedor",
+        "envio_vendedor",
         "entregado",
         "cancelado_vuelto_stock",
         "devolucion_vuelto_stock",
       ],
       default: "pendiente_preparacion",
+    },
+    shippingMode: { type: String },
+    pendingDestination: {
+      type: String,
+      enum: ["retiro_local", "envio_vendedor"],
     },
 
     tags: [{ type: String }],

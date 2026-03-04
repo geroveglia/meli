@@ -16,7 +16,7 @@ export type MeliAccount = "Todas" | TenantAccount;
 export type SalesState = "pendiente_facturacion" | "facturada" | "venta_cancelada" | "nota_credito";
 
 // Logistica internal states
-export type LogisticsState = "pendiente_preparacion" | "listo_para_entregar" | "despachado_meli" | "retiro_local" | "entregado" | "cancelado_vuelto_stock" | "devolucion_vuelto_stock";
+export type LogisticsState = "pendiente_preparacion" | "listo_para_entregar" | "despachado_meli" | "retiro_local" | "acuerdo_vendedor" | "envio_vendedor" | "entregado" | "cancelado_vuelto_stock" | "devolucion_vuelto_stock";
 
 // MELI states
 export type MeliStatus = "ready_to_ship" | "shipped" | "delivered" | "cancelled";
@@ -68,6 +68,8 @@ export interface Order {
   clientId?: string; // Raw Client ID for dynamic mapping
   
   tags: string[]; // MeLi tags
+  shippingMode?: string; // me2, me1, custom, not_specified
+  pendingDestination?: string; // retiro_local | envio_vendedor
 }
 
 interface LumbaState {
@@ -93,6 +95,7 @@ interface LumbaState {
   updateOrderLogisticsStatus: (orderId: string, status: LogisticsState) => void;
   setOrderPackaged: (orderId: string, isPackaged: boolean) => void;
   setOrderTagStatus: (orderId: string, status: "impresas" | "pendientes" | "error") => void;
+  setOrderPendingDestination: (orderId: string, destination: "retiro_local" | "envio_vendedor") => void;
 
   // Simulation
   simulateMeliUpdates: () => void;
@@ -262,7 +265,9 @@ export const useLumbaStore = create<LumbaState>()(
                   billingType: null,
                   packaged: o.isPackaged || false,
                   tenantId: o.tenantId || "",
-                  tags: o.tags || []
+                  tags: o.tags || [],
+                  shippingMode: o.shippingMode || null,
+                  pendingDestination: o.pendingDestination || null,
               }));
 
               // Preserve local state (tagStatus)
@@ -316,6 +321,8 @@ export const useLumbaStore = create<LumbaState>()(
                               listo_para_entregar: "LISTO_PARA_ENTREGAR",
                               despachado_meli: "DESPACHADO_MELI",
                               retiro_local: "RETIRO_EN_LOCAL",
+                              acuerdo_vendedor: "ACUERDO_VENDEDOR",
+                              envio_vendedor: "ENVIO_VENDEDOR",
                               entregado: "ENTREGADOS",
                               cancelado_vuelto_stock: "CANCELADOS",
                               devolucion_vuelto_stock: "DEVOLUCION",
@@ -391,6 +398,8 @@ export const useLumbaStore = create<LumbaState>()(
               listo_para_entregar: "LISTO_PARA_ENTREGAR",
               despachado_meli: "DESPACHADO_MELI",
               retiro_local: "RETIRO_EN_LOCAL",
+              acuerdo_vendedor: "ACUERDO_VENDEDOR",
+              envio_vendedor: "ENVIO_VENDEDOR",
               entregado: "ENTREGADOS",
               cancelado_vuelto_stock: "CANCELADOS",
               devolucion_vuelto_stock: "DEVOLUCION",
@@ -477,6 +486,20 @@ export const useLumbaStore = create<LumbaState>()(
             await api.patch(`/orders/${orderId}`, { tagStatus: status });
         } catch (error) {
             console.error("Failed to persist tag status:", error);
+        }
+      },
+
+      setOrderPendingDestination: async (orderId, destination) => {
+        // Optimistic Update
+        set((state) => ({
+          orders: state.orders.map((o) => (o.id === orderId ? { ...o, pendingDestination: destination } : o)),
+        }));
+
+        // API Call
+        try {
+            await api.patch(`/orders/${orderId}`, { pendingDestination: destination });
+        } catch (error) {
+            console.error("Failed to persist pending destination:", error);
         }
       },
 

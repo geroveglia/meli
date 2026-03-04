@@ -30,6 +30,7 @@ export const LogisticaPage: React.FC = () => {
     updateOrderLogisticsStatus,
     setOrderPackaged,
     setOrderTagStatus,
+    setOrderPendingDestination,
     fetchAccounts,
     fetchOrders
   } = useLumbaStore();
@@ -138,6 +139,8 @@ export const LogisticaPage: React.FC = () => {
       LISTO_PARA_ENTREGAR: ["listo_para_entregar"],
       DESPACHADO_MELI: ["despachado_meli"],
       RETIRO_EN_LOCAL: ["retiro_local"],
+      ACUERDO_VENDEDOR: ["acuerdo_vendedor"],
+      ENVIO_VENDEDOR: ["envio_vendedor"],
       ENTREGADOS: ["entregado"],
       CANCELADOS: ["cancelado_vuelto_stock"],
       DEVOLUCION: ["devolucion_vuelto_stock"],
@@ -178,9 +181,17 @@ export const LogisticaPage: React.FC = () => {
 
   const executeAction = (orderId: string, action: string) => {
     switch (action) {
-      case "PASAR_A_LISTO":
-        updateOrderLogisticsStatus(orderId, "listo_para_entregar");
+      case "PASAR_A_LISTO": {
+        // Auto-routing based on pendingDestination
+        const order = orders.find(o => o.id === orderId);
+        if (order?.pendingDestination === "retiro_local") {
+          updateOrderLogisticsStatus(orderId, "retiro_local");
+        } else {
+          // Both ME2 and Envío Vendedor orders wait in 'Listo para entregar' for the dispatch scan/update
+          updateOrderLogisticsStatus(orderId, "listo_para_entregar");
+        }
         break;
+      }
       case "EMPAQUETAR":
         setOrderPackaged(orderId, true);
         break;
@@ -191,10 +202,6 @@ export const LogisticaPage: React.FC = () => {
         updateOrderLogisticsStatus(orderId, "entregado");
         break;
       case "ETIQUETA":
-        // For bulk, maybe just trigger download or show toast
-        // toast.success(`Descargando etiqueta para orden ${orderId}`);
-        // Now also marks as printed
-        // Now also marks as printed
         setOrderTagStatus(orderId, "impresas");
         break;
       case "CANCELAR":
@@ -210,6 +217,20 @@ export const LogisticaPage: React.FC = () => {
         break;
       case "RETIRO_EN_LOCAL":
         updateOrderLogisticsStatus(orderId, "retiro_local");
+        break;
+      case "PREPARAR_RETIRO":
+        // From Acuerdo Vendedor → En Preparación with destination = retiro_local
+        updateOrderLogisticsStatus(orderId, "pendiente_preparacion");
+        break;
+      case "PREPARAR_ENVIO":
+        // From Acuerdo Vendedor → En Preparación with destination = envio_vendedor
+        updateOrderLogisticsStatus(orderId, "pendiente_preparacion");
+        break;
+      case "ACUERDO_VENDEDOR":
+        updateOrderLogisticsStatus(orderId, "acuerdo_vendedor");
+        break;
+      case "ENVIO_VENDEDOR":
+        updateOrderLogisticsStatus(orderId, "envio_vendedor");
         break;
     }
   };
@@ -405,6 +426,35 @@ export const LogisticaPage: React.FC = () => {
       return;
     }
 
+    if (action === "PREPARAR_RETIRO" || action === "PREPARAR_ENVIO") {
+      const destination = action === "PREPARAR_RETIRO" ? "retiro_local" : "envio_vendedor";
+      const idsToUpdate = isBulk ? (orderOrIds as string[]) : [(orderOrIds as Order).id];
+      setExitingOrderIds((prev) => [...prev, ...idsToUpdate]);
+
+      setTimeout(() => {
+        idsToUpdate.forEach((id) => {
+          setOrderPendingDestination(id, destination);
+          executeAction(id, action);
+        });
+        const msg = destination === "retiro_local" ? "Preparando para retiro en local" : "Preparando para envío propio";
+        sweetAlert.success("Acción completada", isBulk ? `${count} ordenes movidas a preparación. ${msg}.` : `Orden movida a preparación. ${msg}.`);
+        setExitingOrderIds((prev) => prev.filter((id) => !idsToUpdate.includes(id)));
+      }, 500);
+      return;
+    }
+
+    if (action === "ENVIO_VENDEDOR") {
+      const idsToUpdate = isBulk ? (orderOrIds as string[]) : [(orderOrIds as Order).id];
+      setExitingOrderIds((prev) => [...prev, ...idsToUpdate]);
+
+      setTimeout(() => {
+        idsToUpdate.forEach((id) => executeAction(id, action));
+        sweetAlert.success("Acción completada", isBulk ? `${count} ordenes movidas a envío vendedor.` : "Orden movida a envío vendedor.");
+        setExitingOrderIds((prev) => prev.filter((id) => !idsToUpdate.includes(id)));
+      }, 500);
+      return;
+    }
+
     if (action === "CANCELAR") {
       let title = "¿Cancelar Orden?";
       let text = "La orden pasará a la sección 'Cancelados' y se devolverá a stock.";
@@ -521,17 +571,23 @@ export const LogisticaPage: React.FC = () => {
 
       // 2. Imprimir Etiqueta -> Handled below with Local Pickup check
 
-      const isLocalPickup = order.tags?.includes("no_shipping");
-
       // 2. Imprimir Etiqueta OR Retiro Local
+      // Si la orden viene de Acuerdo Vendedor, el destino ya está decidido
+      // En ese caso, si eligieron retiro en local mostramos el atajo, sino la consideramos como envío
+      const isLocalPickup = order.pendingDestination === "retiro_local" || (!order.pendingDestination && order.tags?.includes("no_shipping"));
+
+      // 2. Imprimir Etiqueta
       if (!isLocalPickup) {
+        // Envíos de MercadoLibre o Envíos del Vendedor
+        // (Nota: Envío del vendedor a veces no tiene etiqueta de ML, 
+        // pero por consistencia el usuario la empaqueta y luego marca Listo)
         buttons.push(
             <Button key="print" onClick={() => handleAction(order, "IMPRIMIR_ETIQUETA")} variant="blue" size="sm" className={`flex items-center gap-2`} title="Imprimir Etiqueta">
             <FontAwesomeIcon icon={faPrint} />
             </Button>,
         );
       } else {
-         // Local Pickup Button
+         // Local Pickup Button (shortcut)
          buttons.push(
             <Button key="local" onClick={() => handleAction(order, "RETIRO_EN_LOCAL")} variant="blue" size="sm" disabled={!isPackaged} className={`flex items-center gap-2`} title={!isPackaged ? "Primero debes empaquetar" : "Mover a Retiro en Local"}>
             <FontAwesomeIcon icon={faHome} />
@@ -541,15 +597,18 @@ export const LogisticaPage: React.FC = () => {
 
       // 3. Listo para entregar (Only if not local pickup)
       if (!isLocalPickup) {
+          const isEnvioVendedor = order.pendingDestination === "envio_vendedor";
+          const requiresLabel = !isEnvioVendedor; // ME2 requires label, Envío Vendedor does not
+
           buttons.push(
             <Button
             key="listo"
             onClick={() => handleAction(order, "PASAR_A_LISTO")}
             variant="blue"
             size="sm"
-            disabled={!isLabeled || !isPackaged} // Strict dependency
-            className={`flex items-center gap-2 ${!isLabeled || !isPackaged ? "opacity-50 cursor-not-allowed" : ""}`}
-            title={!isLabeled ? "Falta imprimir etiqueta" : "Listo para entregar"}
+            disabled={(requiresLabel && !isLabeled) || !isPackaged} // Strict dependency based on order type
+            className={`flex items-center gap-2 ${(requiresLabel && !isLabeled) || !isPackaged ? "opacity-50 cursor-not-allowed" : ""}`}
+            title={(requiresLabel && !isLabeled) ? "Falta imprimir etiqueta" : "Listo para entregar"}
             >
             <FontAwesomeIcon icon={faTruck} />
             </Button>,
@@ -558,14 +617,26 @@ export const LogisticaPage: React.FC = () => {
 
       // 4. Cancelar - REMOVED per user request
 
+    } else if (order.logisticsStatus === "acuerdo_vendedor") {
+      // Acuerdo Vendedor: buttons to move to Retiro en Local or Envío Vendedor
+      buttons.push(
+        <Button key="prep-retiro" onClick={() => handleAction(order, "PREPARAR_RETIRO")} variant="blue" size="sm" className="flex items-center gap-2" title="Preparar para Retiro en Local">
+          <FontAwesomeIcon icon={faHome} />
+        </Button>,
+      );
+      buttons.push(
+        <Button key="prep-envio" onClick={() => handleAction(order, "PREPARAR_ENVIO")} variant="blue" size="sm" className="flex items-center gap-2" title="Preparar para Envío Propio">
+          <FontAwesomeIcon icon={faTruck} />
+        </Button>,
+      );
     } else if (
       order.logisticsStatus === "listo_para_entregar" ||
       order.logisticsStatus === "despachado_meli" ||
       order.logisticsStatus === "retiro_local" ||
+      order.logisticsStatus === "envio_vendedor" ||
       order.logisticsStatus === "entregado"
     ) {
-       // Allow cancel for these statuses as well
-       // REMOVED MANUAL CANCEL BUTTON per user request
+       // No manual actions for these states
     }
 
     if ((order.logisticsStatus === "cancelado_vuelto_stock" || order.logisticsStatus === "devolucion_vuelto_stock") && order.packaged) {
@@ -584,11 +655,7 @@ export const LogisticaPage: React.FC = () => {
     }
 
     if (order.logisticsStatus === "retiro_local") {
-      buttons.push(
-        <button key="entregado" onClick={() => handleAction(order, "MARCAR_ENTREGADO")} className="text-blue-600 hover:text-blue-800 p-1.5 transition-colors" title="Marcar Entregado">
-          <FontAwesomeIcon icon={faCheck} className="h-4 w-4" />
-        </button>,
-      );
+      // No manual "Marcar Entregado" button - delivery only via MeLi sync
     }
 
     return (
@@ -712,10 +779,27 @@ export const LogisticaPage: React.FC = () => {
       <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
         <p><strong>Retiro en sucursal.</strong></p>
         <p>El comprador pasará a buscar el producto por el local.</p>
+        <p>Verifica la identidad del comprador al entregar.</p>
+        <p className="text-xs text-gray-500 mt-2">El estado "Entregado" se actualizará automáticamente desde MercadoLibre.</p>
+      </div>
+    ),
+    ACUERDO_VENDEDOR: (
+      <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+        <p><strong>Sala de espera - Acuerdo con Vendedor.</strong></p>
+        <p>Estos pedidos no utilizan Mercado Envíos. Necesitas decidir cómo se entregará el producto:</p>
         <ul className="list-disc pl-5 space-y-1">
-          <li>Verifica la identidad del comprador al entregar.</li>
-          <li>Presiona <strong>Marcar Entregado</strong> una vez que el producto haya sido retirado.</li>
+          <li>Presiona <strong>🏠</strong> para preparar el pedido para <strong>Retiro en Local</strong>.</li>
+          <li>Presiona <strong>🚚</strong> para preparar el pedido para <strong>Envío Propio</strong>.</li>
         </ul>
+        <p className="text-xs text-gray-500 mt-2">La orden pasará a "En Preparación" con el destino elegido.</p>
+      </div>
+    ),
+    ENVIO_VENDEDOR: (
+      <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+        <p><strong>Despachado por cuenta del vendedor.</strong></p>
+        <p>Estos pedidos ya fueron despachados por el vendedor (no a través de Mercado Envíos).</p>
+        <p>No requieren acciones manuales en esta sección.</p>
+        <p className="text-xs text-gray-500 mt-2">El estado "Entregado" se actualizará automáticamente desde MercadoLibre.</p>
       </div>
     ),
     ENTREGADOS: (
@@ -760,7 +844,9 @@ export const LogisticaPage: React.FC = () => {
     PENDIENTE_PREPARACION: "En preparación",
     LISTO_PARA_ENTREGAR: "Listo para entregar",
     DESPACHADO_MELI: "Despachado ML",
+    ENVIO_VENDEDOR: "Despachado Vendedor",
     RETIRO_EN_LOCAL: "Retiro en Local",
+    ACUERDO_VENDEDOR: "Acuerdo Vendedor",
     ENTREGADOS: "Entregados",
     CANCELADOS: "Cancelados",
     DEVOLUCION: "Devoluciones",
@@ -828,11 +914,17 @@ export const LogisticaPage: React.FC = () => {
                 </>
               )}
 
-              {activeTab === "RETIRO_EN_LOCAL" && (
-                <Button onClick={() => handleAction(selectedOrderIds, "MARCAR_ENTREGADO")} variant="blue" size="sm" disabled={selectedOrderIds.length === 0} className="flex items-center gap-2">
-                  <FontAwesomeIcon icon={faCheck} />
-                  Marcar Entregado
-                </Button>
+              {activeTab === "ACUERDO_VENDEDOR" && (
+                <>
+                  <Button onClick={() => handleAction(selectedOrderIds, "PREPARAR_RETIRO")} variant="blue" size="sm" disabled={selectedOrderIds.length === 0} className="flex items-center gap-2">
+                    <FontAwesomeIcon icon={faHome} />
+                    Preparar Retiro
+                  </Button>
+                  <Button onClick={() => handleAction(selectedOrderIds, "PREPARAR_ENVIO")} variant="blue" size="sm" disabled={selectedOrderIds.length === 0} className="flex items-center gap-2">
+                    <FontAwesomeIcon icon={faTruck} />
+                    Preparar Envío
+                  </Button>
+                </>
               )}
             </div>
             {selectedOrderIds.length > 0 && <span className="text-sm font-medium text-blue-800 dark:text-blue-300">{selectedOrderIds.length} seleccionados</span>}
@@ -855,6 +947,9 @@ export const LogisticaPage: React.FC = () => {
                       Antes de...
                     </th>
                   )}
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
+                    Tipo Envío
+                  </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 tracking-wider whitespace-nowrap">
                     Cuenta
                   </th>
@@ -901,6 +996,16 @@ export const LogisticaPage: React.FC = () => {
                           {(order.logisticsStatus === "pendiente_preparacion" || order.logisticsStatus === "listo_para_entregar") && order.shippingCutoff !== "-" ? order.shippingCutoff : ""}
                         </td>
                       )}
+                      <td className="px-6 py-4 whitespace-nowrap text-xs font-medium">
+                        {order.shippingMode === "me2" || order.shippingMode === "me1"
+                            ? <span className="text-blue-600 dark:text-blue-400">Mercado Libre</span>
+                            : order.pendingDestination === "retiro_local" || order.logisticsStatus === "retiro_local"
+                            ? <span className="text-orange-600 dark:text-orange-400">Retiro Local</span>
+                            : order.pendingDestination === "envio_vendedor" || order.shippingMode === "custom" || order.logisticsStatus === "envio_vendedor"
+                            ? <span className="text-green-600 dark:text-green-400">Vendedor</span>
+                            : <span className="text-gray-500">A acordar</span>
+                        }
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-medium">
                         {(() => {
                             // Dynamic Lookup to handle race conditions
