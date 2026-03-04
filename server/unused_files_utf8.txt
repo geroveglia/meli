@@ -1,0 +1,52 @@
+﻿\src\server.ts:221 - default
+\src\config\database.ts:4 - connectDB
+\src\config\database.ts:27 - disconnectDB
+\src\config\queue.ts:9 - JOBS_ENABLED (used in module)
+\src\config\queue.ts:11 - redis (used in module)
+\src\config\queue.ts:35 - assetsQueue
+\src\config\queue.ts:36 - ragQueue
+\src\config\queue.ts:39 - AssetDeriveJob
+\src\config\queue.ts:47 - RagIngestJob
+\src\config\storage.ts:2 - uploadFile
+\src\config\storage.ts:3 - deleteFile
+\src\config\storage.ts:4 - getFileUrl
+\src\config\vector.ts:2 - vectorStore
+\src\middleware\auth.ts:70 - requireRole
+\src\middleware\permissions.ts:10 - requireSuperAdmin
+\src\middleware\permissions.ts:97 - canViewDocument
+\src\middleware\requireAnyRole.ts:4 - requireAnyRole
+\src\middleware\requireClientScope.ts:10 - requireClientScope
+\src\middleware\requireClientScope.ts:53 - applyClientFilter
+\src\middleware\requireClientScope.ts:6 - ClientScopedRequest (used in module)
+\src\middleware\tenant.ts:70 - resolveTenant
+\src\models\Area.ts:3 - IArea (used in module)
+\src\models\CarouselImage.ts:3 - ICarouselImage (used in module)
+\src\models\Counter.ts:3 - ICounter (used in module)
+\src\models\DemoCredential.ts:19 - DemoCredential
+\src\models\Level.ts:3 - ILevel (used in module)
+\src\models\Position.ts:3 - IPosition (used in module)
+\src\models\Project.ts:7 - IProject (used in module)
+\src\models\SeoMetadata.ts:3 - ISeoMetadata (used in module)
+\src\routes\carouselImages.ts:194 - carouselImageRoutes
+\src\routes\projects.ts:160 - projectRoutes
+\src\routes\seo.ts:147 - seoRoutes
+\src\services\billingService.ts:25 - ItemVenta (used in module)
+\src\services\billingService.ts:32 - VentaDatos (used in module)
+\src\services\billingService.ts:41 - ClienteDatos (used in module)
+\src\services\billingService.ts:51 - ClientEnvironmentService (used in module)
+\src\services\billingService.ts:75 - ComprobanteGeneratorService (used in module)
+\src\services\billingService.ts:197 - clientEnvironmentService
+\src\services\billingService.ts:198 - comprobanteGeneratorService (used in module)
+\src\services\clientUsuarios.ts:39 - removeUserFromClientUsuarios
+\src\types\channels.ts:198 - getChannelMetadata
+\src\types\channels.ts:229 - getPostTypeFromChannel
+\src\types\channels.ts:235 - validateChannelConfig
+\src\types\channels.ts:2 - PostType (used in module)
+\src\types\channels.ts:3 - Channel (used in module)
+\src\types\channels.ts:4 - SocialChannel (used in module)
+\src\types\channels.ts:6 - ChannelMetadata (used in module)
+\src\types\channels.ts:18 - SOCIAL_CHANNELS (used in module)
+\src\types\channels.ts:160 - CHANNEL_CATEGORIES
+\src\utils\git.ts:6 - GitInfo (used in module)
+\src\utils\jwt.ts:24 - verifyJwt
+\src\utils\jwt.ts:4 - JWTPayload (used in module)

@@ -327,13 +327,9 @@ export const LogisticaPage: React.FC = () => {
         if (isBulk) {
           const ids = orderOrIds as string[];
           
-          // Check if we should use the fictitious label (frontend route)
-          // We use it if ALL selected orders are in 'pendiente_preparacion' OR if the active tab implies it.
-          // However, we only have IDs here. We need to look them up in `orders`.
-          const selectedOrders = orders.filter(o => ids.includes(o.id));
-          const allInPrep = selectedOrders.every(o => o.logisticsStatus === "pendiente_preparacion");
+          const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
-          if (allInPrep) {
+          if (isLocalhost) {
              // Use Frontend Fictitious Label
              const url = `/print-label/${ids.join(',')}`;
              window.open(url, "_blank");
@@ -353,7 +349,9 @@ export const LogisticaPage: React.FC = () => {
           const order = orderOrIds as Order;
           const id = order.id;
 
-          if (order.logisticsStatus === "pendiente_preparacion") {
+          const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+
+          if (isLocalhost) {
              // Use Frontend Fictitious Label
              window.open(`/print-label/${id}`, "_blank");
              executeAction(id, action);
