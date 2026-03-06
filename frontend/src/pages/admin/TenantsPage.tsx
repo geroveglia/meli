@@ -511,7 +511,6 @@ export const TenantsPage: React.FC = () => {
         isOpen: viewOpen,
         onClose: closeView,
         title: viewTenant?.name || "Tenant",
-        subtitle: viewTenant?.slug,
         size: "lg",
         actions: [
           ...(!viewTenant?.isSystem
@@ -616,36 +615,7 @@ export const TenantsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Uso */}
-            <div>
-              <h4 className="text-sm font-semibold text-accent-9 mb-2">Uso</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="bg-accent-2 rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-black dark:text-white">
-                    {viewTenant.userCount ?? viewTenant.usage?.users?.current ?? 0}
-                  </div>
-                  <div className="text-xs text-accent-5">Usuarios</div>
-                </div>
-                <div className="bg-accent-2 rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-black dark:text-white">
-                    {viewTenant.usage?.clients?.current ?? 0}
-                  </div>
-                  <div className="text-xs text-accent-5">Clientes</div>
-                </div>
-                <div className="bg-accent-2 rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-black dark:text-white">
-                    {viewTenant.usage?.campaigns?.current ?? 0}
-                  </div>
-                  <div className="text-xs text-accent-5">Campañas</div>
-                </div>
-                <div className="bg-accent-2 rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-black dark:text-white">
-                    {viewTenant.usage?.storage?.usedMB ?? 0} MB
-                  </div>
-                  <div className="text-xs text-accent-5">Almacenamiento</div>
-                </div>
-              </div>
-            </div>
+
 
             {/* Timestamps */}
             <div className="pt-4 border-t border-accent-3">
@@ -716,20 +686,7 @@ export const TenantsPage: React.FC = () => {
                     {formErrors.name && <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>}
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-accent-7 mb-1">
-                      Slug *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.slug}
-                      readOnly
-                      className={`input-base bg-accent-1 text-accent-6 cursor-not-allowed ${formErrors.slug ? "border-red-500 dark:border-red-500" : ""}`}
-                      placeholder="slug-auto-generado_tenant"
-                    />
-                    {formErrors.slug && <p className="text-red-500 text-xs mt-1">{formErrors.slug}</p>}
-                  </div>
+
                 </div>
                 
                 <div className="mt-4 flex items-center gap-3 bg-accent-2 p-4 rounded-lg border border-accent-3">

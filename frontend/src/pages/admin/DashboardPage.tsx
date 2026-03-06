@@ -215,100 +215,102 @@ export const DashboardPage: React.FC = () => {
           </div>
         )}
         
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Bar Chart: Sales History */}
-          <div className="bg-accent-2 rounded-xl shadow-lg border border-accent-4 p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-accent-2 border border-accent-4">
-                <FontAwesomeIcon icon={faChartBar} className="h-5 w-5 text-accent-9" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-accent-1">Ventas últimos 7 días</h2>
-                <p className="text-sm text-accent-7">Cantidad de pedidos diarios</p>
-              </div>
-            </div>
-            <div className="h-72">
-              {loading ? (
-                <div className="h-full flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-5"></div>
+        {/* Charts - Only show if NOT in superadmin system view */}
+        {!(stats.totalTenants !== undefined && stats.totalTenants > 0) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Bar Chart: Sales History */}
+            <div className="bg-accent-2 rounded-xl shadow-lg border border-accent-4 p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-accent-2 border border-accent-4">
+                  <FontAwesomeIcon icon={faChartBar} className="h-5 w-5 text-accent-9" />
                 </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={stats.salesHistory} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={themeColors.grid} />
-                    <XAxis 
-                        dataKey="date" 
-                        tick={{ fill: themeColors.text }} 
-                        tickFormatter={(value) => {
-                            const date = new Date(value);
-                            return `${date.getDate()}/${date.getMonth() + 1}`;
-                        }}
-                    />
-                    <YAxis tick={{ fill: themeColors.text }} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: themeColors.background,
-                        border: `1px solid ${themeColors.border}`,
-                        borderRadius: "8px",
-                      }}
-                      labelStyle={{ color: themeColors.textPrimary }}
-                      itemStyle={{ color: themeColors.textSecondary }}
-                    />
-                    <Bar dataKey="orders" name="Pedidos" fill={COLORS[0]} radius={[4, 4, 4, 4]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </div>
-
-          {/* Pie Chart: Logistics Status */}
-          <div className="bg-accent-2 rounded-xl shadow-lg border border-accent-4 p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-accent-3 border border-accent-4">
-                <FontAwesomeIcon icon={faChartPie} className="h-5 w-5 text-accent-1" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-accent-1">Estado de Logística</h2>
-                <p className="text-sm text-accent-7">Distribución de estados de envío</p>
-              </div>
-            </div>
-            <div className="h-72">
-              {loading ? (
-                <div className="h-full flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-1"></div>
+                <div>
+                  <h2 className="text-lg font-semibold text-accent-1">Ventas últimos 7 días</h2>
+                  <p className="text-sm text-accent-7">Cantidad de pedidos diarios</p>
                 </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={stats.statusDistribution}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={3}
-                      dataKey="value"
-                      label={({ name, percent }) => `${formatStatus(name)} ${((percent || 0) * 100).toFixed(0)}%`}
-                    >
-                      {stats.statusDistribution.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke={themeColors.stroke} strokeWidth={2} />
-                      ))}
-                    </Pie>
-                    <Tooltip
+              </div>
+              <div className="h-72">
+                {loading ? (
+                  <div className="h-full flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-5"></div>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={stats.salesHistory} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={themeColors.grid} />
+                      <XAxis 
+                          dataKey="date" 
+                          tick={{ fill: themeColors.text }} 
+                          tickFormatter={(value) => {
+                              const date = new Date(value);
+                              return `${date.getDate()}/${date.getMonth() + 1}`;
+                          }}
+                      />
+                      <YAxis tick={{ fill: themeColors.text }} />
+                      <Tooltip
                         contentStyle={{
-                        backgroundColor: themeColors.background,
-                        border: `1px solid ${themeColors.border}`,
-                        borderRadius: "8px",
-                      }}
-                    />
-                    <Legend wrapperStyle={{ color: themeColors.text }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
+                          backgroundColor: themeColors.background,
+                          border: `1px solid ${themeColors.border}`,
+                          borderRadius: "8px",
+                        }}
+                        labelStyle={{ color: themeColors.textPrimary }}
+                        itemStyle={{ color: themeColors.textSecondary }}
+                      />
+                      <Bar dataKey="orders" name="Pedidos" fill={COLORS[0]} radius={[4, 4, 4, 4]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+
+            {/* Pie Chart: Logistics Status */}
+            <div className="bg-accent-2 rounded-xl shadow-lg border border-accent-4 p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-accent-3 border border-accent-4">
+                  <FontAwesomeIcon icon={faChartPie} className="h-5 w-5 text-accent-1" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-accent-1">Estado de Logística</h2>
+                  <p className="text-sm text-accent-7">Distribución de estados de envío</p>
+                </div>
+              </div>
+              <div className="h-72">
+                {loading ? (
+                  <div className="h-full flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-1"></div>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={stats.statusDistribution}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={90}
+                        paddingAngle={3}
+                        dataKey="value"
+                        label={({ name, percent }) => `${formatStatus(name)} ${((percent || 0) * 100).toFixed(0)}%`}
+                      >
+                        {stats.statusDistribution.map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke={themeColors.stroke} strokeWidth={2} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                          contentStyle={{
+                          backgroundColor: themeColors.background,
+                          border: `1px solid ${themeColors.border}`,
+                          borderRadius: "8px",
+                        }}
+                      />
+                      <Legend wrapperStyle={{ color: themeColors.text }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </PageLayout>
   );
