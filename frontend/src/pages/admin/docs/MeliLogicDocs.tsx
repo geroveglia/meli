@@ -34,9 +34,11 @@ export const MeliLogicDocs: React.FC = () => {
           <h4 className="font-bold text-lg mb-2 text-blue-600 dark:text-blue-400">2. Logistics Status</h4>
           <p className="text-sm text-gray-600 dark:text-gray-400">Estado interno para el flujo de preparación.</p>
           <ul className="mt-3 text-sm list-disc list-inside space-y-1">
+            <li>acuerdo_vendedor</li>
             <li>pendiente_preparacion</li>
             <li>listo_para_entregar</li>
             <li>despachado_meli</li>
+            <li>envio_vendedor</li>
             <li>retiro_local</li>
             <li>entregado</li>
             <li>cancelado_vuelto_stock</li>
@@ -57,12 +59,17 @@ export const MeliLogicDocs: React.FC = () => {
 
       <DocH2 id="logistics-flow">Flujo de Logística</DocH2>
       <DocText>
-        Cuando MercadoLibre envía un webhook con una nueva orden pagada, el sistema la guarda en la base de datos con el estado interno <code>pendiente_preparacion</code>. A partir de ahí, el operador realiza acciones manuales para avanzar la orden por el flujo.
+        El sistema cuenta con 4 flujos logísticos principales dependiendo del tipo de envío de la orden (Mercado Envíos, Envío del Vendedor, Retiro en Local o A Acordar). Además, implementa un sistema de <strong>Anti-Regresión Estricta</strong> mediante ranking de estados, lo que impide que webhooks atrasados retrocedan una orden a un estado inferior.
       </DocText>
 
-      <DocH3>1. En Preparación (pendiente_preparacion)</DocH3>
+      <DocH3>0. Acuerdo Vendedor (acuerdo_vendedor) - Rango 0</DocH3>
       <DocText>
-        Es el estado inicial de toda orden nueva. Aquí el operador tiene <strong>3 acciones</strong> disponibles que deben realizarse en orden:
+        Si la orden no tiene el envío especificado o es "A acordar con el vendedor", nace en este estado ("sala de espera"). El operador debe decidir hacer clic en "Preparar Envío" o "Preparar Retiro".
+      </DocText>
+
+      <DocH3>1. En Preparación (pendiente_preparacion) - Rango 1</DocH3>
+      <DocText>
+        Es el estado inicial de toda orden (excepto las de "Acuerdo Vendedor"). Aquí el operador tiene que <strong>empaquetar</strong> y luego avanzar la orden:
       </DocText>
       <div className="my-6 p-6 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
         <ol className="list-decimal pl-6 space-y-4 text-gray-700 dark:text-gray-300">
@@ -90,20 +97,25 @@ export const MeliLogicDocs: React.FC = () => {
         El estado cambia automáticamente a <code>despachado_meli</code> cuando el correo escanea la etiqueta en la sucursal. Esto llega como un webhook de MercadoLibre con el shipping status <code>shipped</code>.
       </DocAlert>
 
-      <DocH3>3. Despachado ML (despachado_meli)</DocH3>
+      <DocH3>3. Despachado ML (despachado_meli) - Rango 3</DocH3>
       <DocText>
-        El paquete ya fue entregado al correo y está en tránsito hacia el comprador. <strong>No requiere ninguna acción manual.</strong> El sistema actualiza automáticamente este estado cuando MercadoLibre envía el webhook con <code>shipped</code>.
+        Para envíos ME1/ME2. El paquete ya fue entregado al correo y está en tránsito. <strong>Automático.</strong>
+      </DocText>
+
+      <DocH3>4. Despachado Vendedor (envio_vendedor) - Rango 3</DocH3>
+      <DocText>
+        Para envíos a cargo del vendedor. Pasa automáticamente aquí cuando se genera el despacho, indicando que está en manos del repartidor.
       </DocText>
       <DocAlert type="info" title="Transición automática">
-        Cuando MercadoLibre confirma la entrega (<code>delivered</code>), la orden pasa automáticamente a <code>entregado</code>.
+        Ambos despachos esperan el webhook <code>delivered</code> para pasar a <code>entregado</code>.
       </DocAlert>
 
-      <DocH3>4. Retiro en Local (retiro_local)</DocH3>
+      <DocH3>5. Retiro en Local (retiro_local) - Rango 3</DocH3>
       <DocText>
-        El comprador viene a buscar el producto al local. El operador debe verificar la identidad del comprador y presionar <strong>✅ Marcar Entregado</strong> para finalizar. Esto mueve la orden a <code>entregado</code>.
+        El comprador viene a buscar el producto al local. Espera confirmación de MercadoLibre (vía escaneo de QR) o webhook automático para pasar a Entregado. No existen botones manuales.
       </DocText>
 
-      <DocH3>5. Entregado (entregado)</DocH3>
+      <DocH3>6. Entregado (entregado) - Rango 4</DocH3>
       <DocText>
         Estado final exitoso. La orden fue recibida por el comprador, ya sea por envío o retiro en local. Queda como historial de entregas finalizadas.
       </DocText>
@@ -152,28 +164,33 @@ export const MeliLogicDocs: React.FC = () => {
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             <tr>
+              <td className="px-4 py-3 text-gray-700 dark:text-gray-300 font-medium">acuerdo_vendedor</td>
+              <td className="px-4 py-3 text-gray-600 dark:text-gray-400">Preparar Envío / Preparar Retiro</td>
+              <td className="px-4 py-3 text-blue-600 dark:text-blue-400 font-semibold">pendiente_preparacion</td>
+            </tr>
+            <tr>
               <td className="px-4 py-3 text-gray-700 dark:text-gray-300 font-medium">pendiente_preparacion</td>
               <td className="px-4 py-3 text-gray-600 dark:text-gray-400">Empaquetar + Imprimir + Listo</td>
               <td className="px-4 py-3 text-blue-600 dark:text-blue-400 font-semibold">listo_para_entregar</td>
             </tr>
             <tr>
               <td className="px-4 py-3 text-gray-700 dark:text-gray-300 font-medium">pendiente_preparacion</td>
-              <td className="px-4 py-3 text-gray-600 dark:text-gray-400">Empaquetar + Retiro en Local (tag no_shipping)</td>
+              <td className="px-4 py-3 text-gray-600 dark:text-gray-400">Empaquetar + Retiro en Local (atajo)</td>
               <td className="px-4 py-3 text-blue-600 dark:text-blue-400 font-semibold">retiro_local</td>
             </tr>
             <tr>
               <td className="px-4 py-3 text-gray-700 dark:text-gray-300 font-medium">listo_para_entregar</td>
-              <td className="px-4 py-3 text-gray-600 dark:text-gray-400">🔄 Webhook: correo escanea etiqueta (shipped)</td>
+              <td className="px-4 py-3 text-gray-600 dark:text-gray-400">🔄 Webhook: correo escanea (ME2)</td>
               <td className="px-4 py-3 text-blue-600 dark:text-blue-400 font-semibold">despachado_meli</td>
             </tr>
             <tr>
-              <td className="px-4 py-3 text-gray-700 dark:text-gray-300 font-medium">despachado_meli</td>
-              <td className="px-4 py-3 text-gray-600 dark:text-gray-400">🔄 Webhook: entrega confirmada (delivered)</td>
-              <td className="px-4 py-3 text-green-600 dark:text-green-400 font-semibold">entregado ✅</td>
+              <td className="px-4 py-3 text-gray-700 dark:text-gray-300 font-medium">listo_para_entregar</td>
+              <td className="px-4 py-3 text-gray-600 dark:text-gray-400">🔄 Webhook: despacho (Seller)</td>
+              <td className="px-4 py-3 text-blue-600 dark:text-blue-400 font-semibold">envio_vendedor</td>
             </tr>
             <tr>
-              <td className="px-4 py-3 text-gray-700 dark:text-gray-300 font-medium">retiro_local</td>
-              <td className="px-4 py-3 text-gray-600 dark:text-gray-400">Operador marca entregado</td>
+              <td className="px-4 py-3 text-gray-700 dark:text-gray-300 font-medium">despachado_* / retiro_*</td>
+              <td className="px-4 py-3 text-gray-600 dark:text-gray-400">🔄 Webhook: entrega confirmada (delivered)</td>
               <td className="px-4 py-3 text-green-600 dark:text-green-400 font-semibold">entregado ✅</td>
             </tr>
             <tr>
@@ -294,6 +311,8 @@ export interface Order {
   salesStatus: SalesState;
   logisticsStatus: LogisticsState;
   meliStatus: MeliStatus;
+  shippingMode?: string;
+  pendingDestination?: "envio_vendedor" | "retiro_local";
 
   // Metadata
   tagStatus: "impresas" | "pendientes";

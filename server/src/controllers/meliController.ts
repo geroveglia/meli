@@ -13,9 +13,16 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Helper to log to debug file
+const logToFile = (message: string) => {
+    const logPath = path.join(process.cwd(), 'meli_oauth.log');
+    const timestamp = new Date().toISOString();
+    fs.appendFileSync(logPath, `[${timestamp}] ${message}\n`);
+};
+
 // Helper to encode state
-const encodeState = (tenantId: string, cuentaId?: string) => {
-    return Buffer.from(JSON.stringify({ tenantId, cuentaId, nonce: Date.now() })).toString('base64');
+const encodeState = (tenantId: string, cuentaId?: string, origin?: string) => {
+    return Buffer.from(JSON.stringify({ tenantId, cuentaId, origin, nonce: Date.now() })).toString('base64');
 };
 
 // Helper to decode state
@@ -30,7 +37,7 @@ const decodeState = (state: string) => {
 export const configureCredentials = async (req: Request, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const tenantId = authReq.tenantId;
-    const { appId, clientSecret } = req.body;
+    const { appId, clientSecret, redirectUri } = req.body;
 
     if (!tenantId) {
         return res.status(400).json({ error: "Tenant ID required" });
@@ -39,7 +46,8 @@ export const configureCredentials = async (req: Request, res: Response) => {
     try {
         await Tenant.findByIdAndUpdate(tenantId, {
             "mercadolibre.appId": appId,
-            "mercadolibre.clientSecret": clientSecret
+            "mercadolibre.clientSecret": clientSecret,
+            "mercadolibre.redirectUri": redirectUri
         });
 
         // Update .env file and process.env dynamically
@@ -87,6 +95,7 @@ export const getAuth = async (req: Request, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     const tenantId = authReq.tenantId; // Set by authenticateToken
     const cuentaId = req.query.cuentaId as string;
+    const customRedirectUri = req.query.redirectUri as string;
 
     if (!tenantId) {
         return res.status(400).json({ error: "Tenant ID not found in request" });
@@ -96,20 +105,32 @@ export const getAuth = async (req: Request, res: Response) => {
         // Fetch Tenant credentials
         const tenant = await Tenant.findById(tenantId);
         const appId = tenant?.mercadolibre?.appId;
+        const savedRedirectUri = tenant?.mercadolibre?.redirectUri;
 
-        // We use the tenantId in state to recover it during callback
-        // The redirect URI should point to our backend callback 
-        const callbackPath = "/api/v1/meli/callback"; 
-        // Construct full URL based on request host or env
-        // Assuming API_URL is set in env or we can infer it
         const apiUrl = process.env.API_URL || `https://${req.get('host')}`;
-        const redirectUri = `${apiUrl}${callbackPath}`;
+        const redirectUri = (customRedirectUri && customRedirectUri.trim() !== "") 
+            ? customRedirectUri 
+            : (savedRedirectUri || `${apiUrl}/api/v1/meli/callback`);
 
-        const state = encodeState(tenantId, cuentaId);
+        // Capture origin to redirect back to correctly - strip path to prevent duplication
+        let origin = req.get('origin') || req.get('referer');
+        if (origin) {
+            try {
+                const urlObj = new URL(origin);
+                origin = urlObj.origin;
+            } catch (e) {
+                // Fallback to minimal sanitization if URL parsing fails
+                origin = origin.split('/admin')[0];
+            }
+        }
+        
+        const state = encodeState(tenantId, cuentaId, origin);
         
         // Pass the state to getAuthUrl so it can store the PKCE verifier linked to this state
         const url = getAuthUrl(redirectUri, appId, state) + `&state=${state}`;
 
+        logToFile(`[MELI Auth] Initiating auth. tenantId: ${tenantId}, redirectUri: ${redirectUri}, origin: ${origin}`);
+        console.log(`[MELI Auth] Initiating auth. redirectUri: ${redirectUri}, origin: ${origin}, url: ${url}`);
         res.json({ url });
     } catch (e) {
         console.error("Error initiating auth:", e);
@@ -138,44 +159,73 @@ export const callback = async (req: Request, res: Response) => {
         return res.status(400).send("Estado inválido");
     }
 
-    const { tenantId, cuentaId } = decoded;
+    const { tenantId, cuentaId, origin } = decoded;
+    logToFile(`[MELI Callback] Decoded state. tenantId: ${tenantId}, origin: ${origin}, code: ${code?.substring(0, 10)}...`);
+    console.log(`[MELI Callback] Decoded state. tenantId: ${tenantId}, cuentaId: ${cuentaId}, origin: ${origin}, code: ${code}`);
 
     try {
         const apiUrl = process.env.API_URL || `https://${req.get('host')}`;
-        const redirectUri = `${apiUrl}/api/v1/meli/callback`;
 
         // Fetch Tenant credentials
         const tenant = await Tenant.findById(tenantId);
         const appId = tenant?.mercadolibre?.appId;
         const clientSecret = tenant?.mercadolibre?.clientSecret;
+        const savedRedirectUri = tenant?.mercadolibre?.redirectUri;
+
+        const redirectUri = savedRedirectUri || `${apiUrl}/api/v1/meli/callback`;
+        logToFile(`[MELI Callback] Step 1: Found tenant ${tenant?._id}. appId: ${appId}, redirectUri: ${redirectUri}`);
+        console.log(`[MELI Callback] Using redirectUri: ${redirectUri}, appId: ${appId}`);
 
         // Pass 'state' to authorize so it can retrieve the correct PKCE verifier
         const tokenData = await authorize(code, redirectUri, appId, clientSecret, state as string);
+        logToFile(`[MELI Callback] Step 2: PKCE authorize success. sellerId: ${tokenData.sellerId}`);
+        console.log(`[MELI Callback] Token exchange successful for sellerId: ${tokenData.sellerId}`);
 
         // Determine the effective tenantId for syncing
         let effectiveTenantId = tenantId;
         
         // --- GLOBAL UNIQUENESS CHECK ---
-        const frontendUrl = process.env.CORS_ORIGIN?.split(',')[0] || "http://localhost:5173";
+        // Redirect back to the captured origin, or fallback to CORS_ORIGIN/localhost
+        let frontendUrl = origin;
+        if (!frontendUrl) {
+            frontendUrl = process.env.CORS_ORIGIN?.split(',')[0] || "http://localhost:5173";
+        }
+        
+        // Ensure no trailing slash for consistency
+        frontendUrl = frontendUrl.replace(/\/$/, "");
+
         const duplicateCuenta = await Cuenta.findOne({ 'mercadolibre.sellerId': tokenData.sellerId });
         const duplicateTenant = await Tenant.findOne({ 'mercadolibre.sellerId': tokenData.sellerId });
+
+        // Check if this is the superadmin tenant
+        const isSuperadmin = tenant?.slug === 'superadmin' || tenant?.isSystem;
 
         // If linking a Cuenta, ensure no other Cuenta or Tenant has this sellerId
         if (cuentaId) {
             if (duplicateTenant) {
-               return res.redirect(`${frontendUrl}/admin/cuentas?status=error&error_message=Esta cuenta de MercadoLibre ya está vinculada a una organización principal en el sistema.`);
+               logToFile(`[MELI Callback] CONFLICT: sellerId ${tokenData.sellerId} already belongs to tenant ${duplicateTenant._id}`);
+               console.warn(`[MELI Callback] Conflict: sellerId ${tokenData.sellerId} already belongs to tenant ${duplicateTenant._id}`);
+               return res.redirect(`${frontendUrl}/admin/cuentas?status=error&error_message=${encodeURIComponent("Esta cuenta de MercadoLibre ya está vinculada a una organización principal en el sistema.")}`);
             }
             if (duplicateCuenta && String(duplicateCuenta._id) !== cuentaId) {
-               return res.redirect(`${frontendUrl}/admin/cuentas?status=error&error_message=Esta cuenta de MercadoLibre ya está vinculada a otro cliente.`);
+               logToFile(`[MELI Callback] CONFLICT: sellerId ${tokenData.sellerId} already belongs to another cuenta ${duplicateCuenta._id}`);
+               console.warn(`[MELI Callback] Conflict: sellerId ${tokenData.sellerId} already belongs to another cuenta ${duplicateCuenta._id}`);
+               return res.redirect(`${frontendUrl}/admin/cuentas?status=error&error_message=${encodeURIComponent("Esta cuenta de MercadoLibre ya está vinculada a otro cliente.")}`);
             }
-        } else {
-            // If linking a Tenant, ensure no other Tenant or Cuenta has this sellerId
+        } else if (!isSuperadmin) {
+            // Ordinary tenants (non-superadmin) must follow uniqueness rules
             if (duplicateCuenta) {
-               return res.redirect(`${frontendUrl}/admin/integrations?status=error&error_message=Esta cuenta de MercadoLibre ya está vinculada a un cliente específico en el sistema.`);
+               logToFile(`[MELI Callback] CONFLICT: sellerId ${tokenData.sellerId} already belongs to cuenta ${duplicateCuenta._id}`);
+               console.warn(`[MELI Callback] Conflict: sellerId ${tokenData.sellerId} already belongs to cuenta ${duplicateCuenta._id}`);
+               return res.redirect(`${frontendUrl}/admin/integrations?status=error&error_message=${encodeURIComponent("Esta cuenta de MercadoLibre ya está vinculada a un cliente específico en el sistema.")}`);
             }
             if (duplicateTenant && String(duplicateTenant._id) !== tenantId) {
-               return res.redirect(`${frontendUrl}/admin/integrations?status=error&error_message=Esta cuenta de MercadoLibre ya está vinculada a otra organización en el sistema.`);
+               logToFile(`[MELI Callback] CONFLICT: sellerId ${tokenData.sellerId} belongs to tenant ${duplicateTenant._id} (${duplicateTenant.name}), current is ${tenantId}`);
+               console.warn(`[MELI Callback] Conflict: sellerId ${tokenData.sellerId} belongs to tenant ${duplicateTenant._id}, current is ${tenantId}`);
+               return res.redirect(`${frontendUrl}/admin/integrations?status=error&error_message=${encodeURIComponent("Esta cuenta de MercadoLibre ya está vinculada a otra organización en el sistema.")}`);
             }
+        } else {
+            logToFile(`[MELI Callback] Superadmin bypass: Allowing link for sellerId ${tokenData.sellerId} to tenant ${tenantId}`);
         }
         // --- END GLOBAL UNIQUENESS CHECK ---
 
@@ -200,20 +250,24 @@ export const callback = async (req: Request, res: Response) => {
                 userId: String(tokenData.sellerId) // Mapping sellerId to userId field for consistency
              };
              await cuenta.save();
+             logToFile(`[MELI Callback] Step 3: Updated Cuenta ${cuentaId}`);
              console.log(`Linked MELI to Cuenta: ${cuenta.name} (${cuenta._id}), Tenant: ${effectiveTenantId}`);
 
         } else {
             // Fallback: Update Tenant (Legacy / Single Account)
             await Tenant.findByIdAndUpdate(tenantId, {
                 mercadolibre: {
-                    ...tenant?.mercadolibre, // Keep existing credentials
                     accessToken: tokenData.accessToken,
                     refreshToken: tokenData.refreshToken,
                     expiresAt: tokenData.expiresAt,
                     sellerId: tokenData.sellerId,
-                    nickname: tokenData.nickname
+                    nickname: tokenData.nickname,
+                    appId,
+                    clientSecret,
+                    redirectUri
                 }
             });
+            logToFile(`[MELI Callback] Step 3: Updated Tenant ${tenantId} mercadolibre object`);
             console.log(`Linked MELI to Tenant: ${tenantId}`);
         }
 
@@ -221,9 +275,11 @@ export const callback = async (req: Request, res: Response) => {
         // We don't await this to avoid blocking the user redirection
         import("../services/meliService.js").then(({ syncRecentOrders }) => {
             syncRecentOrders(effectiveTenantId, cuentaId, tokenData.accessToken, tokenData.sellerId);
+            logToFile(`[MELI Callback] Step 4: Sync triggered`);
         });
+
+        logToFile(`[MELI Callback] Step 5: Redirecting to ${frontendUrl}/admin/integrations?status=success`);
         // Redirect to Frontend
-        // We know the frontend URL from CORS_ORIGIN or hardcoded
         if (cuentaId) {
             res.redirect(`${frontendUrl}/admin/cuentas?status=success`);
         } else {
@@ -231,9 +287,11 @@ export const callback = async (req: Request, res: Response) => {
         }
 
     } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : 'Error desconocido';
+        logToFile(`[MELI Callback] ERROR: ${errorMsg}`);
         console.error("Error exchanging code:", e);
-        const frontendUrl = process.env.CORS_ORIGIN?.split(',')[0] || "http://localhost:5173";
-        const errorMessage = encodeURIComponent(e instanceof Error ? e.message : 'Error desconocido');
+        const frontendUrl = origin || process.env.CORS_ORIGIN?.split(',')[0] || "http://localhost:5173";
+        const errorMessage = encodeURIComponent(errorMsg);
         res.redirect(`${frontendUrl}/admin/integrations?status=error&error_message=${errorMessage}`);
     }
 };

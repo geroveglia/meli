@@ -17,7 +17,12 @@ export const IntegrationsPage: React.FC = () => {
   
   // Credentials Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [credentials, setCredentials] = useState({ appId: "", clientSecret: "" });
+  const defaultRedirectUri = `${window.location.protocol}//${window.location.host}/api/v1/meli/callback`.replace(':5173', ':8080');
+  const [credentials, setCredentials] = useState({ 
+    appId: "", 
+    clientSecret: "",
+    redirectUri: ""
+  });
 
   useEffect(() => {
     fetchStatus();
@@ -29,7 +34,11 @@ export const IntegrationsPage: React.FC = () => {
         toast.success("¡Conexión con MercadoLibre exitosa!");
         window.history.replaceState({}, document.title, window.location.pathname);
     } else if (urlStatus === "error") {
-        toast.error(errorMessage || "Error al conectar con MercadoLibre.");
+        console.error("MELI Connection Error:", errorMessage);
+        toast.error("No se pudo conectar con MercadoLibre.", {
+            description: errorMessage || "Hubo un problema al procesar la vinculación. Por favor, intenta de nuevo.",
+            duration: 10000,
+        });
         window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [searchParams]);
@@ -40,7 +49,11 @@ export const IntegrationsPage: React.FC = () => {
       setStatus(data);
       // Pre-fill credentials if available (though usually secrets shouldn't be verified this way, appId is fine)
       if (data.appId) {
-          setCredentials(prev => ({ ...prev, appId: data.appId || "" }));
+          setCredentials(prev => ({ 
+              ...prev, 
+              appId: data.appId || "",
+              redirectUri: data.redirectUri || "" 
+          }));
       }
     } catch (error) {
       console.error("Error fetching MELI status:", error);
@@ -59,10 +72,10 @@ export const IntegrationsPage: React.FC = () => {
     setConnecting(true);
     try {
       // 1. Save Credentials
-      await meliService.configureCredentials(credentials.appId, credentials.clientSecret);
+      await meliService.configureCredentials(credentials.appId, credentials.clientSecret, credentials.redirectUri);
       
       // 2. Initiate Auth
-      const url = await meliService.getAuthUrl();
+      const url = await meliService.getAuthUrl(undefined, credentials.redirectUri);
       window.location.href = url;
     } catch (error) {
       console.error("Error initiating MELI auth:", error);
@@ -228,10 +241,19 @@ export const IntegrationsPage: React.FC = () => {
                           />
                       </div>
                       
-                      <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md">
-                          <p className="text-xs text-blue-800 dark:text-blue-300">
-                              Asegúrate de que la <strong>Redirect URI</strong> en tu aplicación de MercadoLibre esté configurada como: <br/>
-                              <code className="bg-white dark:bg-gray-800 px-1 py-0.5 rounded mt-1 block w-fit">{(import.meta.env.VITE_API_URL || `${window.location.protocol}//${window.location.host}/api/v1`).replace('/api/v1', '')}/api/v1/meli/callback</code>
+                      <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              Redirect URI <span className="text-[10px] text-gray-400 font-normal">(Opcional)</span>
+                          </label>
+                          <input 
+                            type="text" 
+                            className="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" 
+                            placeholder={defaultRedirectUri}
+                            value={credentials.redirectUri}
+                            onChange={(e) => setCredentials({...credentials, redirectUri: e.target.value})}
+                          />
+                          <p className="text-[10px] text-gray-500 mt-1 italic">
+                              Si se deja en blanco, se usará la URL predeterminada del sistema.
                           </p>
                       </div>
                   </div>

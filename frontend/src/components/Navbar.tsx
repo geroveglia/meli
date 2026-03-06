@@ -522,7 +522,7 @@ export const MobileNavbar: React.FC = () => {
                           open: { opacity: 1, height: "auto" },
                           collapsed: { opacity: 0, height: 0 },
                         }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
                         className="overflow-hidden space-y-1 ml-4"
                       >
                         <div className="py-1">
@@ -610,7 +610,7 @@ export const MobileNavbar: React.FC = () => {
                           open: { opacity: 1, height: "auto" },
                           collapsed: { opacity: 0, height: 0 },
                         }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
                         className="overflow-hidden space-y-1 ml-4"
                       >
                         <div className="py-1">
@@ -674,7 +674,7 @@ export const MobileNavbar: React.FC = () => {
                     open: { opacity: 1, height: "auto" },
                     collapsed: { opacity: 0, height: 0 },
                   }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
                   className="overflow-hidden space-y-1"
                 >
                   <div className="pb-2">
@@ -693,7 +693,7 @@ export const MobileNavbar: React.FC = () => {
                     {cuentaItem && renderMenuItem(cuentaItem)}
 
                     {/* Configuración */}
-                    {(isSuperAdminTenant || isCliente) && (
+                    {(!isSuperAdminTenant && isCliente) && (
                       <Link
                         to="/admin/configuracion"
                         onClick={() => setOpen(false)}
@@ -771,7 +771,7 @@ export const MobileNavbar: React.FC = () => {
                               open: { opacity: 1, height: "auto" },
                               collapsed: { opacity: 0, height: 0 },
                             }}
-                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                            transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
                             className="overflow-hidden space-y-1 ml-4"
                           >
                              <div className="py-1">
@@ -840,7 +840,7 @@ export const MobileNavbar: React.FC = () => {
                     open: { opacity: 1, height: "auto" },
                     collapsed: { opacity: 0, height: 0 },
                   }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
                   className="overflow-hidden space-y-1"
                 >
                   <div className="pb-2">
@@ -882,7 +882,7 @@ export const MobileNavbar: React.FC = () => {
                     open: { opacity: 1, height: "auto" },
                     collapsed: { opacity: 0, height: 0 },
                   }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
                   className="overflow-hidden space-y-1"
                 >
                   <div className="pb-2">{userAdminItems.map((item) => renderMenuItem(item))}</div>

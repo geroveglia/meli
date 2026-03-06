@@ -92,6 +92,7 @@ export interface ITenant extends Document {
     nickname: string;
     appId?: string;
     clientSecret?: string;
+    redirectUri?: string;
   };
   isActive: boolean;
   createdAt: Date;
@@ -230,6 +231,7 @@ const tenantSchema = new Schema<ITenant>(
       nickname: { type: String },
       appId: { type: String },
       clientSecret: { type: String },
+      redirectUri: { type: String },
     },
 
     isActive: { type: Boolean, default: true },

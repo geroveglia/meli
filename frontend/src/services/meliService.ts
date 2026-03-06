@@ -8,22 +8,32 @@ export interface MeliConnectionStatus {
     expiresAt?: string;
     appId?: string;
     clientSecret?: string;
+    redirectUri?: string;
 }
 
 import { useLumbaStore } from "../stores/lumbaStore";
 
 export const meliService = {
-    async getAuthUrl(cuentaId?: string): Promise<string> {
+    async getAuthUrl(cuentaId?: string, redirectUri?: string): Promise<string> {
         let url = "/meli/auth";
+        const queryParams = [];
         
         if (cuentaId) {
-            url += `?cuentaId=${cuentaId}`;
+            queryParams.push(`cuentaId=${cuentaId}`);
         } else {
             // Fallback to store if no param provided (legacy behavior or global context)
             const selectedAccount = useLumbaStore.getState().selectedAccount;
             if (typeof selectedAccount !== 'string' && selectedAccount.type === 'cuenta') {
-                url += `?cuentaId=${selectedAccount.id}`;
+                queryParams.push(`cuentaId=${selectedAccount.id}`);
             }
+        }
+        
+        if (redirectUri) {
+            queryParams.push(`redirectUri=${encodeURIComponent(redirectUri)}`);
+        }
+        
+        if (queryParams.length > 0) {
+            url += `?${queryParams.join('&')}`;
         }
         
         const response = await axios.get<{ url: string }>(url);
@@ -45,8 +55,8 @@ export const meliService = {
         await axios.post('/meli/disconnect', body);
     },
 
-    async configureCredentials(appId: string, clientSecret: string): Promise<void> {
-        await axios.post('/meli/credentials', { appId, clientSecret });
+    async configureCredentials(appId: string, clientSecret: string, redirectUri?: string): Promise<void> {
+        await axios.post('/meli/credentials', { appId, clientSecret, redirectUri });
     },
 
     async getConnectionStatus(): Promise<MeliConnectionStatus> {
@@ -82,16 +92,18 @@ export const meliService = {
                         isConnected: true,
                         sellerId: tenant.mercadolibre.sellerId,
                         nickname: tenant.mercadolibre.nickname,
-                        expiresAt: tenant.mercadolibre.expiresAt
+                        expiresAt: tenant.mercadolibre.expiresAt,
+                        appId: tenant.mercadolibre.appId,
+                        redirectUri: tenant.mercadolibre.redirectUri
                     };
                 }
             } catch (e) {
                 console.error("Error fetching tenant status", e);
             }
             
-            // If selecting "Todas", we might want to return true if at least one account is connected,
-            // or just let the orders show up regardless of this status flag.
-            return { isConnected: selectedAccount === "Todas" }; 
+            // If selecting "Todas", we don't want to fake a connection. 
+            // The Integrations view needs the actual tenant connection status here.
+            return { isConnected: false };
         }
     },
 };
