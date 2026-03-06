@@ -439,9 +439,14 @@ export const getDashboardStats = async (req: Request, res: Response) => {
                 average: 0
             },
             statusDistribution: [],
-            salesHistory: []
+            salesHistory: [],
+            totalTenants: 0,
+            totalClients: 0
         };
 
+        const tenant = await Tenant.findById(tenantId).lean();
+        const isSuperadmin = tenant?.slug === 'superadmin' || tenant?.isSystem;
+        
         const tenantObjectId = new mongoose.Types.ObjectId(tenantId);
         const matchStage: any = { 
             tenantId: tenantObjectId 
@@ -540,6 +545,15 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         const totalOrders = totalStats[0]?.count || 0;
         const totalRevenue = totalStats[0]?.totalRevenue || 0;
 
+        let totalTenants = 0;
+        let totalClients = 0;
+
+        // If superadmin and no specific clientId, include global counts
+        if (isSuperadmin && rawClientId === undefined) {
+            totalTenants = await Tenant.countDocuments();
+            totalClients = await Cuenta.countDocuments();
+        }
+
         res.json({
             orders: {
                 total: totalOrders,
@@ -554,7 +568,9 @@ export const getDashboardStats = async (req: Request, res: Response) => {
                 date: h._id,
                 orders: h.orders,
                 revenue: h.revenue
-            }))
+            })),
+            totalTenants,
+            totalClients
         });
 
     } catch (e) {

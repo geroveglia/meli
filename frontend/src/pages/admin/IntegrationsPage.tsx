@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { PageLayout } from "../../components/PageLayout";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlug, faSpinner, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faPlug, faSpinner, faPlus, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { meliService, MeliConnectionStatus } from "../../services/meliService";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
@@ -17,6 +17,8 @@ export const IntegrationsPage: React.FC = () => {
   
   // Credentials Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
   const defaultRedirectUri = `${window.location.protocol}//${window.location.host}/api/v1/meli/callback`.replace(':5173', ':8080');
   const [credentials, setCredentials] = useState({ 
     appId: "", 
@@ -103,9 +105,34 @@ export const IntegrationsPage: React.FC = () => {
 
   return (
     <PageLayout
-      title="Mis aplicaciones"
-      subtitle="Gestiona tus aplicaciones conectadas"
-      faIcon={{ icon: faPlug }} // Could use a grid icon if preferred
+      title="Integraciones"
+      subtitle="Gestiona las conexiones con plataformas externas"
+      faIcon={{ icon: faPlug }}
+      infoModal={{
+        isOpen: isInfoOpen,
+        onOpen: () => setIsInfoOpen(true),
+        onClose: () => setIsInfoOpen(false),
+        title: "Ayuda: Integraciones de Mercado Libre",
+        content: (
+          <div className="space-y-4">
+            <p>
+              Esta sección te permite vincular tu cuenta de <strong>Mercado Libre</strong> con el sistema Lumba para centralizar tu operación.
+            </p>
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
+                <h4 className="font-bold text-blue-800 dark:text-blue-300 mb-2">¿Qué obtienes al conectar?</h4>
+                <ul className="list-disc pl-5 text-sm space-y-1 text-blue-700 dark:text-blue-400">
+                    <li>Sincronización automática de pedidos en tiempo real.</li>
+                    <li>Gestión unificada de etiquetas y logística.</li>
+                    <li>Actualización de estados desde una sola pantalla.</li>
+                    <li>Reportes consolidados de ventas e ingresos.</li>
+                </ul>
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              <strong>Nota:</strong> Como administrador, la conexión que realices aquí servirá como base para todos los clientes vinculados a este proyecto, permitiendo una gestión global eficiente.
+            </p>
+          </div>
+        )
+      }}
     >
       {loading ? (
         <div className="flex justify-center p-12">
@@ -132,15 +159,21 @@ export const IntegrationsPage: React.FC = () => {
                 </div>
                 
                 {status.isConnected ? (
-                    <div className="p-4 flex items-center justify-between">
+                    <div 
+                        onClick={() => setIsDetailModalOpen(true)}
+                        className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors group/card"
+                    >
                         <div className="flex items-center gap-4">
                             {/* Logo Placeholder */}
-                            <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center text-white font-bold text-xl ring-4 ring-white dark:ring-gray-800 shadow-sm">
+                            <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center text-white font-bold text-xl ring-4 ring-white dark:ring-gray-800 shadow-sm transition-transform group-hover/card:scale-105">
                                 <span className="transform -rotate-12">🤝</span>
                             </div>
                             
                             <div>
-                                <h3 className="text-sm font-bold text-gray-900 dark:text-white">Lumba Connect - Gestión</h3>
+                                <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    Lumba Connect - Gestión
+                                    <span className="text-[10px] text-blue-500 font-normal opacity-0 group-hover/card:opacity-100 transition-opacity">Ver detalles</span>
+                                </h3>
                                 <div className="flex items-center gap-2 mt-1">
                                     <span className="bg-yellow-100 text-yellow-800 text-[10px] font-bold px-1.5 py-0.5 rounded border border-yellow-200">ML</span>
                                     <span className="text-xs text-gray-500 dark:text-gray-400">Mercado Libre</span>
@@ -168,8 +201,11 @@ export const IntegrationsPage: React.FC = () => {
 
                              {/* Disconnect Button */}
                              <button 
-                                onClick={handleDisconnect}
-                                className="text-red-600 hover:text-red-800 text-sm font-medium hover:underline px-3 py-1 bg-red-50 dark:bg-red-900/20 rounded-md transition-colors"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDisconnect();
+                                }}
+                                className="text-red-600 hover:text-red-800 text-sm font-medium hover:underline px-3 py-1 bg-red-50 dark:bg-red-900/20 rounded-md transition-colors relative z-10"
                              >
                                  Desconectar
                              </button>
@@ -285,6 +321,119 @@ export const IntegrationsPage: React.FC = () => {
                   </div>
                 </Dialog.Panel>
               </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+
+      {/* Application Details Modal */}
+      <Transition appear show={isDetailModalOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setIsDetailModalOpen(false)}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="fixed inset-0 overflow-y-auto">
+                <div className="flex min-h-full items-center justify-center p-4 text-center">
+                <Transition.Child
+                    as={Fragment}
+                    enter="ease-out duration-300"
+                    enterFrom="opacity-0 scale-95"
+                    enterTo="opacity-100 scale-100"
+                    leave="ease-in duration-200"
+                    leaveFrom="opacity-100 scale-100"
+                    leaveTo="opacity-0 scale-95"
+                >
+                    <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-6 text-left align-middle shadow-xl transition-all border border-gray-200 dark:border-gray-700">
+                    <div className="flex justify-between items-start mb-4">
+                        <Dialog.Title
+                            as="h3"
+                            className="text-lg font-bold leading-6 text-gray-900 dark:text-white"
+                        >
+                            Detalles de la Aplicación
+                        </Dialog.Title>
+                        <button 
+                            onClick={() => setIsDetailModalOpen(false)}
+                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                        >
+                            <FontAwesomeIcon icon={faXmark as any} />
+                        </button>
+                    </div>
+                    
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                            <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-sm">
+                                <span className="transform -rotate-12">🤝</span>
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-gray-900 dark:text-white">Lumba Connect - Gestión</h4>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Vinculado a Mercado Libre</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3">
+                            <div className="p-3 border border-gray-100 dark:border-gray-700 rounded-lg">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nombre de Usuario (Nickname)</p>
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">{status.nickname || "N/A"}</p>
+                            </div>
+                            
+                            <div className="p-3 border border-gray-100 dark:border-gray-700 rounded-lg">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Seller ID de MercadoLibre</p>
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">{status.sellerId || "N/A"}</p>
+                            </div>
+
+                            <div className="p-3 border border-gray-100 dark:border-gray-700 rounded-lg">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Application ID (App ID)</p>
+                                <p className="text-sm font-medium text-gray-900 dark:text-white font-mono">{status.appId || "N/A"}</p>
+                            </div>
+
+                            <div className="p-3 border border-gray-100 dark:border-gray-700 rounded-lg">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Redirect URI Configurada</p>
+                                <p className="text-xs font-medium text-gray-600 dark:text-gray-300 break-all">{status.redirectUri || "Predeterminada del sistema"}</p>
+                            </div>
+
+                            {status.expiresAt && (
+                                <div className="p-3 border border-gray-100 dark:border-gray-700 rounded-lg">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Token Expira el</p>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                        {new Date(status.expiresAt).toLocaleString()}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                <span className="text-xs font-semibold">Sincronización en tiempo real activa</span>
+                            </div>
+                            <p className="text-[10px] text-gray-500 mt-1">
+                                Los pedidos y actualizaciones se están procesando correctamente a través de webhooks configurados.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="mt-6 flex justify-end">
+                        <button
+                        type="button"
+                        className="inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-6 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none"
+                        onClick={() => setIsDetailModalOpen(false)}
+                        >
+                        Cerrar
+                        </button>
+                    </div>
+                    </Dialog.Panel>
+                </Transition.Child>
+                </div>
             </div>
           </div>
         </Dialog>

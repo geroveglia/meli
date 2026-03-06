@@ -9,6 +9,8 @@ import {
   faShoppingBag,
   faMoneyBillWave,
   faBoxOpen,
+  faUsers,
+  faBriefcase,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   BarChart,
@@ -34,8 +36,9 @@ interface DashboardStats {
   meliPending: number;
   salesHistory: { date: string; orders: number; revenue: number }[];
   statusDistribution: { name: string; value: number }[];
+  totalTenants?: number;
+  totalClients?: number;
 }
-
 
 // Pre-generate chart colors
 const COLORS = generateChartColors(16);
@@ -72,7 +75,7 @@ const StatCard: React.FC<{
 
 export const DashboardPage: React.FC = () => {
   const { theme } = useThemeStore();
-  const { user } = useAuthStore(); // Obtener usuario para chequear rol
+  const { user } = useAuthStore();
   const { selectedCuenta } = useCuentaContextStore();
 
   const INITIAL_DASHBOARD_STATS: DashboardStats = {
@@ -81,17 +84,16 @@ export const DashboardPage: React.FC = () => {
     meliPending: 0,
     salesHistory: [],
     statusDistribution: [],
+    totalTenants: 0,
+    totalClients: 0,
   };
 
   const [stats, setStats] = useState<DashboardStats>(INITIAL_DASHBOARD_STATS);
-
   const [loading, setLoading] = useState(true);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
 
   const isDark = theme === "dark";
   const themeColors = getThemeColors(isDark);
-
-  const [isInfoOpen, setIsInfoOpen] = useState(false);
-
   const selectedClientId = selectedCuenta?._id?.trim() || undefined;
 
   useEffect(() => {
@@ -100,7 +102,6 @@ export const DashboardPage: React.FC = () => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-
         const meliStatsRes = await axios.get("/meli/dashboard-stats", {
           params: selectedClientId ? { clientId: selectedClientId } : undefined,
         });
@@ -108,38 +109,26 @@ export const DashboardPage: React.FC = () => {
         if (!isActive) return;
 
         const meliData = meliStatsRes.data || {};
-        const meliOrders = meliData.orders?.total || 0;
-        const meliRevenue = meliData.orders?.revenue || 0;
-        const meliPending = meliData.statusDistribution?.find((s: any) => s.name === "pendiente_preparacion")?.value || 0;
-
         setStats({
-          meliOrders,
-          meliRevenue,
-          meliPending,
+          meliOrders: meliData.orders?.total || 0,
+          meliRevenue: meliData.orders?.revenue || 0,
+          meliPending: meliData.statusDistribution?.find((s: any) => s.name === "pendiente_preparacion")?.value || 0,
           salesHistory: meliData.salesHistory || [],
           statusDistribution: meliData.statusDistribution || [],
+          totalTenants: meliData.totalTenants,
+          totalClients: meliData.totalClients,
         });
       } catch (error) {
         if (!isActive) return;
-
-        const err = error as { code?: string };
-        if (err?.code !== "ERR_CANCELED") {
-          console.error("Error fetching dashboard stats:", error);
-        }
-
+        console.error("Error fetching dashboard stats:", error);
         setStats(INITIAL_DASHBOARD_STATS);
       } finally {
-        if (isActive) {
-          setLoading(false);
-        }
+        if (isActive) setLoading(false);
       }
     };
 
     fetchStats();
-
-    return () => {
-      isActive = false;
-    };
+    return () => { isActive = false; };
   }, [user?.tenantId, selectedClientId]);
 
   const formatStatus = (status: string | undefined) => {
@@ -174,11 +163,8 @@ export const DashboardPage: React.FC = () => {
       }}
     >
       <div className="space-y-6">
-
-
-        {/* Stats Cards */}
+        {/* Stats Cards Row 1 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-             {/* MercadoLibre Stats (First Row) */}
             <StatCard
                 title="Pedidos (MeLi)"
                 value={stats.meliOrders}
@@ -200,33 +186,46 @@ export const DashboardPage: React.FC = () => {
                 color="bg-blue-500"
                 loading={loading}
             />
-            {/* Spacer or another stat */}
             <div className="hidden lg:block"></div> 
-
         </div>
+
+        {/* System Stats (Superadmin Section) */}
+        {(stats.totalTenants !== undefined && stats.totalTenants > 0) && (
+          <div className="space-y-4">
+             <h2 className="text-lg font-bold text-accent-1 flex items-center gap-2">
+                <FontAwesomeIcon icon={faChartPie} className="text-accent-7" />
+                Resumen del Sistema
+             </h2>
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard
+                    title="Total Organizaciones"
+                    value={stats.totalTenants ?? 0}
+                    icon={faUsers}
+                    color="bg-purple-500"
+                    loading={loading}
+                />
+                <StatCard
+                    title="Total Clientes"
+                    value={stats.totalClients ?? 0}
+                    icon={faBriefcase}
+                    color="bg-indigo-500"
+                    loading={loading}
+                />
+             </div>
+          </div>
+        )}
         
-        {/* System Stats (Second Row) */}
-
-
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Bar Chart: Sales History */}
           <div className="bg-accent-2 rounded-xl shadow-lg border border-accent-4 p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-accent-2 border border-accent-4">
-                <FontAwesomeIcon
-                  icon={faChartBar}
-                  className="h-5 w-5 text-accent-9"
-                />
+                <FontAwesomeIcon icon={faChartBar} className="h-5 w-5 text-accent-9" />
               </div>
-
               <div>
-                <h2 className="text-lg font-semibold text-accent-1">
-                  Ventas últimos 7 días
-                </h2>
-                <p className="text-sm text-accent-7">
-                  Cantidad de pedidos diarios
-                </p>
+                <h2 className="text-lg font-semibold text-accent-1">Ventas últimos 7 días</h2>
+                <p className="text-sm text-accent-7">Cantidad de pedidos diarios</p>
               </div>
             </div>
             <div className="h-72">
@@ -236,10 +235,7 @@ export const DashboardPage: React.FC = () => {
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={stats.salesHistory}
-                    margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
-                  >
+                  <BarChart data={stats.salesHistory} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke={themeColors.grid} />
                     <XAxis 
                         dataKey="date" 
@@ -270,18 +266,11 @@ export const DashboardPage: React.FC = () => {
           <div className="bg-accent-2 rounded-xl shadow-lg border border-accent-4 p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-accent-3 border border-accent-4">
-                <FontAwesomeIcon
-                  icon={faChartPie}
-                  className="h-5 w-5 text-accent-1"
-                />
+                <FontAwesomeIcon icon={faChartPie} className="h-5 w-5 text-accent-1" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-accent-1">
-                   Estado de Logística
-                </h2>
-                <p className="text-sm text-accent-7">
-                   Distribución de estados de envío
-                </p>
+                <h2 className="text-lg font-semibold text-accent-1">Estado de Logística</h2>
+                <p className="text-sm text-accent-7">Distribución de estados de envío</p>
               </div>
             </div>
             <div className="h-72">
@@ -303,12 +292,7 @@ export const DashboardPage: React.FC = () => {
                       label={({ name, percent }) => `${formatStatus(name)} ${((percent || 0) * 100).toFixed(0)}%`}
                     >
                       {stats.statusDistribution.map((_, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                          stroke={themeColors.stroke}
-                          strokeWidth={2}
-                        />
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke={themeColors.stroke} strokeWidth={2} />
                       ))}
                     </Pie>
                     <Tooltip
@@ -329,4 +313,3 @@ export const DashboardPage: React.FC = () => {
     </PageLayout>
   );
 };
-
