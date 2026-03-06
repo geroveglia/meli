@@ -879,6 +879,7 @@ export const LogisticaPage: React.FC = () => {
             endDate: dateTo,
             onStartDateChange: (val) => setDateRange(val, dateTo),
             onEndDateChange: (val) => setDateRange(dateFrom, val),
+            onClear: () => setDateRange("", ""),
           }}
         >
           <div className="hidden md:flex items-center bg-accent-3 border border-accent-4 rounded-lg p-1 gap-1">

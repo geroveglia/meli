@@ -20,6 +20,7 @@ export interface DateRangeFilter {
   endDate: string;
   onStartDateChange: (value: string) => void;
   onEndDateChange: (value: string) => void;
+  onClear?: () => void;
 }
 
 interface SearchAndFiltersProps {
@@ -66,8 +67,12 @@ export const SearchAndFilters: React.FC<SearchAndFiltersProps> = ({ searchTerm, 
 
   const handleClearDates = () => {
     if (dateFilter) {
-      dateFilter.onStartDateChange("");
-      dateFilter.onEndDateChange("");
+      if (dateFilter.onClear) {
+        dateFilter.onClear();
+      } else {
+        dateFilter.onStartDateChange("");
+        dateFilter.onEndDateChange("");
+      }
     }
     setShowDateModal(false);
   };
