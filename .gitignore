@@ -11,3 +11,8 @@ coverage
 *.tar.gz
 .cache
 .parcel-cache
+
+# Env files
+.env
+.env.*
+!.env.example
